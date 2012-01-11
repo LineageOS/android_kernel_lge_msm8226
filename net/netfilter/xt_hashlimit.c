@@ -445,7 +445,6 @@ hashlimit_init_dst(const struct xt_hashlimit_htable *hinfo,
 {
 	__be16 _ports[2], *ports;
 	u8 nexthdr;
-	__be16 frag_off;
 	int poff;
 
 	memset(dst, 0, sizeof(*dst));
