@@ -3458,7 +3458,8 @@ static struct clk_lookup msm_clocks_8226[] = {
 	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "20.qcom,camera_rev_c"),
 #endif
 #ifdef CONFIG_IMX219
-	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "20.qcom,camera"),
+	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "6d,qcom,camera"),
+	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "6d,qcom,camera_rev_a"),
 #endif
 #ifdef CONFIG_HI543	/*                                           */
 	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "40.qcom,camera"),
@@ -3498,7 +3499,8 @@ static struct clk_lookup msm_clocks_8226[] = {
 	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "20.qcom,camera_rev_c"),
 #endif
 #ifdef CONFIG_IMX219
-	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "20.qcom,camera"),
+	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "6d,qcom,camera"),
+	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "6d,qcom,camera_rev_a"),
 #endif
 #ifdef CONFIG_HI543	/*                                           */
 	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "40.qcom,camera"),
