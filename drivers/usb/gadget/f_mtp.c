@@ -1286,7 +1286,7 @@ static void receive_file_work(struct work_struct *data)
 	struct file *filp;
 	loff_t offset;
 	int64_t count;
-	int ret, cur_buf = 0;
+	int ret, len, cur_buf = 0;
 	int r = 0;
 #ifdef CONFIG_USB_G_LGE_MTP_PROFILING
 	ktime_t	receive_start, start, diff;
@@ -1299,6 +1299,7 @@ static void receive_file_work(struct work_struct *data)
 	count = dev->xfer_file_length;
 
 	DBG(cdev, "receive_file_work(%lld)\n", count);
+
 #ifdef CONFIG_USB_G_LGE_MTP_PROFILING
 	if(!ktime_to_ms(dev->perf.first_start_wtime)) {
 		dev->perf.first_start_wtime = ktime_get();
@@ -1308,9 +1309,6 @@ static void receive_file_work(struct work_struct *data)
 	memset(&dev->perf.wtime, 0, sizeof(dev->perf.wtime));
 	memset(&dev->perf.receive_time, 0, sizeof(dev->perf.receive_time));
 #endif
-	if (!IS_ALIGNED(count, dev->ep_out->maxpacket))
-		DBG(cdev, "%s- count(%lld) not multiple of mtu(%d)\n", __func__,
-						count, dev->ep_out->maxpacket);
 
 	while (count > 0 || write_req) {
 #ifdef CONFIG_USB_G_LGE_MTP_PROFILING
@@ -1321,8 +1319,10 @@ static void receive_file_work(struct work_struct *data)
 			read_req = dev->rx_req[cur_buf];
 			cur_buf = (cur_buf + 1) % RX_REQ_MAX;
 
-			/* some h/w expects size to be aligned to ep's MTU */
-			read_req->length = mtp_rx_req_len;
+			len = ALIGN(count, dev->ep_out->maxpacket);
+			if (len > mtp_rx_req_len)
+				len = mtp_rx_req_len;
+			read_req->length = len;
 
 			dev->rx_done = 0;
 			ret = usb_ep_queue(dev->ep_out, read_req, GFP_KERNEL);
