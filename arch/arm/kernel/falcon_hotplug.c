@@ -27,14 +27,13 @@
 #include <linux/workqueue.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
-#include <linux/earlysuspend.h>
 #include <linux/notifier.h>
 #include <linux/cpufreq.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 
-#define DEFAULT_FIRST_LEVEL	80
-#define DEFAULT_SECOND_LEVEL	70
+#define DEFAULT_FIRST_LEVEL	85
+#define DEFAULT_SECOND_LEVEL	75
 #define HIGH_LOAD_COUNTER	25
 #define SAMPLING_RATE_MS	500
 
@@ -47,6 +46,7 @@ struct cpu_stats
 	/* For the three hot-plug-able Cores */
 	unsigned int counter[2];
 	unsigned int cpu_load_stats[3];
+
 };
 
 struct cpu_load_data {
@@ -59,9 +59,6 @@ static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 static struct cpu_stats stats;
 static struct workqueue_struct *wq;
 static struct delayed_work decide_hotplug;
-static struct workqueue_struct *pm_wq;
-static struct work_struct resume;
-static struct work_struct suspend;
 
 static unsigned long queue_sampling;
 
@@ -159,7 +156,8 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	for (i = 0, j = 2; i < 2; i++, j++) {
 		calculate_load_for_cpu(i);
 
-		if (stats.counter[i] >= 10 && get_load_for_all_cpu() >= stats.default_second_level) {
+		if (stats.counter[i] >= 10 && get_load_for_all_cpu() >= stats.default_second_level
+			&& (num_online_cpus() != num_possible_cpus())) {
 			if (!cpu_online(j)) {
 				printk("[Hot-Plug]: CPU%u ready for onlining\n", j);
 				cpu_up(j);
@@ -170,7 +168,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 			calculate_load_for_cpu(i);
 
 			/* Prevent fast on-/offlining */ 
-			if (time_is_after_jiffies(stats.timestamp + (HZ * 4))) {
+			if (time_is_after_jiffies(stats.timestamp + (HZ * 3))) {
 				/* Rearm you work_queue immediatly */
 				queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 			}
@@ -202,43 +200,6 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 }
 
-static void suspend_func(struct work_struct *work)
-{	 
-	int cpu;
-
-	/* cancel the hotplug work when the screen is off and flush the WQ */
-	flush_workqueue(wq);
-	cancel_delayed_work_sync(&decide_hotplug);
-	cancel_work_sync(&resume);
-
-	pr_info("Early Suspend stopping Hotplug work...\n");
-    
-	for_each_online_cpu(cpu) 
-		if (cpu)
-			cpu_down(cpu);
-}
-
-static void __ref resume_func(struct work_struct *work)
-{
-	int cpu;
-
-	/* online all cores when the screen goes online */
-	for_each_possible_cpu(cpu) {
-		if (cpu) 
-			cpu_up(cpu);
-	}
-
-	cancel_work_sync(&suspend);
-
-	/* Resetting Counters */
-	stats.counter[0] = 0;
-	stats.counter[1] = 0;
-	stats.timestamp = jiffies;
-
-	pr_info("Late Resume starting Hotplug work...\n");
-	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
-}
-
 int __init falcon_hotplug_init(void)
 {
 	pr_info("Falcon Hotplug driver started.\n");
@@ -257,15 +218,8 @@ int __init falcon_hotplug_init(void)
     
 	if (!wq)
 		return -ENOMEM;
-
-	pm_wq = create_singlethread_workqueue("falcon_pm_workqueue");
-
-	if (!pm_wq)
-		return -ENOMEM;
     
 	INIT_DELAYED_WORK(&decide_hotplug, decide_hotplug_func);
-	INIT_WORK(&resume, resume_func);
-	INIT_WORK(&suspend, suspend_func);
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
     
 	return 0;
