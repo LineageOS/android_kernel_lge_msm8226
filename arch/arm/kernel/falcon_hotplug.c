@@ -17,8 +17,7 @@
  */
 
 /*
- * TODO   - Enable sysfs entries for better tuning
- *        - Add Thermal Throttle Driver
+ * TODO   - Add Thermal Throttle Driver
  */
 
 #include <linux/kernel.h>
@@ -31,6 +30,8 @@
 #include <linux/cpufreq.h>
 #include <linux/module.h>
 #include <linux/delay.h>
+#include <linux/sysfs.h>
+#include <linux/kobject.h>
 
 #define DEFAULT_FIRST_LEVEL	85
 #define DEFAULT_SECOND_LEVEL	75
@@ -200,8 +201,97 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 }
 
+static ssize_t show_first_threshold_level(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", stats.default_first_level);
+}
+
+static ssize_t store_first_threshold_level(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	int ret;
+	unsigned long val;
+
+	ret = strict_strtoul(buf, 0, &val);
+	if (ret < 0)
+		return ret;
+
+	stats.default_first_level = val;
+	return count;
+}
+
+static struct global_attr first_threshold_attr = __ATTR(single_core_load, 0666,
+					show_first_threshold_level, store_first_threshold_level);
+
+static ssize_t show_second_threshold_level(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", stats.default_second_level);
+}
+
+static ssize_t store_second_threshold_level(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	int ret;
+	unsigned long val;
+
+	ret = strict_strtoul(buf, 0, &val);
+	if (ret < 0)
+		return ret;
+
+	stats.default_second_level = val;
+	return count;
+}
+
+static struct global_attr second_threshold_attr = __ATTR(all_core_load, 0666,
+					show_second_threshold_level, store_second_threshold_level);
+
+static ssize_t show_sampling_rate(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%lu\n", queue_sampling);
+}
+
+static ssize_t store_sampling_rate(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	int ret;
+	unsigned long val;
+
+	ret = strict_strtoul(buf, 0, &val);
+	if (ret < 0)
+		return ret;
+
+	queue_sampling = val;
+	return count;
+}
+
+static struct global_attr sampling_rate_attr = __ATTR(queue_sampling, 0666,
+					show_sampling_rate, store_sampling_rate);
+
+
+static struct attribute *falcon_hotplug_attributes[] = 
+{
+	&first_threshold_attr.attr,
+	&second_threshold_attr.attr,
+	&sampling_rate_attr.attr,
+	NULL
+};
+
+static struct attribute_group hotplug_attr_group = 
+{
+	.attrs  = falcon_hotplug_attributes,
+};
+
+static struct kobject *hotplug_control_kobj;
+
 int __init falcon_hotplug_init(void)
 {
+	int ret;
 	pr_info("Falcon Hotplug driver started.\n");
     
 	/* init everything here */
@@ -213,6 +303,20 @@ int __init falcon_hotplug_init(void)
 	stats.counter[0] = 0;
 	stats.counter[1] = 0;
 	stats.timestamp = jiffies;
+
+	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
+	if (!hotplug_control_kobj) {
+		pr_err("%s hotplug_control kobject create failed!\n", __FUNCTION__);
+		return -ENOMEM;
+        }
+
+	ret = sysfs_create_group(hotplug_control_kobj,
+			&hotplug_attr_group);
+        if (ret) {
+		pr_info("%s hotplug_control sysfs create failed!\n", __FUNCTION__);
+		kobject_put(hotplug_control_kobj);
+		return ret;
+	}
 
 	wq = create_singlethread_workqueue("falcon_hotplug_workqueue");
     
