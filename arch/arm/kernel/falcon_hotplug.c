@@ -17,7 +17,8 @@
  */
 
 /*
- * TODO   - Add Thermal Throttle Driver
+ * TODO   - Enable sysfs entries for better tuning
+ *        - Add Thermal Throttle Driver
  */
 
 #include <linux/kernel.h>
@@ -201,54 +202,6 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 }
 
-static ssize_t show_first_threshold_level(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", stats.default_first_level);
-}
-
-static ssize_t store_first_threshold_level(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	int ret;
-	unsigned long val;
-
-	ret = strict_strtoul(buf, 0, &val);
-	if (ret < 0)
-		return ret;
-
-	stats.default_first_level = val;
-	return count;
-}
-
-static struct global_attr first_threshold_attr = __ATTR(single_core_load, 0666,
-					show_first_threshold_level, store_first_threshold_level);
-
-static ssize_t show_second_threshold_level(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", stats.default_second_level);
-}
-
-static ssize_t store_second_threshold_level(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	int ret;
-	unsigned long val;
-
-	ret = strict_strtoul(buf, 0, &val);
-	if (ret < 0)
-		return ret;
-
-	stats.default_second_level = val;
-	return count;
-}
-
-static struct global_attr second_threshold_attr = __ATTR(all_core_load, 0666,
-					show_second_threshold_level, store_second_threshold_level);
-
 static ssize_t show_sampling_rate(struct kobject *kobj,
 					struct attribute *attr, char *buf)
 {
@@ -273,11 +226,8 @@ static ssize_t store_sampling_rate(struct kobject *kobj,
 static struct global_attr sampling_rate_attr = __ATTR(queue_sampling, 0666,
 					show_sampling_rate, store_sampling_rate);
 
-
 static struct attribute *falcon_hotplug_attributes[] = 
 {
-	&first_threshold_attr.attr,
-	&second_threshold_attr.attr,
 	&sampling_rate_attr.attr,
 	NULL
 };
@@ -298,11 +248,6 @@ int __init falcon_hotplug_init(void)
 	stats.default_first_level = DEFAULT_FIRST_LEVEL;
 	stats.default_second_level = DEFAULT_SECOND_LEVEL;
 	queue_sampling = msecs_to_jiffies(SAMPLING_RATE_MS);
-	
-	/* Resetting Counters */
-	stats.counter[0] = 0;
-	stats.counter[1] = 0;
-	stats.timestamp = jiffies;
 
 	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
 	if (!hotplug_control_kobj) {
@@ -318,6 +263,11 @@ int __init falcon_hotplug_init(void)
 		return ret;
 	}
 
+	/* Resetting Counters */
+	stats.counter[0] = 0;
+	stats.counter[1] = 0;
+	stats.timestamp = jiffies;
+
 	wq = create_singlethread_workqueue("falcon_hotplug_workqueue");
     
 	if (!wq)
@@ -325,7 +275,7 @@ int __init falcon_hotplug_init(void)
     
 	INIT_DELAYED_WORK(&decide_hotplug, decide_hotplug_func);
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
-    
+	
 	return 0;
 }
 MODULE_AUTHOR("Francisco Franco <franciscofranco.1990@gmail.com>, "
@@ -334,5 +284,3 @@ MODULE_DESCRIPTION("Simple SMP hotplug driver");
 MODULE_LICENSE("GPL");
 
 late_initcall(falcon_hotplug_init);
-
-
