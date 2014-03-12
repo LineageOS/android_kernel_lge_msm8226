@@ -172,7 +172,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 			/* Prevent fast on-/offlining */ 
 			if (time_is_after_jiffies(stats.timestamp + (HZ * 3))) {
 				/* Rearm you work_queue immediatly */
-				queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
+				queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(queue_sampling));
 			}
 			else {
 				if (stats.counter[i] > 0 && cpu_online(j)) {
@@ -199,7 +199,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	}
 	
 	/* Make a dedicated work_queue */
-	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
+	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(queue_sampling));
 }
 
 static ssize_t show_sampling_rate(struct kobject *kobj,
@@ -274,7 +274,7 @@ int __init falcon_hotplug_init(void)
 		return -ENOMEM;
     
 	INIT_DELAYED_WORK(&decide_hotplug, decide_hotplug_func);
-	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
+	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(20000));
 	
 	return 0;
 }
