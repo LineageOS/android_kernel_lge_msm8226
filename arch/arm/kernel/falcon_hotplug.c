@@ -17,8 +17,8 @@
  */
 
 /*
- * TODO   - Enable sysfs entries for better tuning
- *        - Add Thermal Throttle Driver
+ * TODO   - Enable _better_ sysfs entries for better tuning
+ *        - Add Thermal Throttle Driver (if needed)
  */
 
 #include <linux/kernel.h>
@@ -37,7 +37,7 @@
 #define DEFAULT_FIRST_LEVEL	85
 #define DEFAULT_SECOND_LEVEL	75
 #define HIGH_LOAD_COUNTER	25
-#define SAMPLING_RATE_MS	500
+#define SAMPLING_RATE_MS	2000
 
 struct cpu_stats
 {
@@ -142,6 +142,46 @@ static void calculate_load_for_cpu(int cpu)
 	}	
 
 }
+/*
+ * Finds the lowest operation core to offline
+ */
+
+static void put_cpu_down(int cpu) 
+{
+	int current_cpu = 0;
+
+	/* Prevent fast on-/offlining */ 
+	if (time_is_after_jiffies(stats.timestamp + (HZ * 3)))
+		return;
+
+	/*
+	 * Decide which core should be offlined
+	 */
+
+	/* No core was online anyway */
+	if ((!cpu_online(cpu) && !cpu_online(cpu + 1))
+			|| (!cpu_online(cpu - 1) && !cpu_online(cpu)))
+		return;
+
+	if ((cpu_online(cpu) && cpu_online(cpu + 1)
+			&& get_cpu_load(cpu) > get_cpu_load(cpu + 1))
+			|| (!cpu_online(cpu) && cpu_online(cpu + 1)))
+		current_cpu = cpu + 1;
+	else if (cpu_online(cpu) && cpu_online(cpu - 1)
+			&& get_cpu_load(cpu) > get_cpu_load(cpu - 1)
+			&& (cpu - 1) != 1)
+		current_cpu = cpu - 1;
+	else if ((cpu_online(cpu) && !cpu_online(cpu + 1))
+			|| (cpu_online(cpu) && !cpu_online(cpu - 1) && (cpu - 1) != 1))
+		current_cpu = cpu;
+	else
+		current_cpu = cpu;
+						
+	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);	
+	cpu_down(current_cpu);
+	stats.timestamp = jiffies;
+
+}
 
 /**
  * Simple load based decision algorithm to determ
@@ -151,15 +191,13 @@ static void calculate_load_for_cpu(int cpu)
 static void __ref decide_hotplug_func(struct work_struct *work)
 {
 	int i, j;
-	int current_cpu = 0;
 
 	/* Do load calculation for each cpu counter */
 
 	for (i = 0, j = 2; i < 2; i++, j++) {
 		calculate_load_for_cpu(i);
 
-		if (stats.counter[i] >= 10 && get_load_for_all_cpu() >= stats.default_second_level
-			&& (num_online_cpus() != num_possible_cpus())) {
+		if (stats.counter[i] >= 10) {
 			if (!cpu_online(j)) {
 				printk("[Hot-Plug]: CPU%u ready for onlining\n", j);
 				cpu_up(j);
@@ -167,39 +205,14 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 			}
 		}
 		else {
-			calculate_load_for_cpu(i);
-
-			/* Prevent fast on-/offlining */ 
-			if (time_is_after_jiffies(stats.timestamp + (HZ * 3))) {
-				/* Rearm you work_queue immediatly */
-				queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(queue_sampling));
-			}
-			else {
-				if (stats.counter[i] > 0 && cpu_online(j)) {
-						
-						/*
-						 * Decide which core should be offlined
-						 */
-
-						if (get_cpu_load(j) > get_cpu_load(j+1) 
-								&& cpu_online(j+1))
-							current_cpu = j + 1;
-						else if (get_cpu_load(j) > get_cpu_load(j-1) 
-								&& cpu_online(j-1) && j-1 != 1)
-							current_cpu = j - 1;
-						else
-							current_cpu = j;
-						
-						printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);	
-						cpu_down(current_cpu);
-						stats.timestamp = jiffies;
-				}
+			if (stats.counter[i] > 0) {
+				put_cpu_down(j);	
 			}
 		}
 	}
 	
 	/* Make a dedicated work_queue */
-	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(queue_sampling));
+	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 }
 
 static ssize_t show_sampling_rate(struct kobject *kobj,
@@ -247,7 +260,7 @@ int __init falcon_hotplug_init(void)
 	/* init everything here */
 	stats.default_first_level = DEFAULT_FIRST_LEVEL;
 	stats.default_second_level = DEFAULT_SECOND_LEVEL;
-	queue_sampling = msecs_to_jiffies(SAMPLING_RATE_MS);
+	queue_sampling = SAMPLING_RATE_MS;
 
 	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
 	if (!hotplug_control_kobj) {
