@@ -33,6 +33,10 @@
 #include <linux/delay.h>
 #include <linux/sysfs.h>
 #include <linux/kobject.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
+
 
 #define DEFAULT_FIRST_LEVEL	85
 #define DEFAULT_SECOND_LEVEL	75
@@ -61,6 +65,9 @@ static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 static struct cpu_stats stats;
 static struct workqueue_struct *wq;
 static struct delayed_work decide_hotplug;
+static struct workqueue_struct *pm_wq;
+static struct work_struct resume;
+static struct work_struct suspend;
 
 static unsigned long queue_sampling;
 
@@ -215,6 +222,56 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 }
 
+#ifdef CONFIG_POWERSUSPEND
+static void suspend_func(struct work_struct *work)
+{	 
+	int cpu;
+
+	/* cancel the hotplug work when the screen is off and flush the WQ */
+	flush_workqueue(wq);
+	cancel_delayed_work_sync(&decide_hotplug);
+	cancel_work_sync(&resume);
+
+	pr_info("Early Suspend stopping Hotplug work...\n");
+    
+	for_each_online_cpu(cpu) 
+		if (cpu)
+			cpu_down(cpu);
+}
+
+static void __ref resume_func(struct work_struct *work)
+{
+	/* Online only the second core */
+	cpu_up(1);
+
+	cancel_work_sync(&suspend);
+
+	/* Resetting Counters */
+	stats.counter[0] = 0;
+	stats.counter[1] = 0;
+	stats.timestamp = jiffies;
+
+	pr_info("Late Resume starting Hotplug work...\n");
+	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
+}
+
+static void falcon_hotplug_suspend(struct power_suspend *h)
+{
+	queue_work(pm_wq, &suspend);
+}
+
+
+static void falcon_hotplug_resume(struct power_suspend *h)
+{
+	queue_work(pm_wq, &resume);
+}
+
+static struct power_suspend falcon_hotplug_power_suspend = {
+	.suspend = falcon_hotplug_suspend,
+	.resume	 = falcon_hotplug_resume,
+};
+#endif
+
 static ssize_t show_sampling_rate(struct kobject *kobj,
 					struct attribute *attr, char *buf)
 {
@@ -285,7 +342,18 @@ int __init falcon_hotplug_init(void)
     
 	if (!wq)
 		return -ENOMEM;
-    
+
+#ifdef CONFIG_POWERSUSPEND
+	pm_wq = create_singlethread_workqueue("grouper_pm_workqueue");
+
+	if (!pm_wq)
+		return -ENOMEM;
+
+	register_power_suspend(&falcon_hotplug_power_suspend);
+	INIT_WORK(&resume, resume_func);
+	INIT_WORK(&suspend, suspend_func);
+#endif
+
 	INIT_DELAYED_WORK(&decide_hotplug, decide_hotplug_func);
 	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(20000));
 	
