@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013, Francisco Franco <franciscofranco.1990@gmail.com>. 
  *
- * Small algorithm changes for more performance
+ * Small algorithm changes for more performance/battery life
  * Copyright (c) 2014, Alexander Christ <alex.christ@hotmail.de>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -17,8 +17,7 @@
  */
 
 /*
- * TODO   - Enable _better_ sysfs entries for better tuning
- *        - Add Thermal Throttle Driver (if needed)
+ * TODO   - Add Thermal Throttle Driver (if needed)
  */
 
 #include <linux/kernel.h>
@@ -45,14 +44,12 @@
 
 struct cpu_stats
 {
-	unsigned int default_first_level;
 	unsigned int default_second_level;
 	unsigned long timestamp;
 
 	/* For the three hot-plug-able Cores */
 	unsigned int counter[2];
 	unsigned int cpu_load_stats[3];
-
 };
 
 struct cpu_load_data {
@@ -70,6 +67,7 @@ static struct work_struct resume;
 static struct work_struct suspend;
 
 static unsigned long queue_sampling;
+static unsigned int default_first_level;
 
 static inline int get_cpu_load(unsigned int cpu)
 {
@@ -131,7 +129,7 @@ static void calculate_load_for_cpu(int cpu)
 		 * We are above our threshold, so update our counter for cpu.
 		 * Consider this only, if we are on our max frequency
 		 */
-		if (get_cpu_load(cpu) >= stats.default_first_level &&
+		if (get_cpu_load(cpu) >= default_first_level &&
 			get_load_for_all_cpu() >= stats.default_second_level
 			&& likely(stats.counter[cpu] < HIGH_LOAD_COUNTER)
 			&& cpufreq_quick_get(cpu) == policy.max) {
@@ -158,7 +156,7 @@ static void put_cpu_down(int cpu)
 	int current_cpu = 0;
 
 	/* Prevent fast on-/offlining */ 
-	if (time_is_after_jiffies(stats.timestamp + (HZ * 3)))
+	if (time_is_after_jiffies(stats.timestamp + (HZ * 4)))
 		return;
 
 	/*
@@ -272,6 +270,28 @@ static struct power_suspend falcon_hotplug_power_suspend = {
 };
 #endif
 
+/* Start sysfs entries */
+static ssize_t show_first_threshold(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", default_first_level);
+}
+
+static ssize_t store_first_threshold(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	unsigned int val;
+
+	sscanf(buf, "%u", &val);
+
+	default_first_level = val;
+	return count;
+}
+
+static struct global_attr single_core_threshold_attr = __ATTR(single_core_threshold, 0666,
+					show_first_threshold, store_first_threshold);
+
 static ssize_t show_sampling_rate(struct kobject *kobj,
 					struct attribute *attr, char *buf)
 {
@@ -299,6 +319,7 @@ static struct global_attr sampling_rate_attr = __ATTR(queue_sampling, 0666,
 static struct attribute *falcon_hotplug_attributes[] = 
 {
 	&sampling_rate_attr.attr,
+	&single_core_threshold_attr.attr,
 	NULL
 };
 
@@ -315,7 +336,7 @@ int __init falcon_hotplug_init(void)
 	pr_info("Falcon Hotplug driver started.\n");
     
 	/* init everything here */
-	stats.default_first_level = DEFAULT_FIRST_LEVEL;
+	default_first_level = DEFAULT_FIRST_LEVEL;
 	stats.default_second_level = DEFAULT_SECOND_LEVEL;
 	queue_sampling = SAMPLING_RATE_MS;
 
@@ -344,7 +365,7 @@ int __init falcon_hotplug_init(void)
 		return -ENOMEM;
 
 #ifdef CONFIG_POWERSUSPEND
-	pm_wq = create_singlethread_workqueue("grouper_pm_workqueue");
+	pm_wq = create_singlethread_workqueue("falcon_pm_workqueue");
 
 	if (!pm_wq)
 		return -ENOMEM;
