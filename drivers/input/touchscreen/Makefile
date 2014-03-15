@@ -111,3 +111,4 @@ obj-$(CONFIG_LGE_TOUCH_SYNAPTICS) += lge_touch_core.o
 obj-$(CONFIG_LGE_TOUCH_SYNAPTICS) += touch_synaptics.o
 obj-$(CONFIG_LGE_TOUCH_SYNAPTICS_FW_UPGRADE) += touch_synaptics_fw_upgrade.o
 obj-$(CONFIG_LGE_TOUCH_SYNAPTICS)	+= DS4/
+obj-y					+= touchboost.o
