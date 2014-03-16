@@ -73,7 +73,7 @@ static unsigned int hispeed_freq = 998400;
 static unsigned long go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
 
 /* Sampling down factor to be applied to min_sample_time at max freq */
-#define DEFAULT_SAMPLING_DOWN_FACTOR 120000
+#define DEFAULT_SAMPLING_DOWN_FACTOR 4
 static unsigned int sampling_down_factor = DEFAULT_SAMPLING_DOWN_FACTOR;
 
 /* Target load.  Lower values result in higher CPU speeds. */
@@ -488,13 +488,13 @@ static void cpufreq_interactive_timer(unsigned long data)
 	 * Do not scale below floor_freq unless we have been at or above the
 	 * floor frequency for the minimum sample time since last validated.
 	 */
-	if (sampling_down_factor && pcpu->policy->cur == pcpu->policy->max)
-		mod_min_sample_time = sampling_down_factor;
-	else
-		mod_min_sample_time = min_sample_time;
+	if (pcpu->policy->cur == pcpu->policy->max)
+ 		mod_min_sample_time = sampling_down_factor;
+ 	else
+ 		mod_min_sample_time = 1;
 
 	if (new_freq < pcpu->floor_freq) {
-		if (now - pcpu->floor_validate_time < mod_min_sample_time) {
+		if (now - pcpu->floor_validate_time < (min_sample_time * mod_min_sample_time)) {
 			trace_cpufreq_interactive_notyet(
 				data, cpu_load, pcpu->target_freq,
 				pcpu->policy->cur, new_freq);
