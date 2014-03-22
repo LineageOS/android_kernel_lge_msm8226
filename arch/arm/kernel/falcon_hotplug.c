@@ -38,9 +38,10 @@
 
 
 #define DEFAULT_FIRST_LEVEL	85
-#define DEFAULT_SECOND_LEVEL	75
+#define DEFAULT_SECOND_LEVEL	60
 #define HIGH_LOAD_COUNTER	25
 #define SAMPLING_RATE_MS	2000
+#define FALCON_DEBUG
 
 struct cpu_stats
 {
@@ -181,8 +182,10 @@ static void put_cpu_down(int cpu)
 		current_cpu = cpu;
 	else
 		current_cpu = cpu;
-						
-	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);	
+
+#ifdef FALCON_DEBUG						
+	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
+#endif	
 	cpu_down(current_cpu);
 	stats.timestamp = jiffies;
 
@@ -204,7 +207,9 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 
 		if (stats.counter[i] >= 10) {
 			if (!cpu_online(j)) {
+#ifdef FALCON_DEBUG
 				printk("[Hot-Plug]: CPU%u ready for onlining\n", j);
+#endif
 				cpu_up(j);
 				stats.timestamp = jiffies;
 			}
@@ -230,7 +235,9 @@ static void suspend_func(struct work_struct *work)
 	cancel_delayed_work_sync(&decide_hotplug);
 	cancel_work_sync(&resume);
 
-	pr_info("Early Suspend stopping Hotplug work...\n");
+#ifdef FALCON_DEBUG
+	pr_info("[Hot-Plug]: Early Suspend stopping Hotplug work...\n");
+#endif
     
 	for_each_online_cpu(cpu) 
 		if (cpu)
@@ -249,7 +256,9 @@ static void __ref resume_func(struct work_struct *work)
 	stats.counter[1] = 0;
 	stats.timestamp = jiffies;
 
-	pr_info("Late Resume starting Hotplug work...\n");
+#ifdef FALCON_DEBUG
+	pr_info("[Hot-Plug]: Late Resume starting Hotplug work...\n");
+#endif
 	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
 }
 
@@ -333,7 +342,9 @@ static struct kobject *hotplug_control_kobj;
 int __init falcon_hotplug_init(void)
 {
 	int ret;
-	pr_info("Falcon Hotplug driver started.\n");
+#ifdef FALCON_DEBUG
+	pr_info("[Hot-Plug]: Falcon Hotplug driver started.\n");
+#endif
     
 	/* init everything here */
 	default_first_level = DEFAULT_FIRST_LEVEL;
