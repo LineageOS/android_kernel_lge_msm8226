@@ -27,7 +27,7 @@
 #define QPNP_VIB_EN_CTL(base)		(base + 0x46)
 
 #define QPNP_VIB_MAX_LEVEL		31
-#define QPNP_VIB_MIN_LEVEL		12
+#define QPNP_VIB_MIN_LEVEL		10
 
 #define QPNP_VIB_DEFAULT_TIMEOUT	15000
 #define QPNP_VIB_DEFAULT_VTG_LVL	3100
@@ -83,16 +83,13 @@ static ssize_t qpnp_vib_level_store(struct device *dev,
 
         rc = kstrtoint(buf, 10, &val);
         if (rc) {
-                pr_err("%s: error getting level\n", __func__);
+                pr_err("%s: error getting level\n, error-code: %d", __func__, rc);
                 return -EINVAL;
         }
 
-        if (val < QPNP_VIB_MIN_LEVEL) {
-                pr_err("%s: level %d not in range (%d - %d), using min.", __func__, val, QPNP_VIB_MIN_LEVEL, QPNP_VIB_MAX_LEVEL);
-                val = QPNP_VIB_MIN_LEVEL;
-        } else if (val > QPNP_VIB_MAX_LEVEL) {
-                pr_err("%s: level %d not in range (%d - %d), using max.", __func__, val, QPNP_VIB_MIN_LEVEL, QPNP_VIB_MAX_LEVEL);
-                val = QPNP_VIB_MAX_LEVEL;
+        if (val < QPNP_VIB_MIN_LEVEL || val > QPNP_VIB_MAX_LEVEL) {
+                pr_err("%s: level %d not in range.", __func__, val);
+                return -EINVAL;
         }
 
         vib->vtg_level_normal = val;
