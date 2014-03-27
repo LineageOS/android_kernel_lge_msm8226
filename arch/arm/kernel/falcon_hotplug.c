@@ -157,7 +157,7 @@ static void put_cpu_down(int cpu)
 	int current_cpu = 0;
 
 	/* Prevent fast on-/offlining */ 
-	if (time_is_after_jiffies(stats.timestamp + (HZ * 4)))
+	if (time_is_after_jiffies(stats.timestamp + (HZ * 4)))	
 		return;
 
 	/*
@@ -215,7 +215,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 			}
 		}
 		else {
-			if (stats.counter[i] > 0) {
+			if (stats.counter[i] >= 0) {
 				put_cpu_down(j);	
 			}
 		}
