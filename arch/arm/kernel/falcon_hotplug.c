@@ -37,11 +37,11 @@
 #endif
 
 
-#define DEFAULT_FIRST_LEVEL	85
+#define DEFAULT_FIRST_LEVEL	80
 #define DEFAULT_SECOND_LEVEL	60
 #define HIGH_LOAD_COUNTER	25
-#define SAMPLING_RATE_MS	2000
-#define FALCON_DEBUG
+#define SAMPLING_RATE_MS	5
+// #define FALCON_DEBUG
 
 struct cpu_stats
 {
@@ -67,7 +67,7 @@ static struct workqueue_struct *pm_wq;
 static struct work_struct resume;
 static struct work_struct suspend;
 
-static unsigned long queue_sampling;
+static unsigned int hotplug_sampling = SAMPLING_RATE_MS;
 static unsigned int default_first_level;
 
 static inline int get_cpu_load(unsigned int cpu)
@@ -165,23 +165,48 @@ static void put_cpu_down(int cpu)
 	 */
 
 	/* No core was online anyway */
-	if ((!cpu_online(cpu) && !cpu_online(cpu + 1))
-			|| (!cpu_online(cpu - 1) && !cpu_online(cpu)))
-		return;
-
-	if ((cpu_online(cpu) && cpu_online(cpu + 1)
-			&& get_cpu_load(cpu) > get_cpu_load(cpu + 1))
-			|| (!cpu_online(cpu) && cpu_online(cpu + 1)))
-		current_cpu = cpu + 1;
-	else if (cpu_online(cpu) && cpu_online(cpu - 1)
-			&& get_cpu_load(cpu) > get_cpu_load(cpu - 1)
-			&& (cpu - 1) != 1)
-		current_cpu = cpu - 1;
-	else if ((cpu_online(cpu) && !cpu_online(cpu + 1))
-			|| (cpu_online(cpu) && !cpu_online(cpu - 1) && (cpu - 1) != 1))
-		current_cpu = cpu;
-	else
-		current_cpu = cpu;
+	if (!cpu_online(cpu)) {
+		if ((!cpu_online(cpu + 1)) || (!cpu_online(cpu - 1)))
+			return;
+	}
+	
+	switch(cpu) {
+		case 2:
+			if (cpu_online(cpu) && !cpu_online(cpu + 1)) {
+				current_cpu = cpu;
+				break;
+			} else if (!cpu_online(cpu) && cpu_online(cpu + 1)) {
+				current_cpu = cpu + 1;
+				break;
+			} else if (cpu_online(cpu) && cpu_online(cpu + 1)) {
+				if (get_cpu_load(cpu) >= get_cpu_load(cpu + 1)) {
+					current_cpu = cpu + 1;
+					break;
+				} else {
+					current_cpu = cpu;
+					break;
+				}
+			}
+		break;
+		case 3:
+			if (cpu_online(cpu - 1) && !cpu_online(cpu)) {
+				current_cpu = cpu - 1;
+				break;
+			} else if (cpu_online(cpu) && cpu_online(cpu - 1)) {
+				current_cpu = cpu;
+				break;
+			} else if (cpu_online(cpu) && cpu_online(cpu - 1)
+				&& (cpu - 1) != 1) {
+				if (get_cpu_load(cpu - 1) >= get_cpu_load(cpu)) {
+					current_cpu = cpu;
+					break;
+				} else {
+					current_cpu = cpu - 1;	
+					break;
+				}
+			}
+		break;
+	}
 
 #ifdef FALCON_DEBUG						
 	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
@@ -222,7 +247,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	}
 	
 	/* Make a dedicated work_queue */
-	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
+	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(hotplug_sampling * HZ));
 }
 
 #ifdef CONFIG_POWERSUSPEND
@@ -259,7 +284,7 @@ static void __ref resume_func(struct work_struct *work)
 #ifdef FALCON_DEBUG
 	pr_info("[Hot-Plug]: Late Resume starting Hotplug work...\n");
 #endif
-	queue_delayed_work_on(0, wq, &decide_hotplug, queue_sampling);
+	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(hotplug_sampling * HZ));
 }
 
 static void falcon_hotplug_suspend(struct power_suspend *h)
@@ -298,36 +323,33 @@ static ssize_t store_first_threshold(struct kobject *kobj,
 	return count;
 }
 
-static struct global_attr single_core_threshold_attr = __ATTR(single_core_threshold, 0666,
+static struct global_attr single_core_threshold_attr = __ATTR(single_core_threshold, 0664,
 					show_first_threshold, store_first_threshold);
 
 static ssize_t show_sampling_rate(struct kobject *kobj,
 					struct attribute *attr, char *buf)
 {
-	return sprintf(buf, "%lu\n", queue_sampling);
+	return sprintf(buf, "%u\n", hotplug_sampling);
 }
 
 static ssize_t store_sampling_rate(struct kobject *kobj,
 					 struct attribute *attr,
 					 const char *buf, size_t count)
 {
-	int ret;
-	unsigned long val;
+	unsigned int val;
 
-	ret = strict_strtoul(buf, 0, &val);
-	if (ret < 0)
-		return ret;
+	sscanf(buf, "%u", &val);
 
-	queue_sampling = val;
+	hotplug_sampling = val;
 	return count;
 }
 
-static struct global_attr sampling_rate_attr = __ATTR(queue_sampling, 0666,
+static struct global_attr hotplug_sampling_rate_attr = __ATTR(hotplug_sampling, 0664,
 					show_sampling_rate, store_sampling_rate);
 
 static struct attribute *falcon_hotplug_attributes[] = 
 {
-	&sampling_rate_attr.attr,
+	&hotplug_sampling_rate_attr.attr,
 	&single_core_threshold_attr.attr,
 	NULL
 };
@@ -349,7 +371,6 @@ int __init falcon_hotplug_init(void)
 	/* init everything here */
 	default_first_level = DEFAULT_FIRST_LEVEL;
 	stats.default_second_level = DEFAULT_SECOND_LEVEL;
-	queue_sampling = SAMPLING_RATE_MS;
 
 	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
 	if (!hotplug_control_kobj) {
