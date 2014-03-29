@@ -40,7 +40,7 @@
 #define DEFAULT_FIRST_LEVEL	80
 #define DEFAULT_SECOND_LEVEL	60
 #define HIGH_LOAD_COUNTER	25
-#define SAMPLING_RATE_MS	5
+#define SAMPLING_RATE_MS	10
 // #define FALCON_DEBUG
 
 struct cpu_stats
@@ -63,7 +63,6 @@ static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 static struct cpu_stats stats;
 static struct workqueue_struct *wq;
 static struct delayed_work decide_hotplug;
-static struct workqueue_struct *pm_wq;
 static struct work_struct resume;
 static struct work_struct suspend;
 
@@ -260,13 +259,14 @@ static void suspend_func(struct work_struct *work)
 	cancel_delayed_work_sync(&decide_hotplug);
 	cancel_work_sync(&resume);
 
-#ifdef FALCON_DEBUG
-	pr_info("[Hot-Plug]: Early Suspend stopping Hotplug work...\n");
-#endif
-    
 	for_each_online_cpu(cpu) 
 		if (cpu)
 			cpu_down(cpu);
+
+#ifdef FALCON_DEBUG
+	pr_info("[Hot-Plug]: Early Suspend stopping Hotplug work. CPUs online: %d\n", num_online_cpus());
+#endif
+    
 }
 
 static void __ref resume_func(struct work_struct *work)
@@ -282,20 +282,20 @@ static void __ref resume_func(struct work_struct *work)
 	stats.timestamp = jiffies;
 
 #ifdef FALCON_DEBUG
-	pr_info("[Hot-Plug]: Late Resume starting Hotplug work...\n");
+	pr_info("[Hot-Plug]: Late Resume starting Hotplug work. CPUs online: %d\n", num_online_cpus());
 #endif
 	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(hotplug_sampling * HZ));
 }
 
 static void falcon_hotplug_suspend(struct power_suspend *h)
 {
-	queue_work(pm_wq, &suspend);
+	queue_work(system_power_efficient_wq, &suspend);
 }
 
 
 static void falcon_hotplug_resume(struct power_suspend *h)
 {
-	queue_work(pm_wq, &resume);
+	queue_work(system_power_efficient_wq, &resume);
 }
 
 static struct power_suspend falcon_hotplug_power_suspend = {
@@ -397,11 +397,6 @@ int __init falcon_hotplug_init(void)
 		return -ENOMEM;
 
 #ifdef CONFIG_POWERSUSPEND
-	pm_wq = create_singlethread_workqueue("falcon_pm_workqueue");
-
-	if (!pm_wq)
-		return -ENOMEM;
-
 	register_power_suspend(&falcon_hotplug_power_suspend);
 	INIT_WORK(&resume, resume_func);
 	INIT_WORK(&suspend, suspend_func);
