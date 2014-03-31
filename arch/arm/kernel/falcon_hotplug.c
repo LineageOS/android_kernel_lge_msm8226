@@ -375,7 +375,7 @@ static ssize_t store_min_online_time(struct kobject *kobj,
 }
 
 static struct global_attr min_online_time_attr = __ATTR(min_online_time, 0664,
-					show_min_online, store_min_online);
+					show_min_online_time, store_min_online_time);
 
 
 static struct attribute *falcon_hotplug_attributes[] = 
