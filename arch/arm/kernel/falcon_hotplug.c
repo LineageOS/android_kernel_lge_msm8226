@@ -17,7 +17,10 @@
  */
 
 /*
- * TODO   - Add Thermal Throttle Driver (if needed)
+ * TODO:   - Add Thermal Throttle Driver (if needed)
+ *	   - Make calculate_load_for_cpu() truely generic for a cpu.
+ *	     Its more like a void-call at the moment
+ *	   - Add debug tunable
  */
 
 #include <linux/kernel.h>
@@ -165,16 +168,15 @@ static void put_cpu_down(int cpu)
 	if (time_is_after_jiffies(hot_data->timestamp + (HZ * hot_data->min_online_time)))	
 		return;
 
-	/*
-	 * Decide which core should be offlined
-	 */
-
 	/* No core was online anyway */
 	if (!cpu_online(cpu)) {
 		if ((!cpu_online(cpu + 1)) || (!cpu_online(cpu - 1)))
 			return;
 	}
-	
+
+	/*
+	 * Decide which core should be offlined
+	 */
 	switch(cpu) {
 		case 2:
 			if (cpu_online(cpu) && !cpu_online(cpu + 1)) {
@@ -232,7 +234,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	unsigned int current_online_cpus = num_online_cpus();
 
 	/* Reschedule early if we don't need to bother about calculations */
-	if (unlikely(current_online_cpus == 1)
+	if (unlikely(current_online_cpus == 1))
 		queue_delayed_work(system_power_efficient_wq, &decide_hotplug, msecs_to_jiffies(hot_data->hotplug_sampling * HZ));
 
 
