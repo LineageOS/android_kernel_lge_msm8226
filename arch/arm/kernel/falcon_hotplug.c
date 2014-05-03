@@ -132,29 +132,21 @@ static void calculate_load_for_cpu(int cpu)
 
 	avg_load = get_load_for_all_cpu();
 
-	for_each_online_cpu(cpu) {
-		cpufreq_get_policy(&policy, cpu);
-		/*  
-		 * We are above our threshold, so update our counter for cpu.
-		 * Consider this only, if we are on our max frequency
-		 */
-		if (get_cpu_load(cpu) >= hot_data->single_cpu_threshold &&
-			avg_load >= hot_data->all_cpus_threshold
-			&& likely(hot_data->counter[cpu] < HIGH_LOAD_COUNTER)
-			&& cpufreq_quick_get(cpu) == policy.max) {
-				hot_data->counter[cpu] += 2;
-		}
-
-		else {
-			if (hot_data->counter[cpu] > 0)
-				hot_data->counter[cpu]--;
-		}
-
-		/* Reset CPU */
-		if (cpu)
-			break;
+	cpufreq_get_policy(&policy, cpu);
+	/*  
+	 * We are above our threshold, so update our counter for cpu.
+	 * Consider this only, if we are on our max frequency
+	 */
+	if (get_cpu_load(cpu) >= hot_data->single_cpu_threshold &&
+		avg_load >= hot_data->all_cpus_threshold
+		&& likely(hot_data->counter[cpu] < HIGH_LOAD_COUNTER)
+		&& cpufreq_quick_get(cpu) == policy.max) {
+			hot_data->counter[cpu] += 2;
+	}
+	else {
+		if (hot_data->counter[cpu] > 0)
+			hot_data->counter[cpu]--;
 	}	
-
 }
 /*
  * Finds the lowest operation core to offline
@@ -219,6 +211,7 @@ static void put_cpu_down(int cpu)
 	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
 #endif	
 	cpu_down(current_cpu);
+	hot_data->cpu_load_stats[cpu] = 0;
 	hot_data->timestamp = jiffies;
 
 }
@@ -237,11 +230,10 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	if (unlikely(current_online_cpus == 1))
 		queue_delayed_work(system_power_efficient_wq, &decide_hotplug, msecs_to_jiffies(hot_data->hotplug_sampling * HZ));
 
-
-	/* Do load calculation for each cpu counter */
-	calculate_load_for_cpu(i);
-
 	for (i = 0, j = 2; i < 2; i++, j++) {
+
+		/* Do load calculation for each cpu counter */
+		calculate_load_for_cpu(i);
 
 		if (hot_data->counter[i] >= 10) {
 			if (!cpu_online(j)) {
