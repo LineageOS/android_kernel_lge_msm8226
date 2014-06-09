@@ -127,6 +127,9 @@ static void __ref set_cpu_up(int cpu)
 {
 	if (!cpu_online(cpu)
 		&& hot_data->online_cpus != hot_data->possible_cpus) {
+#ifdef FALCON_DEBUG
+		printk("[Hot-Plug]: CPU%u ready for onlining\n", cpu);
+#endif
 		cpu_up(cpu);
 		hot_data->timestamp = jiffies;
 		hot_data->online_cpus = num_online_cpus();
@@ -178,7 +181,10 @@ static void calculate_load_for_cpu(int cpu)
  */
 static void put_cpu_down(int cpu) 
 {
-	int current_cpu = 0;
+	int current_cpu = cpu; 
+	int cpu_load = 0;
+	int lowest_load = 100;
+	int j;
 
 	/* Prevent fast on-/offlining */ 
 	if (time_is_after_jiffies(hot_data->timestamp + (HZ * hot_data->min_online_time)))	
@@ -193,49 +199,23 @@ static void put_cpu_down(int cpu)
 	/*
 	 * Decide which core should be offlined
 	 */
-	switch(cpu) {
-		case 2:
-			if (cpu_online(cpu) && !cpu_online(cpu + 1)) {
-				current_cpu = cpu;
-				break;
-			} else if (!cpu_online(cpu) && cpu_online(cpu + 1)) {
-				current_cpu = cpu + 1;
-				break;
-			} else if (cpu_online(cpu) && cpu_online(cpu + 1)) {
-				if (get_cpu_load(cpu) >= get_cpu_load(cpu + 1)) {
-					current_cpu = cpu + 1;
-					break;
-				} else {
-					current_cpu = cpu;
-					break;
-				}
-			}
-		break;
-		case 3:
-			if (cpu_online(cpu - 1) && !cpu_online(cpu)) {
-				current_cpu = cpu - 1;
-				break;
-			} else if (cpu_online(cpu) && cpu_online(cpu - 1)) {
-				current_cpu = cpu;
-				break;
-			} else if (cpu_online(cpu) && cpu_online(cpu - 1)
-				&& (cpu - 1) != 1) {
-				if (get_cpu_load(cpu - 1) >= get_cpu_load(cpu)) {
-					current_cpu = cpu;
-					break;
-				} else {
-					current_cpu = cpu - 1;	
-					break;
-				}
-			}
-		break;
+	for (j = 2; j < 4; j++) {
+
+		if (!cpu_online(j))
+			continue;
+
+		cpu_load = get_cpu_load(j);
+		if (cpu_load < lowest_load) {
+			lowest_load = cpu_load;
+			current_cpu = j;	
+		}
 	}
 
 #ifdef FALCON_DEBUG						
 	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
 #endif	
 	cpu_down(current_cpu);
-	hot_data->cpu_load_stats[cpu] = 0;
+	hot_data->cpu_load_stats[current_cpu] = 0;
 	hot_data->timestamp = jiffies;
 	hot_data->online_cpus = num_online_cpus();
 }
@@ -259,9 +239,6 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 		calculate_load_for_cpu(i);
 
 		if (hot_data->counter[i] >= 10) {
-#ifdef FALCON_DEBUG
-			printk("[Hot-Plug]: CPU%u ready for onlining\n", j);
-#endif
 			set_cpu_up(j);
 		}
 		else {
