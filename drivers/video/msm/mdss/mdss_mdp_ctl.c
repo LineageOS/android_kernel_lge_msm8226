@@ -1717,13 +1717,13 @@ static void mdss_mdp_ctl_restore_sub(struct mdss_mdp_ctl *ctl)
 {
 	u32 temp;
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 	temp = readl_relaxed(ctl->mdata->mdp_base +
 		MDSS_MDP_REG_DISP_INTF_SEL);
 	temp |= (ctl->intf_type << ((ctl->intf_num - MDSS_MDP_INTF0) * 8));
 	writel_relaxed(temp, ctl->mdata->mdp_base +
 		MDSS_MDP_REG_DISP_INTF_SEL);
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 }
 
 /*
@@ -1828,7 +1828,7 @@ int mdss_mdp_ctl_start(struct mdss_mdp_ctl *ctl, bool handoff)
 
 	memset(&ctl->cur_perf, 0, sizeof(ctl->cur_perf));
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 
 	ret = mdss_mdp_ctl_intf_event(ctl, MDSS_EVENT_RESET, NULL);
 	if (ret) {
@@ -1856,7 +1856,7 @@ int mdss_mdp_ctl_start(struct mdss_mdp_ctl *ctl, bool handoff)
 	}
 	mdss_mdp_hist_intr_setup(&mdata->hist_intr, MDSS_IRQ_RESUME);
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 error:
 	mutex_unlock(&ctl->lock);
 
@@ -1881,7 +1881,7 @@ int mdss_mdp_ctl_stop(struct mdss_mdp_ctl *ctl)
 
 	mutex_lock(&ctl->lock);
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 
 	mdss_mdp_hist_intr_setup(&mdata->hist_intr, MDSS_IRQ_SUSPEND);
 
@@ -1918,7 +1918,7 @@ int mdss_mdp_ctl_stop(struct mdss_mdp_ctl *ctl)
 		mdss_mdp_ctl_perf_update(ctl, 0);
 	}
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 
 	mutex_unlock(&ctl->lock);
 
@@ -2599,7 +2599,7 @@ int mdss_mdp_display_commit(struct mdss_mdp_ctl *ctl, void *arg)
 	mixer1_changed = (ctl->mixer_left && ctl->mixer_left->params_changed);
 	mixer2_changed = (ctl->mixer_right && ctl->mixer_right->params_changed);
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 
 	/*
 	 * We could have released the bandwidth if there were no transactions
@@ -2678,7 +2678,7 @@ int mdss_mdp_display_commit(struct mdss_mdp_ctl *ctl, void *arg)
 	ATRACE_END("flush_kickoff");
 
 done:
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 
 	mutex_unlock(&ctl->lock);
 
