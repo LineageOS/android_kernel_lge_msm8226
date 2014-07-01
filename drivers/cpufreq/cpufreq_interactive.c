@@ -484,21 +484,27 @@ static void cpufreq_interactive_timer(unsigned long data)
 	boosted = now < (last_input_time + boostpulse_duration_val);
 	boosted_freq = max(hispeed_freq, pcpu->policy->min);
 
-	if (cpu_load >= go_hispeed_load)
-	{
+	/* Don't provide strange data */
+	if (cpu_load >= 100)
+		cpu_load = 100;
+
+	cpufreq_notify_utilization(pcpu->policy, cpu_load);
+
+	if (cpu_load >= go_hispeed_load) {
 		if (pcpu->target_freq < boosted_freq)
 			new_freq = boosted_freq;
-		else
-		{
+		else {
 			new_freq = choose_freq(pcpu, loadadjfreq);
 
 			if (new_freq < boosted_freq)
 				new_freq = boosted_freq;
 		}
 	}
-	else
-	{
+	else{
 		new_freq = choose_freq(pcpu, loadadjfreq);
+		if (new_freq > boosted_freq &&
+				pcpu->target_freq < boosted_freq)
+			new_freq = boosted_freq;
 
 		if (sync_freq && new_freq < sync_freq) {
 
@@ -522,8 +528,7 @@ static void cpufreq_interactive_timer(unsigned long data)
 		}
 	}
 
-	if (boosted)
-	{
+	if (boosted) {
 		if (new_freq < input_boost_freq)
 			new_freq = input_boost_freq;
 	}
