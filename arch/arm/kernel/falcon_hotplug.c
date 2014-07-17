@@ -38,8 +38,8 @@
 #endif
 
 
-#define DEFAULT_FIRST_LEVEL	80
-#define DEFAULT_SECOND_LEVEL	60
+#define DEFAULT_FIRST_LEVEL	70
+#define DEFAULT_SECOND_LEVEL	50
 #define HIGH_LOAD_COUNTER	25
 #define SAMPLING_RATE		10
 #define DEFAULT_MIN_ONLINE	4
@@ -58,6 +58,9 @@ struct hotplug_data {
 	/* The first threshold level for a single cpu */
 	unsigned int single_cpu_threshold;
 
+	/* Short load spikes will be forcing cpus to come online */
+	bool low_latency;
+
 	unsigned long timestamp;
 	unsigned int online_cpus;
 	unsigned int possible_cpus;
@@ -72,37 +75,10 @@ struct cpu_load_data {
         u64 prev_cpu_wall;
 };
 
-static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 static struct workqueue_struct *wq;
 static struct delayed_work decide_hotplug;
 static struct work_struct resume;
 static struct work_struct suspend;
-
-static inline int get_cpu_load(unsigned int cpu)
-{
-	struct cpu_load_data *pcpu = &per_cpu(cpuload, cpu);
-	struct cpufreq_policy policy;
-	u64 cur_wall_time, cur_idle_time;
-	unsigned int idle_time, wall_time;
-	unsigned int cur_load;
-
-	cpufreq_get_policy(&policy, cpu);
-
-	cur_idle_time = get_cpu_idle_time(cpu, &cur_wall_time, true);
-
-	wall_time = (unsigned int) (cur_wall_time - pcpu->prev_cpu_wall);
-	pcpu->prev_cpu_wall = cur_wall_time;
-
-	idle_time = (unsigned int) (cur_idle_time - pcpu->prev_cpu_idle);
-	pcpu->prev_cpu_idle = cur_idle_time;
-
-	if (unlikely(!wall_time || wall_time < idle_time))
-		return 0;
-
-	cur_load = 100 * (wall_time - idle_time) / wall_time;
-
-	return (cur_load * policy.cur) / policy.max;
-}
 
 /*
  * Returns the average load for all currently onlined cpus
@@ -116,7 +92,7 @@ static int get_load_for_all_cpu(void)
 	for_each_online_cpu(cpu) {
 
 		hot_data->cpu_load_stats[cpu] = 0;
-		hot_data->cpu_load_stats[cpu] = get_cpu_load(cpu);
+		hot_data->cpu_load_stats[cpu] = cpufreq_quick_get_util(cpu);
 		load = load + hot_data->cpu_load_stats[cpu];
 	}
 	
@@ -144,29 +120,33 @@ static void __ref set_cpu_up(int cpu)
 static void calculate_load_for_cpu(int cpu) 
 {
 	struct cpufreq_policy policy;
-	int avg_load;
+	int avg_load, cpu_load;
 
+	cpu_load = cpufreq_quick_get_util(cpu);
 	avg_load = get_load_for_all_cpu();
 
 	cpufreq_get_policy(&policy, cpu);
+	
 	/*  
 	 * We are above our threshold, so update our counter for cpu.
 	 * Consider this only, if we are on our max frequency
 	 */
-	if (get_cpu_load(cpu) >= hot_data->single_cpu_threshold &&
+	if (cpu_load >= hot_data->single_cpu_threshold &&
 		avg_load >= hot_data->all_cpus_threshold
 		&& likely(hot_data->counter[cpu] < HIGH_LOAD_COUNTER)
 		&& cpufreq_quick_get(cpu) == policy.max) {
 			hot_data->counter[cpu] += 2;
 
 			/* CPU is stressed */
-			if (get_cpu_load(cpu) >= 100 && 
-				avg_load >= 100 && hot_data->counter[cpu] >= 4) {
+			if (hot_data->low_latency) {
+				if (cpu_load >= 100 &&
+					avg_load >= 100 && hot_data->counter[cpu] >= 4) {
 #ifdef FALCON_DEBUG
-				printk("[Hot-Plug]: CPU%u is stressed, considering boosting CPU%u \n", cpu, (cpu + 2));
+					printk("[Hot-Plug]: CPU%u is stressed, considering boosting CPU%u \n", cpu, (cpu + 2));
 #endif
-				set_cpu_up(cpu + 2);
-				return;
+					set_cpu_up(cpu + 2);
+					return;
+				}
 			}
 
 	}
@@ -204,7 +184,7 @@ static void put_cpu_down(int cpu)
 		if (!cpu_online(j))
 			continue;
 
-		cpu_load = get_cpu_load(j);
+		cpu_load = cpufreq_quick_get_util(j);
 		if (cpu_load < lowest_load) {
 			lowest_load = cpu_load;
 			current_cpu = j;	
@@ -393,12 +373,34 @@ static ssize_t store_all_cpus_threshold(struct kobject *kobj,
 static struct global_attr all_cpus_threshold_attr = __ATTR(all_cpus_threshold, 0664,
 					show_all_cpus_threshold, store_all_cpus_threshold);
 
+static ssize_t show_low_latency(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", hot_data->low_latency);
+}
+
+static ssize_t store_low_latency(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	unsigned int val;
+
+	sscanf(buf, "%u", &val);
+
+	hot_data->low_latency = val;
+	return count;
+}
+
+static struct global_attr low_latency_attr = __ATTR(low_latency, 0664,
+					show_low_latency, store_low_latency);
+
 static struct attribute *falcon_hotplug_attributes[] = 
 {
 	&hotplug_sampling_rate_attr.attr,
 	&single_core_threshold_attr.attr,
 	&min_online_time_attr.attr,
 	&all_cpus_threshold_attr.attr,
+	&low_latency_attr.attr,
 	NULL
 };
 
@@ -423,6 +425,7 @@ int __init falcon_hotplug_init(void)
 	hot_data->min_online_time = DEFAULT_MIN_ONLINE;
 	hot_data->single_cpu_threshold = DEFAULT_FIRST_LEVEL;
 	hot_data->all_cpus_threshold = DEFAULT_SECOND_LEVEL;
+	hot_data->low_latency = false;
 
 	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
 	if (!hotplug_control_kobj) {
