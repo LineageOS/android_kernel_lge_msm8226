@@ -43,6 +43,7 @@
 #define HIGH_LOAD_COUNTER	25
 #define SAMPLING_RATE		10
 #define DEFAULT_MIN_ONLINE	4
+// #define SMART_LOAD_CALC
 // #define FALCON_DEBUG
 
 struct hotplug_data {
@@ -75,16 +76,47 @@ struct cpu_load_data {
         u64 prev_cpu_wall;
 };
 
+#ifndef SMART_LOAD_CALC
+static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
+#endif
 static struct workqueue_struct *wq;
 static struct delayed_work decide_hotplug;
 static struct work_struct resume;
 static struct work_struct suspend;
 
+#ifndef SMART_LOAD_CALC
+static inline int get_cpu_load(unsigned int cpu)
+{
+	struct cpu_load_data *pcpu = &per_cpu(cpuload, cpu);
+	struct cpufreq_policy policy;
+	u64 cur_wall_time, cur_idle_time;
+	unsigned int idle_time, wall_time;
+	unsigned int cur_load;
+
+	cpufreq_get_policy(&policy, cpu);
+
+	cur_idle_time = get_cpu_idle_time(cpu, &cur_wall_time, true);
+
+	wall_time = (unsigned int) (cur_wall_time - pcpu->prev_cpu_wall);
+	pcpu->prev_cpu_wall = cur_wall_time;
+
+	idle_time = (unsigned int) (cur_idle_time - pcpu->prev_cpu_idle);
+	pcpu->prev_cpu_idle = cur_idle_time;
+
+	if (unlikely(!wall_time || wall_time < idle_time))
+		return 0;
+
+	cur_load = 100 * (wall_time - idle_time) / wall_time;
+
+	return (cur_load * policy.cur) / policy.max;
+}
+#endif
+
 /*
  * Returns the average load for all currently onlined cpus
  */
 
-static int get_load_for_all_cpu(void)
+static inline int get_load_for_all_cpu(void)
 {
 	int cpu;
 	int load = 0;
@@ -92,7 +124,11 @@ static int get_load_for_all_cpu(void)
 	for_each_online_cpu(cpu) {
 
 		hot_data->cpu_load_stats[cpu] = 0;
+#ifndef SMART_LOAD_CALC
+		hot_data->cpu_load_stats[cpu] = get_cpu_load(cpu);
+#else
 		hot_data->cpu_load_stats[cpu] = cpufreq_quick_get_util(cpu);
+#endif
 		load = load + hot_data->cpu_load_stats[cpu];
 	}
 	
@@ -122,7 +158,11 @@ static void calculate_load_for_cpu(int cpu)
 	struct cpufreq_policy policy;
 	int avg_load, cpu_load;
 
+#ifndef SMART_LOAD_CALC
+	cpu_load = get_cpu_load(cpu);
+#else
 	cpu_load = cpufreq_quick_get_util(cpu);
+#endif
 	avg_load = get_load_for_all_cpu();
 
 	cpufreq_get_policy(&policy, cpu);
@@ -183,8 +223,11 @@ static void put_cpu_down(int cpu)
 
 		if (!cpu_online(j))
 			continue;
-
+#ifndef SMART_LOAD_CALC
+		cpu_load = get_cpu_load(j);
+#else
 		cpu_load = cpufreq_quick_get_util(j);
+#endif
 		if (cpu_load < lowest_load) {
 			lowest_load = cpu_load;
 			current_cpu = j;	
