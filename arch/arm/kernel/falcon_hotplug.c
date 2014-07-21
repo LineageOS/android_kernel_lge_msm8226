@@ -17,10 +17,7 @@
  */
 
 /*
- * TODO:   - Add Thermal Throttle Driver (if needed)
- *	   - Make calculate_load_for_cpu() truely generic for a cpu.
- *	     Its more like a void-call at the moment
- *	   - Add debug tunable
+ * TODO:  - Add debug tunable
  */
 
 #include <linux/kernel.h>
@@ -43,7 +40,7 @@
 #define HIGH_LOAD_COUNTER	25
 #define SAMPLING_RATE		10
 #define DEFAULT_MIN_ONLINE	4
-// #define SMART_LOAD_CALC
+#define SMART_LOAD_CALC
 // #define FALCON_DEBUG
 
 struct hotplug_data {
