@@ -1,0 +1,36 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9923000{
+		mms100s@48 {
+			melfas,product = "W5";
+			melfas,max-x = <480>;
+			melfas,max-y = <800>;
+			melfas,gpio-vdd-en = <62>;
+			melfas,key-map = <158 139>;
+			melfas,fw-image-name = "melfas/w5_open_eu/w5_open_eu_v01.mfsb";
+			status = "ok";
+			revision = "rev_b...";
+		};
+
+		lgd_melfas@34 {
+			status = "ok";
+			revision = "rev_a";
+		};
+
+		ads_ags04@6a {
+			status = "ok";
+			revision = "rev_a";
+		};
+	};
+};

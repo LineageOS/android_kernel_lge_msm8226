@@ -178,6 +178,13 @@ extern struct device_node *of_find_compatible_node(struct device_node *from,
 #define for_each_compatible_node(dn, type, compatible) \
 	for (dn = of_find_compatible_node(NULL, type, compatible); dn; \
 	     dn = of_find_compatible_node(dn, type, compatible))
+//                                                           
+extern struct device_node *of_find_compatible_node_with_rev_lge(struct device_node *from,
+			const char *type, const char *compat);
+#define for_each_compatible_node_with_rev_lge(dn, type, compatible) \
+			for (dn = of_find_compatible_node_with_rev_lge(NULL, type, compatible); dn; \
+				 dn = of_find_compatible_node_with_rev_lge(dn, type, compatible))
+//                                                         
 extern struct device_node *of_find_matching_node(struct device_node *from,
 	const struct of_device_id *matches);
 #define for_each_matching_node(dn, matches) \
@@ -223,6 +230,9 @@ extern int of_property_count_strings(struct device_node *np,
 extern int of_device_is_compatible(const struct device_node *device,
 				   const char *);
 extern int of_device_is_available(const struct device_node *device);
+#ifdef CONFIG_MACH_LGE
+extern int of_device_is_available_revision(struct device_node *device);
+#endif
 extern const void *of_get_property(const struct device_node *node,
 				const char *name,
 				int *lenp);

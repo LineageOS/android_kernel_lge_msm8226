@@ -1,0 +1,40 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+/include/ "msm8610-lge-panel.dtsi"
+/include/ "msm8610-lge-input.dtsi"
+/include/ "msm8610-lge-hdmi.dtsi"
+/include/ "msm8610-lge-usb.dtsi"
+/include/ "msm8610-lge-misc.dtsi"
+/include/ "msm8610-lge-pm.dtsi"
+/include/ "msm8610-lge-sensor.dtsi"
+/include/ "msm8610-lge-sound.dtsi"
+
+/ {
+};
+
+&soc {
+	i2c@f9923000 { /* BLSP-1 QUP-1 */
+		/* Touch I2C bus frequency 100Khz -> 384Khz */
+		qcom,i2c-bus-freq = <384000>;
+	};
+	qcom,msm-mem-hole {
+		qcom,memblock-remove = <0x09700000 0x4700000>; /* Address and Size of Hole */
+	};
+
+	qcom,ion {
+		qcom,ion-heap@26 { /* MODEM HEAP */
+			qcom,memory-fixed = <0x09700000 0x2e00000>;
+		};
+	};
+};

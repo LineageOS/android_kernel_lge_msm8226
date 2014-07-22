@@ -311,6 +311,11 @@ static int mdss_mdp_wb_start(struct msm_fb_data_type *mfd)
 		return -ENODEV;
 	}
 
+#if defined(CONFIG_MACH_MSM8926_X5_VZW) || defined(CONFIG_MACH_MSM8926_X5_SPR)
+	//change request number of writeback path for memory to normal value
+	change_wb_block_request_num_to_high();
+#endif
+
 	mutex_lock(&wb->lock);
 	wb->state = WB_START;
 	mutex_unlock(&wb->lock);
@@ -327,6 +332,11 @@ static int mdss_mdp_wb_stop(struct msm_fb_data_type *mfd)
 		pr_err("unable to stop, writeback is not initialized\n");
 		return -ENODEV;
 	}
+
+#if defined(CONFIG_MACH_MSM8926_X5_VZW) || defined(CONFIG_MACH_MSM8926_X5_SPR)
+	//change request number of writeback path for memory to low value
+        change_wb_block_request_num_to_low();
+#endif
 
 	mutex_lock(&wb->lock);
 	wb->state = WB_STOPING;
@@ -862,3 +872,4 @@ int msm_fb_writeback_set_secure(struct fb_info *info, int enable)
 	return mdss_mdp_wb_set_secure(mfd, enable);
 }
 EXPORT_SYMBOL(msm_fb_writeback_set_secure);
+

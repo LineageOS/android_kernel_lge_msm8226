@@ -243,7 +243,9 @@ typedef struct {
 
 #define ATOMIC64_INIT(i) { (i) }
 
-static inline u64 atomic64_read(atomic64_t *v)
+/* 2012-12-04, sungwoo79.park LGP_DATA_KERNEL_CONFIG [START] */
+static inline u64 atomic64_read(const atomic64_t *v)
+/* 2012-12-04, sungwoo79.park LGP_DATA_KERNEL_CONFIG [END] */
 {
 	u64 result;
 

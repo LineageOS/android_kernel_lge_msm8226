@@ -495,4 +495,165 @@ config QPNP_BMS
 	  Say Y here to enable support for QPNP chip bms device.
 	  It registers a fuelgauge bms power supply to report
 	  State of Charge.
+
+config LGE_PM
+	tristate "PM8x26 LGE Feature"
+	depends on SPMI
+	help
+      Say Y here to enable support for pm8941 chip lge feature.
+	  LGE_PM releasted changed.
+	  Power Management, Battery charging, Battery Monitoring System
+	  with battery FET and fuel gauge.
+
+config MAX17048_FUELGAUGE
+	tristate "Maxim MAX17048 fuel gauging external driver"
+	depends on I2C && LGE_PM
+	default n
+	help
+	  MAX17048 is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment. The MAX17048 is configured
+	  to operate with a single lithium cell
+
+config LGE_PM_BATTERY_ID_CHECKER
+	bool "Virtual Device for LGE Battery ID Checker"
+	depends on LGE_PM
+	help
+	  Say Y here to enable LGE Battery ID Checker
+
+config LGE_PM_BATTERY_4_2VOLT
+	bool "LGE Support 4.2V Battery"
+	depends on LGE_PM
+	help
+	  Say Y here to enable LGE Support 4.2V Battery
+
+config LGE_PM_FACTORY_PSEUDO_BATTERY
+	bool "Pseudo battery mode setting for factory test"
+	depends on LGE_PM
+	help
+	  Say Y here to enable pseudo mode setting
+	  
+config LGE_PM_FACTORY_TESTMODE
+	bool "testmode node setting for battery testmode"
+	depends on LGE_PM
+	help
+	  Say Y here to enable testmode setting
+
+config LGE_PM_USB_ID
+	bool "Support LGE USB_ID"
+	depends on LGE_PM
+	help
+	  Say Y here to enable USB_ID
+
+config LGE_PM_CHARGING_CHARGERLOGO
+	bool "LGE Chargerlogo Feature"
+	depends on LGE_PM
+	help
+	  Say Y here to enable LGE charger logo
+
+config LGE_PM_CHARGING_TEMP_SCENARIO
+	bool "LGE Charging Temp Scenario"
+	depends on LGE_PM
+	help
+	  Say Y here to enable LGE Charging Temp Scenario
+
+config LGE_PM_BATTERY_PROFILE_DATA
+	bool "Apply battery profile data for W7"
+	depends on LGE_PM
+	help
+	  Apply battery profile data for W7.
+	  bms-batterydata-LGE_BL_54SH_2540mAh_LG_Chem_Final.c
+	  bms-batterydata-LGE_BL_54SH_2540mAh_Sanyo_Final.c
+
+config LGE_PM_CHARGING_EXTERNAL_OVP
+	bool "LGE Using External OVP"
+	depends on LGE_PM
+	help
+	  This config will be for external ovp.
+
+config LGE_PM_BATTERY_SOC_RESCALING
+	bool "SOC Rescaling"
+	depends on LGE_PM
+	help
+	  Enable SOC Rescaling.
+  
+config LGE_PM_BMS_MIN_IAVG_CAL_TIME
+	bool "apply BMS_MIN_IAVG_CAL_TIME 20sec"
+	depends on LGE_PM
+	help
+	  Enable BMS_MIN_IAVG_CAL_TIME 20.
+
+config LGE_PM_BMS_VERY_LOW_CAL_TIME
+	bool "apply LGE_PM_BMS_VERY_LOW_CAL_TIME"
+	depends on LGE_PM
+	help
+	  Enable LGE_PM_BMS_VERY_LOW_CAL_TIME.
+	  
+config LGE_PM_NEED_TO_MONITORING_QCT_PATCH
+	bool "LGE internal configuration for QCT patch"
+	help 
+	  This is LGE internal feature for QCT Patch. 
+	  Featured functions will be removed after QCT's patch.
+
+config LGE_PM_4_25V_CHARGING_START
+	bool "LGE Charging Start at 4.25V"
+	depends on LGE_PM
+	help
+	  Charging Start at 4.25V battery.
+
+config LGE_PM_SMPL_COUNT
+	bool "SMPL Counter"
+	depends on LGE_PM
+	help
+	  Say Y here to enable smpl count for hiddenmenu.
+
+#LGE_CHANGE_S, mg.jeong@lge.com, 12-07-04, Reason*/
+config LGE_WAKE_IRQ_PRINT
+	bool "Print IRQ when resuming..."
+	depends on LGE_PM
+	help
+	  This enables to print irqs when waking up from suspend..
+#LGE_CHANGE_E, mg.jeong@lge.com, 12-07-04, Reason*/
+
+config LGE_PM_THERMAL
+	bool "Control IUSBMAX current by thermal-engine"
+	depends on LGE_PM
+	help
+	  IUSBMAX current could be controlled by Thermal-engine.
+
+config LGE_PM_VZW_FAST_CHG
+	bool "Applying VZW requirement"
+	depends on LGE_PM
+	help
+	  Say Y here to meet VZW requirement.
+
+config LGE_PM_VZW_HIGH_TEMP_PWR_OFF
+	bool "Notify power-off due to high temperature in chargerlogo"
+	depends on LGE_PM
+	help
+	  Say Y here to notify in chargerlogo when occurring power-off due to high temperature
+
+config LGE_PM_VZW_LLK
+	bool "VZW store mode"
+	depends on LGE_PM
+	help
+	  Say Y here to enable VZW LLK mode.
+
+config LGE_PM_PWR_KEY_FOR_CHG_LOGO
+	bool "Control the PWR KEY for charger logo"
+	depends on LGE_PM
+	help
+	  PWR KEY could be controlled by this code.
+
+config LGE_PM_WORKAROUND_USB_VALID_BY_REVERSE_BOOST
+	bool "Workaround code for USB false detection"
+	depends on LGE_PM
+	help
+	  This code is workaround code for loss of UVD detection by reverse boost of PM8110 & PM8x26
+
+config LGE_PM_WORKAROUND_PORT_OPEN_FAIL_IN_FACTORY_TEST
+	bool "Workaround code for port open fail in factory test"
+	depends on LGE_PM
+	help
+	  This code is workaround code for OVD detection by USBIN Voltage in factory test
+
 endif # POWER_SUPPLY

@@ -24,6 +24,9 @@
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
 #endif
 
+//                                                                          
+char *lge_camera_info = NULL;
+
 DEFINE_MSM_MUTEX(msm_eeprom_mutex);
 
 int32_t msm_eeprom_config(struct msm_eeprom_ctrl_t *e_ctrl,
@@ -216,6 +219,43 @@ int32_t read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl)
 				return rc;
 			}
 			memptr += emap[j].mem.valid_size;
+
+//                                                                                
+			/*
+			 *We need to change slave address for read data (Y412B)
+			 *I2C addr : 0x50, 0x51, 0x52, 0x53
+			*/
+			#if !defined(CONFIG_ARCH_MSM8610)
+				#if defined(CONFIG_IMX111)
+				CDBG("%s: I2C address : 0x%x\n", __func__, e_ctrl->i2c_client.cci_client->sid);
+				e_ctrl->i2c_client.cci_client->sid++;
+				#endif
+			#else
+				#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5TS_GLOBAL_COM)
+				if(lge_camera_info){
+					if(!strncmp(lge_camera_info, "imx111", 6)){
+						CDBG("%s: (global)I2C address : 0x%x\n", __func__, e_ctrl->i2c_client.client->addr);
+						e_ctrl->i2c_client.client->addr+=0x2;
+					}
+				}
+				#else
+					#if defined(CONFIG_IMX111)
+					CDBG("%s: I2C address : 0x%x\n", __func__, e_ctrl->i2c_client.client->addr);
+					e_ctrl->i2c_client.client->addr+=0x2;
+					#endif
+				#endif
+			#endif
+//                                                                                
+		}
+		if (emap[j].pageen.valid_size) {
+			e_ctrl->i2c_client.addr_type = emap[j].pageen.addr_t;
+			rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write(
+				&(e_ctrl->i2c_client), emap[j].pageen.addr,
+				0, emap[j].pageen.data_t);
+			if (rc < 0) {
+				pr_err("%s: page disable failed\n", __func__);
+				return rc;
+			}
 		}
 		if (emap[j].pageen.valid_size) {
 			e_ctrl->i2c_client.addr_type = emap[j].pageen.addr_t;
@@ -389,7 +429,9 @@ static struct msm_cam_clk_info cam_8960_clk_info[] = {
 };
 
 static struct msm_cam_clk_info cam_8974_clk_info[] = {
-	[SENSOR_CAM_MCLK] = {"cam_src_clk", 19200000},
+//                                                                                
+	[SENSOR_CAM_MCLK] = {"cam_src_clk", 24000000},
+//                                                                                
 	[SENSOR_CAM_CLK] = {"cam_clk", 0},
 };
 
@@ -400,6 +442,62 @@ static struct v4l2_subdev_core_ops msm_eeprom_subdev_core_ops = {
 static struct v4l2_subdev_ops msm_eeprom_subdev_ops = {
 	.core = &msm_eeprom_subdev_core_ops,
 };
+
+//                                                                                
+#if defined(CONFIG_IMX111)|| defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5TS_GLOBAL_COM)
+static int msm_eeprom_check_CRC(struct msm_eeprom_ctrl_t *e_ctrl)
+{
+	int CRC_code, CRC_sum, counter;
+
+	// (CRC MSB - 0x53, 0x7E << 8 ) + (CRC LSB - 0x53, 0x7F) = SUM( 0x50, 0x0A ~ 0x53,0x7D)
+    CRC_code = (e_ctrl->memory_data[0x037E] << 8) + e_ctrl->memory_data[0x037F];
+    CRC_sum = 0;
+
+    for( counter = 0x000A; counter <= 0x037D; counter++ ) {
+		CRC_sum  += e_ctrl->memory_data[counter];
+     }
+
+	CRC_sum &= 0xffff;
+
+	if( CRC_code != CRC_sum ) {
+	// CRC error
+        pr_err("%s IMX111 EEPROM CRC error for 5100K! CRC = 0x%04x / 0x%04x\n", __func__, CRC_code, CRC_sum);
+		return EIO;
+    } else {
+        CDBG("%s CRC for 5100K - OK = 0x%04x / 0x%04x", __func__, CRC_code, CRC_sum);
+    }
+
+	// (CRC MSB - 0x53, 0xC4 << 8 ) + (CRC LSB - 0x53, 0xC5) = SUM( 0x53, 0x80 ~ 0x53,0xC3)
+    CRC_code = (e_ctrl->memory_data[0x03C4] << 8) + e_ctrl->memory_data[0x03C5];
+    CRC_sum = 0;
+
+    for( counter = 0x0380; counter <= 0x03C3; counter++ ) {
+		CRC_sum  += e_ctrl->memory_data[counter];
+    }
+
+	CRC_sum &= 0xffff;
+
+	if( CRC_code != CRC_sum ) {
+	// CRC error
+		pr_err("%s IMX111 EEPROM CRC error for 2856K! CRC = 0x%04x / 0x%04x\n", __func__, CRC_code, CRC_sum);
+		return EIO;
+    } else {
+        CDBG("%s CRC for 2856K - OK = 0x%04x / 0x%04x", __func__, CRC_code, CRC_sum);
+    }
+
+	return 0;
+}
+#endif
+//                                                                                
+//                                                                            
+static int __init camera_information_setup(char *cam_info)
+{
+        lge_camera_info = cam_info;
+        printk(KERN_INFO "Camera Info : %s\n", lge_camera_info);
+        return 1;
+}
+__setup("lge.camera=", camera_information_setup);
+//                                                                            
 
 int32_t msm_eeprom_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id) {
@@ -444,7 +542,7 @@ int32_t msm_eeprom_i2c_probe(struct i2c_client *client,
 	}
 
 	power_info = &e_ctrl->eboard_info->power_info;
-	e_ctrl->eboard_info->i2c_slaveaddr = temp;
+	e_ctrl->eboard_info->i2c_slaveaddr = temp<<1; //                                                               
 	e_ctrl->i2c_client.client = client;
 	e_ctrl->is_supported = 0;
 
@@ -490,6 +588,30 @@ int32_t msm_eeprom_i2c_probe(struct i2c_client *client,
 
 	for (j = 0; j < e_ctrl->num_bytes; j++)
 		CDBG("memory_data[%d] = 0x%X\n", j, e_ctrl->memory_data[j]);
+
+	//                                                                                
+#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5TS_GLOBAL_COM)
+	if(lge_camera_info){
+		if(!strncmp(lge_camera_info, "imx111", 6)){
+			pr_err("%s (GLOBAL) call msm_eeprom_check_CRC\n", __func__);
+			rc = msm_eeprom_check_CRC(e_ctrl);
+			if (rc < 0) {
+				pr_err("%s read_eeprom_memory failed\n", __func__);
+				goto memdata_free;
+			}
+		}
+	}
+#else
+	#if defined(CONFIG_IMX111)
+		pr_err("%s call msm_eeprom_check_CRC\n", __func__);
+		rc = msm_eeprom_check_CRC(e_ctrl);
+		if (rc < 0) {
+			pr_err("%s read_eeprom_memory failed\n", __func__);
+			goto memdata_free;
+		}
+	#endif
+#endif
+	//                                                                                
 
 	rc = msm_camera_power_down(power_info, e_ctrl->eeprom_device_type,
 		&e_ctrl->i2c_client);
@@ -906,6 +1028,16 @@ static int32_t msm_eeprom_platform_probe(struct platform_device *pdev)
 		pr_err("%s line %d\n", __func__, __LINE__);
 	for (j = 0; j < e_ctrl->num_bytes; j++)
 		CDBG("memory_data[%d] = 0x%X\n", j, e_ctrl->memory_data[j]);
+
+	//                                                                                
+	#if defined(CONFIG_IMX111)
+	rc = msm_eeprom_check_CRC(e_ctrl);
+	if (rc < 0) {
+		pr_err("%s read_eeprom_memory failed\n", __func__);
+		goto memdata_free;
+	}
+	#endif
+	//                                                                                
 
 	rc = msm_camera_power_down(power_info, e_ctrl->eeprom_device_type,
 		&e_ctrl->i2c_client);

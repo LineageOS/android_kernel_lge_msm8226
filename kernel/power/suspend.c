@@ -129,6 +129,12 @@ void __attribute__ ((weak)) arch_suspend_enable_irqs(void)
 	local_irq_enable();
 }
 
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+extern void wakeup_irq_record_reset(void);
+extern void wakeup_irq_record_print(void);
+#endif
+	
+
 /**
  * suspend_enter - Make the system enter the given sleep state.
  * @state: System sleep state to enter.
@@ -175,6 +181,11 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 			error = suspend_ops->enter(state);
 			events_check_enabled = false;
 		}
+
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+		wakeup_irq_record_reset();
+#endif
+	
 		syscore_resume();
 	}
 
@@ -234,6 +245,11 @@ int suspend_devices_and_enter(suspend_state_t state)
  Resume_devices:
 	suspend_test_start();
 	dpm_resume_end(PMSG_RESUME);
+
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+	wakeup_irq_record_print();
+#endif
+	
 	suspend_test_finish("resume devices");
 	resume_console();
  Close:

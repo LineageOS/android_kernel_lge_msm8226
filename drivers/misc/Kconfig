@@ -595,6 +595,23 @@ config PMIC8XXX_VIBRATOR
 	  on the PM8XXX chips. The vibrator is controlled using the
 	  timed output class.
 
+config FMR_INTENNA
+	bool "fmr intenna support"
+	default n
+	help
+	  This option enables device driver support for fmr intenna
+
+config TSPDRV
+    bool "tspdrv"
+        default n
+        
+config ANDROID_SW_IRRC
+	bool "Android irrc support"
+	default n
+	help
+	  This option enables device driver support for Android SW IRRC
+	  Some functions should be given by platform data for enable PWM, Motor IC, etc.
+
 config PMIC8XXX_NFC
 	tristate "Qualcomm PM8XXX support for Near Field Communication"
 	depends on MFD_PM8XXX
@@ -664,6 +681,28 @@ config TI_DRV2667
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called ti_drv2667.
+
+config BU52061NVX
+       tristate "Cradle BU52061NVX support"
+       default n
+       help
+         This option enable device driver support for the cradle
+         on the PM8XXX chips. The cradle is controlled using the PM8XXX gpio
+
+config BU52033NVX_CARKIT
+       tristate "Carkit BU52033NVX support"
+       default n
+       help
+         This option enable device driver support for the carkit
+         on the PM8XXX chips. The cradle is controlled using the PM8XXX gpio
+
+config S5717
+       tristate "Cradle S5717 support"
+       default n
+       help
+         This option enable device driver support for the cradle
+         on the PM8XXX chips. The cradle is controlled using the PM8XXX gpio
+
 
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"

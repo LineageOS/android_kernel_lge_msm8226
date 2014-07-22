@@ -20,6 +20,8 @@
 #include <mach/rpm-regulator-smd.h>
 #include <linux/regulator/consumer.h>
 
+/*#define CONFIG_MSMB_CAMERA_DEBUG*/
+
 #undef CDBG
 #ifdef CONFIG_MSMB_CAMERA_DEBUG
 #define CDBG(fmt, args...) pr_err(fmt, ##args)
@@ -259,14 +261,21 @@ static int32_t msm_sensor_get_dt_vreg_data(struct device_node *of_node,
 	struct msm_camera_sensor_board_info *sensordata)
 {
 	int32_t rc = 0, i = 0;
-	uint32_t count = 0;
+	int32_t count = 0;  /*                                                              */
 	uint32_t *vreg_array = NULL;
 
 	count = of_property_count_strings(of_node, "qcom,cam-vreg-name");
 	CDBG("%s qcom,cam-vreg-name count %d\n", __func__, count);
 
+/*                                                                */
+	#if 0 // QCT original
 	if (!count)
 		return 0;
+	#else
+	if (count <= 0)
+		return 0;
+	#endif
+/*                                                                */
 
 	sensordata->cam_vreg = kzalloc(sizeof(struct camera_vreg_t) * count,
 		GFP_KERNEL);
@@ -566,7 +575,7 @@ int32_t msm_sensor_init_gpio_pin_tbl(struct device_node *of_node,
 		}
 		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_STANDBY] =
 			gpio_array[val];
-		CDBG("%s qcom,gpio-reset %d\n", __func__,
+		CDBG("%s qcom,gpio-standby %d\n", __func__,
 			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_STANDBY]);
 	}
 
@@ -967,7 +976,6 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_sensor_power_setting_array *power_setting_array = NULL;
 	struct msm_sensor_power_setting *power_setting = NULL;
 	struct msm_camera_sensor_board_info *data = s_ctrl->sensordata;
-	uint32_t retry = 0;
 	s_ctrl->stop_setting_valid = 0;
 
 	CDBG("%s:%d\n", __func__, __LINE__);
@@ -1069,23 +1077,19 @@ int32_t msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		}
 	}
 
-	for (retry = 0; retry < 3; retry++)
-	{
-		if (s_ctrl->func_tbl->sensor_match_id)
-			rc = s_ctrl->func_tbl->sensor_match_id(s_ctrl);
-		else
-			rc = msm_sensor_match_id(s_ctrl);
-		if (rc < 0) {
-			if (retry < 2) {
-				continue;
-			} else {
-				pr_err("%s:%d match id failed rc %d\n", __func__, __LINE__, rc);
-				goto power_up_failed;
-			}
-		} else {
-			break;
-		}
+	if (s_ctrl->func_tbl->sensor_match_id)
+		rc = s_ctrl->func_tbl->sensor_match_id(s_ctrl);
+	else
+		rc = msm_sensor_match_id(s_ctrl);
+	if (rc < 0) {
+		pr_err("%s:%d match id failed rc %d\n", __func__, __LINE__, rc);
+		goto power_up_failed;
 	}
+
+	/*                                                                       */
+	if(strncmp(s_ctrl->sensordata->sensor_name, "hi707", strlen("hi707")) == 0)
+		s_ctrl->isFirstStream = TRUE;
+	/*                                                                       */
 
 	CDBG("%s exit\n", __func__);
 	return 0;
@@ -1212,7 +1216,13 @@ int32_t msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 	msm_camera_request_gpio_table(
 		data->gpio_conf->cam_gpio_req_tbl,
 		data->gpio_conf->cam_gpio_req_tbl_size, 0);
-	CDBG("%s exit\n", __func__);
+
+	/*                                                                       */
+	if(strncmp(s_ctrl->sensordata->sensor_name, "hi707", strlen("hi707")) == 0)
+		s_ctrl->isFirstStream = FALSE;
+	/*                                                                       */
+
+	pr_err("%s exit\n", __func__);
 	return 0;
 }
 
@@ -1223,7 +1233,7 @@ int32_t msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(
 			s_ctrl->sensor_i2c_client,
 			s_ctrl->sensordata->slave_info->sensor_id_reg_addr,
-			&chipid, MSM_CAMERA_I2C_WORD_DATA);
+			&chipid, MSM_CAMERA_I2C_WORD_DATA);   /*                                  */
 	if (rc < 0) {
 		pr_err("%s: %s: read id failed\n", __func__,
 			s_ctrl->sensordata->sensor_name);
@@ -1255,6 +1265,7 @@ static void msm_sensor_stop_stream(struct msm_sensor_ctrl_t *s_ctrl)
 		s_ctrl->stop_setting.reg_setting = NULL;
 	}
 	mutex_unlock(s_ctrl->msm_sensor_mutex);
+	pr_err("%s exit\n", __func__);
 	return;
 }
 
@@ -1426,7 +1437,6 @@ int32_t msm_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 			rc = -EFAULT;
 			break;
 		}
-
 		reg_setting = kzalloc(conf_array.size *
 			(sizeof(struct msm_camera_i2c_reg_array)), GFP_KERNEL);
 		if (!reg_setting) {

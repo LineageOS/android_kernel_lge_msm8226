@@ -1,0 +1,168 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/include/ "msm8610-w3ds-panel.dtsi"
+/include/ "msm8610-w3ds-sensor.dtsi"
+/include/ "msm8610-w3ds-hdmi.dtsi"
+/include/ "msm8610-w3ds-usb.dtsi"
+/include/ "msm8610-w3ds-input.dtsi"
+/include/ "msm8610-w3ds-1seg-spi.dtsi" /*Oneseg*/
+/include/ "msm8610-w3ds-misc.dtsi"
+/include/ "msm8610-w3ds-pm.dtsi"
+/include/ "msm8610-w3ds-camera.dtsi"
+
+&soc {
+	serial@f991f000 {
+		status = "disabled";
+	};
+
+	maxim_max1462x_rev0 { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "ok";          //"ok" or "disable"
+		revision = "rev_0";
+	};
+
+	maxim_max1462x_revA {
+		compatible = "maxim,max1462x";
+		status = "ok";          //"ok" or "disable"
+		revision = "rev_a";
+	};
+
+	maxim_max1462x_revB {
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		revision = "rev_b";
+	};
+
+	maxim_max1462x_revC {
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		revision = "rev_c";
+	};
+
+	maxim_max1462x_revD {
+		compatible = "maxim,max1462x";
+		status = "ok";          //"ok" or "disable"
+		revision = "rev_d";
+	};
+
+	maxim_max1462x_revE {
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		revision = "rev_e...";
+	};
+
+	i2c@f9924000 { /* BLSP-1 QUP-2 */
+		cell-index = <2>;
+		compatible = "qcom,i2c-qup";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "qup_phys_addr";
+		reg = <0xf9924000 0x1000>;
+		interrupt-names = "qup_err_intr";
+		interrupts = <0 96 0>;
+		qcom,i2c-bus-freq = <100000>;
+		qcom,i2c-src-freq = <19200000>;
+		qcom,sda-gpio = <&msmgpio 6 0>;
+		qcom,scl-gpio = <&msmgpio 7 0>;
+	};
+
+	i2c: i2c@f9928000 { /* BLSP1 QUP6 */
+		cell-index = <6>;
+		compatible = "qcom,i2c-qup";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "qup_phys_addr";
+		reg = <0xf9928000 0x1000>;
+		interrupt-names = "qup_err_intr";
+		interrupts = <0 100 0>;
+		qcom,i2c-bus-freq = <400000>;/* LGE_CHANGE increase I2C speed, sensor limitation 2013-09-02, yt.jeon@lge.com */
+		qcom,i2c-src-freq = <19200000>;
+		qcom,sda-gpio = <&msmgpio 16 0>;
+		qcom,scl-gpio = <&msmgpio 17 0>;
+	};
+
+	i2c@f9925000 { /* BLSP-1 QUP-3 */
+		cell-index = <3>;
+		qcom,i2c-src-freq = <19200000>;
+		qcom,sda-gpio = <&msmgpio 10 0>;
+		qcom,scl-gpio = <&msmgpio 11 0>;
+	};
+
+    i2c@0 {
+        compatible = "i2c-gpio";
+        gpios = <&msmgpio 4 0 /* sda */
+                 &msmgpio 5 0 /* scl */
+                 >;
+        #address-cells = <1>;
+        #size-cells = <0>;
+    };
+};
+
+&sdhc_1 {
+	vdd-supply = <&pm8110_l17>;
+	qcom,vdd-always-on;
+	qcom,vdd-lpm-sup;
+	qcom,vdd-voltage-level = <2900000 2900000>;
+	qcom,vdd-current-level = <200 400000>;
+
+	vdd-io-supply = <&pm8110_l6>;
+	qcom,vdd-io-always-on;
+	qcom,vdd-io-voltage-level = <1800000 1800000>;
+	qcom,vdd-io-current-level = <200 60000>;
+
+	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+	qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+	qcom,bus-speed-mode = "HS200_1p8v", "DDR_1p8v";
+	qcom,nonremovable;
+
+	status = "ok";
+};
+
+&sdhc_2 {
+	vdd-supply = <&pm8110_l18>;
+	qcom,vdd-voltage-level = <2950000 2950000>;
+	qcom,vdd-current-level = <15000 400000>;
+
+	vdd-io-supply = <&pm8110_l21>;
+	qcom,vdd-io-voltage-level = <1800000 2950000>;
+	qcom,vdd-io-current-level = <200 50000>;
+
+	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+	qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+
+	#address-cells = <0>;
+	interrupt-parent = <&sdhc_2>;
+	interrupts = <0 1 2>;
+	#interrupt-cells = <1>;
+	interrupt-map-mask = <0xffffffff>;
+	interrupt-map = <0 &intc 0 125 0
+			1 &intc 0 221 0
+			2 &msmgpio 42 0x3>;
+	interrupt-names = "hc_irq", "pwr_irq", "status_irq";
+	cd-gpios = <&msmgpio 42 0x0>; /* card detect 1:Low-Active, 0:High-Active */
+
+	status = "ok";
+};
+/* this memory reservation setting for LG logo in booting time*/
+&mdss_fb0 {
+	qcom,memory-reservation-type = "EBI1";
+	qcom,memory-reservation-size = <0x100000>; /* LGE chagne to decrease buffer size. QCT original -> 0x300000 */
+};

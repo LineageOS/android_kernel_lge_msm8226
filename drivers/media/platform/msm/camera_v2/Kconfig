@@ -36,6 +36,14 @@ config MSM_CSI20_HEADER
           This config macro is required targets based on 8960,
           8930 and 8064 platforms.
 
+# LGE_CHANGE_S: V3 HI351 Camera Bringup - hong.junki@lge.com 2012/09/25
+config HI351
+	bool "Sensor HI351 (YUV 3M)"
+	depends on MSMB_CAMERA
+	---help---
+	Hynix 3M YUV Sensor
+# LGE_CHANGE_E: V3 HI351 Camera Bringup - hong.junki@lge.com 2012/09/25
+
 config MSM_CSI22_HEADER
         bool "Qualcomm MSM CSI 2.2 Header"
         depends on MSMB_CAMERA
@@ -119,6 +127,46 @@ config IMX135
 		snapshot config = 4208 x 3120 at 24 fps,
 		Video HDR support.
 
+config IMX111
+	bool "Sensor imx111 (Sony 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX111 sensor driver.
+		This is a Sony 8MP Bayer Sensor with autofocus.
+		Say Y if the platform uses IMX111 sensor.
+
+config IMX179
+	bool "Sensor imx179 (Sony 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX179 sensor driver.
+		This is a Sony 8MP Bayer Sensor with autofocus.
+		Say Y if the platform uses IMX179 sensor.
+		
+config HI543
+    bool "Sensor hi543 (Hynix 5MP)"
+    depends on MSMB_CAMERA
+    ---help---
+        Support for HI543 sensor driver.
+        This is a Hynix 5MP Bayer Sensor with autofocus.
+        Say Y if the platform uses HI543 sensor.
+
+config IMX119
+	bool "Sensor imx119 (Sony Bayer 1.3MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX119 sensor driver.
+		This is a Sony 1.3MP Bayer Sensor.
+		Say Y if the platform uses IMX119 sensor.
+
+config IMX119G
+	bool "Sensor imx119 (Sony Bayer 1.3MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX119 sensor driver.
+		This is a Sony 1.3MP Bayer Sensor.
+		Say Y if the platform uses IMX119 sensor.
+		
 config IMX134
 	bool "Sensor IMX134 (BAYER 8M)"
 	depends on MSMB_CAMERA
@@ -171,6 +219,15 @@ config MT9M114
 		MT9M114 is Aptina YUV sensor. It supports 1.26 MP preview
 		and snapshot. The preview and snapshot resolution shall be
 		1280 * 270. It does not support auto focus. It supports
+		few special effects like saturation.
+
+config HI707
+	bool "Sensor HI707 (YUV VGA)"
+	depends on MSMB_CAMERA
+	---help---
+		HI707 is Aptina YUV sensor. It supports VGA preview
+		and snapshot. The preview and snapshot resolution shall be
+		640 * 480. It does not support auto focus. It supports
 		few special effects like saturation.
 
 config SP1628
@@ -249,3 +306,10 @@ config MSM_GEMINI
 	depends on MSMB_CAMERA && (ARCH_MSM7X30 || ARCH_MSM8X60 || ARCH_MSM8960)
 	---help---
 	  Enables support for the Gemini JPEG encoder engine for 8x60.
+
+config BACKLIGHT_RT8542
+	tristate "Backlight driver for rt8542 visualisation device"
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  To compile this driver as a module, choose M here: the module will be
+	  called rt8542 driver.

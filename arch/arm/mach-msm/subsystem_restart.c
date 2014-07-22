@@ -40,9 +40,17 @@
 #include <mach/subsystem_notif.h>
 #include <mach/subsystem_restart.h>
 
+#ifdef CONFIG_LGE_HANDLE_PANIC
+#include <mach/lge_handle_panic.h>
+#endif
 #include "smd_private.h"
 
 static int enable_debug;
+
+/* START : subsys_modem_restart : testmode */
+extern bool ignore_errors_by_subsys_modem_restart;
+/* END : subsys_modem_restart : testmode */
+
 module_param(enable_debug, int, S_IRUGO | S_IWUSR);
 
 /**
@@ -165,6 +173,10 @@ struct subsys_device {
 	bool crashed;
 };
 
+#ifdef CONFIG_MACH_LGE
+static int modem_reboot_cnt;
+#endif
+
 static struct subsys_device *to_subsys(struct device *d)
 {
 	return container_of(d, struct subsys_device, dev);
@@ -260,6 +272,10 @@ static DEFINE_IDA(subsys_ida);
 
 static int enable_ramdumps;
 module_param(enable_ramdumps, int, S_IRUGO | S_IWUSR);
+
+#ifdef CONFIG_MACH_LGE
+module_param(modem_reboot_cnt, int, S_IRUGO | S_IWUSR);
+#endif
 
 struct workqueue_struct *ssr_wq;
 
@@ -443,9 +459,13 @@ static void subsystem_shutdown(struct subsys_device *dev, void *data)
 	const char *name = dev->desc->name;
 
 	pr_info("[%p]: Shutting down %s\n", current, name);
-	if (dev->desc->shutdown(dev->desc) < 0)
+	if (dev->desc->shutdown(dev->desc) < 0) {
+#ifdef CONFIG_LGE_HANDLE_PANIC
+		lge_set_magic_subsystem(name, LGE_ERR_SUB_SD);
+#endif
 		panic("subsys-restart: [%p]: Failed to shutdown %s!",
 			current, name);
+	}
 	subsys_set_state(dev, SUBSYS_OFFLINE);
 }
 
@@ -466,9 +486,12 @@ static void subsystem_powerup(struct subsys_device *dev, void *data)
 
 	pr_info("[%p]: Powering up %s\n", current, name);
 	init_completion(&dev->err_ready);
-	if (dev->desc->powerup(dev->desc) < 0)
+	if (dev->desc->powerup(dev->desc) < 0) {
+#ifdef CONFIG_LGE_HANDLE_PANIC
+		lge_set_magic_subsystem(name, LGE_ERR_SUB_PWR);
+#endif
 		panic("[%p]: Powerup error: %s!", current, name);
-
+	}
 	ret = wait_for_err_ready(dev);
 	if (ret)
 		panic("[%p]: Timed out waiting for error ready: %s!",
@@ -758,15 +781,29 @@ int subsystem_restart_dev(struct subsys_device *dev)
 	pr_info("Restart sequence requested for %s, restart_level = %s.\n",
 		name, restart_levels[dev->restart_level]);
 
+#ifdef CONFIG_MACH_LGE
+	if (!strcmp(name, "modem")) {
+		modem_reboot_cnt++;
+		if (modem_reboot_cnt <= 0)
+			modem_reboot_cnt = 1;
+	}
+#endif
+
 	switch (dev->restart_level) {
 
 	case RESET_SUBSYS_COUPLED:
 		__subsystem_restart_dev(dev);
 		break;
 	case RESET_SOC:
+#ifdef CONFIG_LGE_HANDLE_PANIC
+		lge_set_magic_subsystem(name, LGE_ERR_SUB_RST);
+#endif
 		panic("subsys-restart: Resetting the SoC - %s crashed.", name);
 		break;
 	default:
+#ifdef CONFIG_LGE_HANDLE_PANIC
+		lge_set_magic_subsystem(name, LGE_ERR_SUB_UNK);
+#endif
 		panic("subsys-restart: Unknown restart level!\n");
 		break;
 	}
@@ -790,6 +827,46 @@ int subsystem_restart(const char *name)
 	return ret;
 }
 EXPORT_SYMBOL(subsystem_restart);
+
+/* START : subsys_modem_restart : testmode */
+/**
+ * subsys_modem_restart() - modem restart silently
+ *
+ * modem restart silently
+ */
+int subsys_modem_restart(void)
+{
+	int ret;
+	int rsl;
+	struct subsys_tracking *track;
+
+	struct subsys_device *dev = find_subsys("modem");
+
+	if (!dev)
+		return -ENODEV;
+
+	track = subsys_get_track(dev);
+
+	if (dev->track.state != SUBSYS_ONLINE ||
+		track->p_state != SUBSYS_NORMAL)
+		return -ENODEV;
+
+	rsl = dev->restart_level;
+	dev->restart_level = RESET_SUBSYS_COUPLED;
+	subsys_set_crash_status(dev, true);
+	ignore_errors_by_subsys_modem_restart = true; //                         
+	ret = subsystem_restart_dev(dev);
+	dev->restart_level = rsl;
+#ifdef CONFIG_MACH_LGE
+	modem_reboot_cnt--;
+#endif
+
+
+	put_device(&dev->dev);
+	return ret;
+}
+EXPORT_SYMBOL(subsys_modem_restart);
+/* END : subsys_modem_restart : testmode */
 
 int subsystem_crashed(const char *name)
 {

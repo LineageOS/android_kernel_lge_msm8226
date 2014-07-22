@@ -1,0 +1,40 @@
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+/include/ "../msm8610-lge-common/msm8610-v2-lge.dtsi"
+/include/ "msm8610-w6ds.dtsi"
+
+
+/ {
+	model = "Qualcomm MSM 8610v1 w6dstimbr";
+	compatible = "qcom,msm8610-w6dstimbr", "qcom,msm8610";
+	/* 
+		MSM8610   = 147,
+		MSM8110   = 161,
+		MSM8210   = 162,
+		MSM8810   = 163,
+		MSM8212   = 164,
+		MSM8612   = 165,
+		MSM8812   = 166,
+	*/
+	qcom,board-id = <123 0>;
+	aliases {
+		lcd_primary = "/soc/qcom,dsi_v2_lgd_incell_wvga_video";
+		lcd_secondary = "/soc/qcom,dsi_v2_tovis_shrink_wvga_video";
+	};
+	
+};
+
+
+
+

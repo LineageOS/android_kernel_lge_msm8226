@@ -37,6 +37,10 @@
 #include "q6voice.h"
 #include "q6core.h"
 
+
+#define DEBUG //                                                    
+
+
 struct msm_pcm_routing_bdai_data {
 	u16 port_id; /* AFE port ID */
 	u8 active; /* track if this backend is enabled */

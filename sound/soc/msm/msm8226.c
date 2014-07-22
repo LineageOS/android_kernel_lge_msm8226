@@ -27,7 +27,7 @@
 #include <asm/mach-types.h>
 #include <mach/socinfo.h>
 #include <mach/subsystem_notif.h>
-#include <qdsp6v2/msm-pcm-routing-v2.h>
+#include "qdsp6v2/msm-pcm-routing-v2.h"
 #include "qdsp6v2/q6core.h"
 #include "../codecs/wcd9xxx-common.h"
 #include "../codecs/wcd9306.h"
@@ -73,6 +73,10 @@ static const struct soc_enum msm8226_auxpcm_enum[] = {
 
 #define I2S_PCM_SEL 1
 #define I2S_PCM_SEL_OFFSET 1
+
+#if defined(CONFIG_MACH_LGE) && defined(CONFIG_SWITCH_MAX1462X) //                                               
+extern bool maxim_enabled;
+#endif
 
 void *def_tapan_mbhc_cal(void);
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec, int enable,
@@ -151,6 +155,10 @@ static int ext_spk_amp_gpio = -1;
 static int vdd_spkr_gpio = -1;
 static int msm_proxy_rx_ch = 2;
 static int slim0_rx_bit_format = SNDRV_PCM_FORMAT_S16_LE;
+
+#ifdef CONFIG_SND_SPK_BOOST
+int boost_gpio = -1;
+#endif
 
 static inline int param_is_mask(int p)
 {
@@ -360,7 +368,8 @@ static const struct snd_soc_dapm_widget msm8226_dapm_widgets[] = {
 
 	SND_SOC_DAPM_MIC("Handset Mic", NULL),
 	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("ANCRight Headset Mic", NULL),
+    SND_SOC_DAPM_MIC("Handset SubMic", NULL), //                                                                                             
+    SND_SOC_DAPM_MIC("ANCRight Headset Mic", NULL),
 	SND_SOC_DAPM_MIC("ANCLeft Headset Mic", NULL),
 
 	SND_SOC_DAPM_MIC("Digital Mic1", NULL),
@@ -436,7 +445,20 @@ static int msm_btsco_rate_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	pr_debug("%s: msm_btsco_rate  = %d", __func__, msm_btsco_rate);
+#if defined(CONFIG_MACH_LGE)
+	switch (msm_btsco_rate) {
+	case BTSCO_RATE_16KHZ:
+		ucontrol->value.integer.value[0] = 1;
+		break;
+
+	case BTSCO_RATE_8KHZ:
+	default:
+		ucontrol->value.integer.value[0] = 0;
+		break;
+	}
+#else
 	ucontrol->value.integer.value[0] = msm_btsco_rate;
+#endif
 	return 0;
 }
 
@@ -477,7 +499,20 @@ static int msm_btsco_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 static int msm8226_auxpcm_rate_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
+#if defined(CONFIG_MACH_LGE)
+	switch (msm8226_auxpcm_rate) {
+	case 16000:
+		ucontrol->value.integer.value[0] = 1;
+		break;
+
+	case 8000:
+	default:
+		ucontrol->value.integer.value[0] = 0;
+		break;
+	}
+#else
 	ucontrol->value.integer.value[0] = msm8226_auxpcm_rate;
+#endif
 	return 0;
 }
 
@@ -1025,22 +1060,43 @@ void *def_tapan_mbhc_cal(void)
 	btn_low = wcd9xxx_mbhc_cal_btn_det_mp(btn_cfg, MBHC_BTN_DET_V_BTN_LOW);
 	btn_high = wcd9xxx_mbhc_cal_btn_det_mp(btn_cfg,
 					       MBHC_BTN_DET_V_BTN_HIGH);
+
+#if 0 //QCT ORG code
 	btn_low[0] = -50;
-	btn_high[0] = 20;
-	btn_low[1] = 21;
-	btn_high[1] = 61;
-	btn_low[2] = 62;
-	btn_high[2] = 104;
-	btn_low[3] = 105;
-	btn_high[3] = 148;
-	btn_low[4] = 149;
-	btn_high[4] = 189;
-	btn_low[5] = 190;
-	btn_high[5] = 228;
-	btn_low[6] = 229;
-	btn_high[6] = 269;
-	btn_low[7] = 270;
-	btn_high[7] = 500;
+        btn_high[0] = 20;
+        btn_low[1] = 21;
+        btn_high[1] = 61;
+        btn_low[2] = 62;
+        btn_high[2] = 104;
+        btn_low[3] = 105;
+        btn_high[3] = 148;
+        btn_low[4] = 149;
+        btn_high[4] = 189;
+        btn_low[5] = 190;
+        btn_high[5] = 228;
+        btn_low[6] = 229;
+        btn_high[6] = 269;
+        btn_low[7] = 270;
+        btn_high[7] = 500;
+#else
+  btn_low[0] = -50;
+  btn_high[0] = 150; // hook
+  btn_low[1] = 151;
+  btn_high[1] = 200;
+  btn_low[2] = 201;
+  btn_high[2] = 300; // +
+  btn_low[3] = 301;
+  btn_high[3] = 340;
+  btn_low[4] = 341;
+  btn_high[4] = 350;
+  btn_low[5] = 351;
+  btn_high[5] = 380;
+  btn_low[6] = 381;
+  btn_high[6] = 400; // -
+  btn_low[7] = 401;
+  btn_high[7] = 660;
+#endif
+
 	n_ready = wcd9xxx_mbhc_cal_btn_det_mp(btn_cfg, MBHC_BTN_DET_N_READY);
 	n_ready[0] = 80;
 	n_ready[1] = 12;
@@ -2087,6 +2143,13 @@ static __devinit int msm8226_asoc_machine_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+#ifdef CONFIG_SND_SPK_BOOST	
+	if(boost_gpio < 0)
+		boost_gpio = of_get_named_gpio(pdev->dev.of_node, "qcom,cdc-boost-spkr-gpios", 0);
+	if(boost_gpio < 0)
+		dev_err(&pdev->dev, "boost gpio error");
+#endif
+
 	pdata->mclk_gpio = of_get_named_gpio(pdev->dev.of_node,
 				"qcom,cdc-mclk-gpios", 0);
 	if (pdata->mclk_gpio < 0) {
@@ -2161,7 +2224,12 @@ static __devinit int msm8226_asoc_machine_probe(struct platform_device *pdev)
 			goto err_vdd_spkr;
 		}
 	}
-
+#if defined(CONFIG_MACH_LGE) && defined(CONFIG_SWITCH_MAX1462X) //                                               
+		if(maxim_enabled) {
+			mbhc_cfg.insert_detect = false;
+			pr_info("%s: mbhc disable\n", __func__);
+		}
+#endif
 	msm8226_setup_hs_jack(pdev, pdata);
 
 	ret = of_property_read_string(pdev->dev.of_node,
@@ -2226,6 +2294,7 @@ static int __devexit msm8226_asoc_machine_remove(struct platform_device *pdev)
 		gpio_free(ext_spk_amp_gpio);
 	if (pdata->us_euro_gpio > 0)
 		gpio_free(pdata->us_euro_gpio);
+
 
 	vdd_spkr_gpio = -1;
 	ext_spk_amp_gpio = -1;

@@ -26,7 +26,11 @@
 
 #define TAPAN_REG_VAL(reg, val)		{reg, 0, val}
 
+#if 0 //QCT ORG Code
 #define TAPAN_CDC_ZDET_SUPPORTED  true
+#else
+#define TAPAN_CDC_ZDET_SUPPORTED  false
+#endif
 
 extern const u8 tapan_reg_readable[TAPAN_CACHE_SIZE];
 extern const u8 tapan_reset_reg_defaults[TAPAN_CACHE_SIZE];

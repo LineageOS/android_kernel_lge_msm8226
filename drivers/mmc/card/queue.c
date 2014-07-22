@@ -377,6 +377,8 @@ prev_sg_alloc_failed:
 cur_sg_alloc_failed:
 		host->max_segs /= 2;
 		if (host->max_segs) {
+			pr_warning("%s: p1-fs allocate max segs =%d\n",
+					mmc_card_name(card), host->max_segs);
 			goto retry;
 		} else {
 			host->max_segs = max_segs;

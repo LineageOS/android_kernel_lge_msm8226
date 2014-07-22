@@ -1510,8 +1510,14 @@ static void reg_process_hint(struct regulatory_request *reg_request,
 	if (wiphy_idx_valid(reg_request->wiphy_idx))
 		wiphy = wiphy_idx_to_wiphy(reg_request->wiphy_idx);
 
+#if 0
+	if (reg_initiator == NL80211_REGDOM_SET_BY_DRIVER &&
+	    !wiphy) {
+#else
+	// QCT temp patch to fix kernel crash
 	if ((reg_initiator == NL80211_REGDOM_SET_BY_DRIVER ||
-	     reg_initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE) && !wiphy) {
+		reg_initiator == NL80211_REGDOM_SET_BY_COUNTRY_IE) && !wiphy) {
+#endif
 		kfree(reg_request);
 		return;
 	}

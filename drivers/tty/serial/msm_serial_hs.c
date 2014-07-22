@@ -30,6 +30,10 @@
  * of operation. See msm_serial_hs_platform_data.rx_wakeup_irq.
  */
 
+//LG_UPDATE_START :  Loging to check bt uart init 20140106, [START]
+#define DEBUG
+//LG_UPDATE_END :  20140106, [END]
+
 #include <linux/module.h>
 
 #include <linux/serial.h>
@@ -3034,6 +3038,48 @@ deregister_bam:
 	return rc;
 }
 
+/*                                                                    */
+/*                                                                 */
+#ifdef CONFIG_LGE_BLUESLEEP
+struct uart_port* msm_hs_get_bt_uport(unsigned int line)
+{
+	return &q_uart_port[line].uport;
+}
+EXPORT_SYMBOL(msm_hs_get_bt_uport);
+
+/* Get UART Clock State : */
+int msm_hs_get_bt_uport_clock_state(struct uart_port *uport)
+{
+	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
+	//unsigned long flags;
+	int ret = CLOCK_REQUEST_UNAVAILABLE;
+
+	//mutex_lock(&msm_uport->clk_mutex);
+	//spin_lock_irqsave(&uport->lock, flags);
+
+	switch (msm_uport->clk_state) {
+		case MSM_HS_CLK_ON:
+		case MSM_HS_CLK_PORT_OFF:
+			printk(KERN_ERR "UART Clock already on or port not use : %d\n", msm_uport->clk_state);
+			ret = CLOCK_REQUEST_UNAVAILABLE;
+			break;
+		case MSM_HS_CLK_REQUEST_OFF:
+		case MSM_HS_CLK_OFF:
+			printk(KERN_ERR "Uart clock off. Please clock on : %d\n", msm_uport->clk_state);
+			ret = CLOCK_REQUEST_AVAILABLE;
+			break;
+	}
+
+	//spin_unlock_irqrestore(&uport->lock, flags);
+	//mutex_unlock(&msm_uport->clk_mutex);
+
+	return ret;
+}
+EXPORT_SYMBOL(msm_hs_get_bt_uport_clock_state);
+#endif /*                      */
+/*                                                                 */
+/*                                                        */
+
 #define BLSP_UART_NR	12
 static int deviceid[BLSP_UART_NR] = {0};
 static atomic_t msm_serial_hs_next_id = ATOMIC_INIT(0);
@@ -3112,7 +3158,11 @@ static int __devinit msm_hs_probe(struct platform_device *pdev)
 					IORESOURCE_MEM, "bam_mem");
 		core_irqres = platform_get_irq_byname(pdev, "core_irq");
 		bam_irqres = platform_get_irq_byname(pdev, "bam_irq");
+#if 0  //                                                       
 		wakeup_irqres = platform_get_irq_byname(pdev, "wakeup_irq");
+#else
+		wakeup_irqres = 0;
+#endif
 
 		if (!core_resource) {
 			MSM_HS_ERR("Invalid core HSUART Resources.\n");
@@ -3321,6 +3371,10 @@ static int __devinit msm_hs_probe(struct platform_device *pdev)
 		uport->line = pdata->userid;
 	ret = uart_add_one_port(&msm_hs_driver, uport);
 	if (!ret) {
+//LG_UPDATE_START :  Loging to check bt uart init 20140106, [START]
+		if(pdev)
+			MSM_HS_INFO("detected port #%d (ttyHS%d)\n", pdev->id, uport->line);
+//LG_UPDATE_END :  20140106, [END]
 		msm_hs_clock_unvote(msm_uport);
 		return ret;
 	}

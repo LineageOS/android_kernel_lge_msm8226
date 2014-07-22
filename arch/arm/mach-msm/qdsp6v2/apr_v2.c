@@ -94,6 +94,15 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 	svc->id = svc_id;
 	svc->dest_id = dest_id;
 	svc->client_id = client_id;
+
+	if (!strcmp(svc_name, "ASM"))
+		pr_err("%s():before  svc->port_cnt=%u svc->svc_cnt=%u"
+			" client->svc_cnt=%u src_port=0x%08X\n",
+			__func__,svc->port_cnt,
+			svc->svc_cnt, client->svc_cnt, src_port);
+
+
+
 	if (src_port != 0xFFFFFFFF) {
 		temp_port = ((src_port >> 8) * 8) + (src_port & 0xFF);
 		pr_debug("port = %d t_port = %d\n", src_port, temp_port);
@@ -116,6 +125,12 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 				svc->svc_cnt++;
 		}
 	}
+
+	if (!strcmp(svc_name, "ASM"))
+		pr_err("%s() svc->port_cnt=%u svc->svc_cnt=%u"
+			" client->svc_cnt=%u\n",
+			__func__,svc->port_cnt,
+			svc->svc_cnt, client->svc_cnt);
 
 	mutex_unlock(&svc->m_lock);
 done:

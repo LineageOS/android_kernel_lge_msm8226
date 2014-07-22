@@ -577,6 +577,12 @@ static int gpio_keys_get_devtree_pdata(struct device *dev,
 	while ((pp = of_get_next_child(node, pp))) {
 		enum of_gpio_flags flags;
 
+                if (!!of_get_property(pp, "unused", NULL)) {
+                        pdata->nbuttons--;
+                        dev_dbg(dev, "unused key\n");
+                        continue;
+                }
+
 		if (!of_find_property(pp, "gpios", NULL)) {
 			pdata->nbuttons--;
 			dev_warn(dev, "Found button without gpios\n");

@@ -502,8 +502,14 @@ void __cfg80211_connect_result(struct net_device *dev, const u8 *bssid,
 
 	country_ie = (u8 *) ieee80211_bss_get_ie(bss, WLAN_EID_COUNTRY);
 
-	if (!country_ie)
+#if 1
+	if (!country_ie) {
+#else
+	// QCT temp patch to fix kernel crash
+	if (!country_ie || (wdev->wiphy->flags & WIPHY_FLAG_DISABLE_BEACON_HINTS)) {
+#endif
 		return;
+	}
 
 	/*
 	 * ieee80211_bss_get_ie() ensures we can access:

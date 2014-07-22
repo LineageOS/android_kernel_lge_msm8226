@@ -87,8 +87,15 @@ static struct msm_iommu_remote_lock msm_iommu_remote_lock;
 static void _msm_iommu_remote_spin_lock_init(void)
 {
 	msm_iommu_remote_lock.lock = smem_alloc(SMEM_SPINLOCK_ARRAY, 32);
-	memset(msm_iommu_remote_lock.lock, 0,
+	if(msm_iommu_remote_lock.lock)
+	{
+	    memset(msm_iommu_remote_lock.lock, 0,
 			sizeof(*msm_iommu_remote_lock.lock));
+        }
+        else
+	{
+            pr_err("Unable to allocate SMEM_SPINLOCK_ARRAY\n");
+        }
 }
 
 void msm_iommu_remote_p0_spin_lock(unsigned int need_lock)
@@ -1354,6 +1361,12 @@ irqreturn_t msm_iommu_fault_handler(int irq, void *dev_id)
 			pr_err("context = %s (%d)\n", ctx_drvdata->name, num);
 			pr_err("Interesting registers:\n");
 			__print_ctx_regs(base, num);
+			/*                                                                       */
+			if (strcmp(drvdata->name, "lpass_iommu") == 0)
+			{
+				panic("Msm_iommu-v0.c panic at msm_iommu_fault_handler func. Contact WX-BSP-Audio@lge.com");
+			}
+			/*                                                                     */
 		}
 
 		SET_FSR(base, num, fsr);

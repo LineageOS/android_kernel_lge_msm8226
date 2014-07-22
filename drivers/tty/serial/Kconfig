@@ -1390,4 +1390,10 @@ config SERIAL_EFM32_UART_CONSOLE
 	depends on SERIAL_EFM32_UART=y
 	select SERIAL_CORE_CONSOLE
 
+config LGE_DEBUG_UART
+        bool "LGE Conditional UART Console support"
+        default n
+        help
+          Support LGE Conditional UART Console depends on boot cmd
+
 endmenu

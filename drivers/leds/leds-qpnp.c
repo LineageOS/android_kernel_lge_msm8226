@@ -25,7 +25,7 @@
 #include <linux/workqueue.h>
 #include <linux/delay.h>
 #include <linux/regulator/consumer.h>
-#include <linux/delay.h>
+#include <linux/gpio.h>
 
 #define WLED_MOD_EN_REG(base, n)	(base + 0x60 + n*0x10)
 #define WLED_IDAC_DLY_REG(base, n)	(WLED_MOD_EN_REG(base, n) + 0x01)
@@ -68,12 +68,20 @@
 #define WLED_OP_FDBCK_MASK		0x07
 #define WLED_OP_FDBCK_BIT_SHFT		0x00
 #define WLED_OP_FDBCK_DEFAULT		0x00
+#ifdef CONFIG_MACH_LGE
+#define WLED1_LED1_CABC_EN(base)			(base + 0x66) //CABC
+#endif //               
 
 #define WLED_MAX_LEVEL			4095
 #define WLED_8_BIT_MASK			0xFF
 #define WLED_4_BIT_MASK			0x0F
 #define WLED_8_BIT_SHFT			0x08
 #define WLED_MAX_DUTY_CYCLE		0xFFF
+
+#ifdef CONFIG_MACH_LGE
+#define WLED_CABC_EN_MASK		0x80
+#define WLED_CABC_EN_ON			0x80
+#endif //               
 
 #define WLED_SYNC_VAL			0x07
 #define WLED_SYNC_RESET_VAL		0x00
@@ -105,6 +113,7 @@
 #define FLASH_FAULT_DETECT(base)	(base + 0x51)
 #define FLASH_PERIPHERAL_SUBTYPE(base)	(base + 0x05)
 #define FLASH_CURRENT_RAMP(base)	(base + 0x54)
+#define FLASH_VPH_PWR_DROOP(base) (base + 0x5A)  /*                                                                                                */
 
 #define FLASH_MAX_LEVEL			0x4F
 #define TORCH_MAX_LEVEL			0x0F
@@ -119,8 +128,11 @@
 #define FLASH_TMR_MASK			0x03
 #define FLASH_TMR_WATCHDOG		0x03
 #define FLASH_TMR_SAFETY		0x00
+
+/*                              */
 #define FLASH_FAULT_DETECT_MASK		0X80
 #define FLASH_HW_VREG_OK		0x40
+/*                */
 #define FLASH_VREG_MASK			0xC0
 #define FLASH_STARTUP_DLY_MASK		0x02
 #define FLASH_CURRENT_RAMP_MASK		0xBF
@@ -161,6 +173,8 @@
 
 #define FLASH_RAMP_UP_DELAY_US		1000
 #define FLASH_RAMP_DN_DELAY_US		2160
+
+#define FLASH_VPH_PWR_DROOP_MASK 0xF3  /*                                                                                                */
 
 #define LED_TRIGGER_DEFAULT		"none"
 
@@ -484,6 +498,9 @@ struct qpnp_led_data {
 };
 
 static int num_kpbl_leds_on;
+#ifdef CONFIG_MACH_LGE
+extern const char *platform_name;
+#endif
 
 static int
 qpnp_led_masked_write(struct qpnp_led_data *led, u16 addr, u8 mask, u8 val)
@@ -921,6 +938,9 @@ static int qpnp_flash_set(struct qpnp_led_data *led)
 	/* Set led current */
 	if (val > 0) {
 		if (led->flash_cfg->torch_enable) {
+
+			usleep(FLASH_RAMP_UP_DELAY_US);  /*                                                                                                */
+
 			if (led->flash_cfg->peripheral_subtype ==
 							FLASH_SUBTYPE_DUAL) {
 				rc = qpnp_torch_regulator_operate(led, true);
@@ -1011,6 +1031,7 @@ static int qpnp_flash_set(struct qpnp_led_data *led)
 					led->id, rc);
 				goto error_reg_write;
 			}
+
 		} else {
 			rc = qpnp_flash_regulator_operate(led, true);
 			if (rc) {
@@ -1613,7 +1634,32 @@ static int __devinit qpnp_wled_init(struct qpnp_led_data *led)
 		}
 
 	}
-
+#if defined(CONFIG_LGE_TOVIS_540P_PANEL_CABC)
+#ifndef CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL
+if(!gpio_get_value(23)){
+#endif
+	rc = qpnp_led_masked_write(led, WLED1_LED1_CABC_EN(led->base),
+			WLED_CABC_EN_MASK,WLED_CABC_EN_ON);
+	pr_info("%s:cabc write",__func__);
+	if (rc) {
+		dev_err(&led->spmi_dev->dev,
+				"WLED cabc_en reg write failed(%d)\n",rc);
+		return rc;
+	}
+#ifndef CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL
+}else
+	pr_info("%s:cabc not write. lcd maker id: %d",__func__, gpio_get_value(23));
+#endif
+#elif defined(CONFIG_LGE_TOVIS_ILI9806E_WVGA_PANEL_CABC)
+	rc = qpnp_led_masked_write(led, WLED1_LED1_CABC_EN(led->base),
+			WLED_CABC_EN_MASK,WLED_CABC_EN_ON);
+	pr_info("%s:cabc write",__func__);
+	if (rc) {
+		dev_err(&led->spmi_dev->dev,
+				"WLED cabc_en reg write failed(%d)\n",rc);
+		return rc;
+	}
+#endif
 	/* dump wled registers */
 	qpnp_dump_regs(led, wled_debug_regs, ARRAY_SIZE(wled_debug_regs));
 
@@ -2234,7 +2280,18 @@ static int __devinit qpnp_flash_init(struct qpnp_led_data *led)
 {
 	int rc;
 
+	/*                              */
+	struct spmi_controller *ctrl = spmi_busnum_to_ctrl(0);
+	u8 buf = 0x01;
+
+	spmi_ext_register_writel(ctrl, 0, 0x1544, &buf, 1);
+	/*                */
 	led->flash_cfg->flash_on = false;
+
+/*                                                                                                  */
+	rc = qpnp_led_masked_write(led, FLASH_VPH_PWR_DROOP(led->base),
+		FLASH_VPH_PWR_DROOP_MASK, 0xC3);
+/*                                                                                                  */
 
 	rc = qpnp_led_masked_write(led,
 		FLASH_LED_STROBE_CTRL(led->base),
@@ -3463,7 +3520,14 @@ static int __init qpnp_led_init(void)
 {
 	return spmi_driver_register(&qpnp_leds_driver);
 }
+
+/*                                                                                  */
+#if 0 //QCT_original
 module_init(qpnp_led_init);
+#else
+late_initcall(qpnp_led_init);
+#endif
+/*                                                                                  */
 
 static void __exit qpnp_led_exit(void)
 {

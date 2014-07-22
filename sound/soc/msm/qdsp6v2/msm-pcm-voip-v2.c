@@ -911,8 +911,11 @@ static int voip_config_vocoder(struct snd_pcm_substream *substream)
 		pr_debug("%s: Invalid rate playback %d, capture %d\n",
 			 __func__, prtd->play_samp_rate,
 			 prtd->cap_samp_rate);
-
+#if defined(CONFIG_MACH_LGE) 
+		ret = -ENOEXEC;
+#else		
 		ret = -EINVAL;
+#endif 
 	}
 done:
 
@@ -935,6 +938,15 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 	if (prtd->playback_instance && prtd->capture_instance
 	    && (prtd->state != VOIP_STARTED)) {
 		ret = voip_config_vocoder(substream);
+#if defined(CONFIG_MACH_LGE) 
+		if ( ret == -ENOEXEC ) {
+		    pr_err("ENOEXEC rate playback %d, capture %d\n",
+		    		prtd->play_samp_rate, prtd->cap_samp_rate);
+		    ret = 0;
+		    goto done;
+			
+		} else 
+#endif  
 		if (ret < 0) {
 			pr_err("%s(): fail at configuring vocoder for voip, ret=%d\n",
 				__func__, ret);

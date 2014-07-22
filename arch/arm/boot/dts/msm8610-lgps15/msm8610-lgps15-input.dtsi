@@ -1,0 +1,34 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9923000{
+		melfas_mms136@48 {
+			compatible = "melfas,mms136";
+			status = "ok";
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x2>;
+			vdd-supply = <&pm8110_l19>;
+			vcc_i2c-supply = <&pm8110_l14>;
+			melfas,i2c_int_gpio = <&msmgpio 1 0x00>;
+			melfas,panel-x = <480>;
+			melfas,panel-y = <800>;
+			melfas,i2c-pull-up = <1>;
+			melfas,fw-version = <1>;
+			melfas,ic-booting-delay = <400>;
+			melfas,touch_id_gpio = <62>;
+			melfas,button-map = <139 158>;
+		};
+	};
+
+};

@@ -1,0 +1,47 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9923000{
+		mms100s@48 {
+			melfas,product = "I2S45B";
+			melfas,max-x = <480>;
+			melfas,max-y = <800>;
+                        melfas,use_vdd_i2c = <1>;
+			melfas,gpio-vdd-en = <62>;
+			melfas,key-map = <158 139>;
+			melfas,fw-image-name = "melfas/w5n_vdf_eu/w5n_vdf_eu_rev_b_v05.mfsb";
+			status = "ok";
+			revision = "rev_b...";
+		};
+
+		lgd_melfas@34 {
+			status = "ok";
+			revision = "rev_a";
+		};
+
+		ads_ags04@6a {
+			status = "ok";
+			revision = "rev_a";
+		};
+	};
+	gpio_keys {
+		quick_clip {
+			label = "quick_clip";
+			gpios = <&msmgpio 75 0x1>;
+			linux,input-type = <1>;
+			linux,code = <250>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+	};
+};

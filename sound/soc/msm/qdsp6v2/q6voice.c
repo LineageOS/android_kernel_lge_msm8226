@@ -28,8 +28,9 @@
 #include "audio_acdb.h"
 #include "q6voice.h"
 
-
-#define TIMEOUT_MS 200
+//                                                                     
+#define TIMEOUT_MS 500
+//            
 
 
 #define CMD_STATUS_SUCCESS 0
@@ -96,6 +97,32 @@ static int voice_alloc_and_map_cal_mem(struct voice_data *v);
 static int voice_alloc_and_map_oob_mem(struct voice_data *v);
 
 static struct voice_data *voice_get_session_by_idx(int idx);
+
+
+//                                      
+static uint32_t audio_start = 0;
+//static String audio_start = "/sys/module/q6voice/parameters/audio_start";
+static int set_start_call(const char *buf, struct kernel_param *kp)
+{
+        audio_start = buf[0] - '0';
+		pr_info("%s: LG audio bsp: set  %d \n", __func__, audio_start);
+        return 1;
+}
+
+
+
+static int get_start_call(char *buf, struct kernel_param *kp)
+{
+	    int ret = 0;
+		
+		ret = sprintf(buf, "%d\n", audio_start);
+		pr_info("%s:LG audio bsp: get  %d \n", __func__, audio_start);
+	    return ret;
+}
+module_param_call(audio_start,set_start_call, get_start_call, NULL, 0664);
+//                                    
+
+
 
 static void voice_itr_init(struct voice_session_itr *itr,
 			   u32 session_id)
@@ -4762,6 +4789,11 @@ int voc_end_voice_call(uint32_t session_id)
 {
 	struct voice_data *v = voice_get_session(session_id);
 	int ret = 0;
+  //                                      
+	char temp_buf[2] = "0";   
+
+   set_start_call(temp_buf,NULL); 
+  //                                    
 
 	if (v == NULL) {
 		pr_err("%s: invalid session_id 0x%x\n", __func__, session_id);
@@ -4803,11 +4835,13 @@ int voc_standby_voice_call(uint32_t session_id)
 	u16 mvm_handle;
 	int ret = 0;
 
-	pr_debug("%s: voc state=%d", __func__, v->voc_state);
 	if (v == NULL) {
 		pr_err("%s: v is NULL\n", __func__);
 		return -EINVAL;
 	}
+
+	pr_debug("%s: voc state=%d", __func__, v->voc_state); //                                              
+
 	if (v->voc_state == VOC_RUN) {
 		apr_mvm = common.apr_q6_mvm;
 		if (!apr_mvm) {
@@ -4906,6 +4940,7 @@ int voc_start_voice_call(uint32_t session_id)
 {
 	struct voice_data *v = voice_get_session(session_id);
 	int ret = 0;
+	char temp_buf[2] = "1";  //                                      
 
 	if (v == NULL) {
 		pr_err("%s: invalid session_id 0x%x\n", __func__, session_id);
@@ -4969,9 +5004,16 @@ int voc_start_voice_call(uint32_t session_id)
 		ret = voice_send_dual_control_cmd(v);
 		if (ret < 0) {
 			pr_err("Err Dual command failed\n");
+		    panic("q6voice timeout at send_dual_control_cmd. Contact WX-BSP-Audio@lge.com"); //temporarily panic code for debugging
 			goto fail;
 		}
 		ret = voice_setup_vocproc(v);
+		//                                      
+		if(ret == 0){
+			set_start_call(temp_buf,NULL); 
+			pr_info("LG audio bsp - stated voice call \n");
+		}
+		//                                    
 		if (ret < 0) {
 			pr_err("setup voice failed\n");
 			goto fail;
@@ -4991,6 +5033,7 @@ int voc_start_voice_call(uint32_t session_id)
 		ret = voice_send_start_voice_cmd(v);
 		if (ret < 0) {
 			pr_err("start voice failed\n");
+		    panic("q6voice timeout at start_voice_cmd. Contact WX-BSP-Audio@lge.com"); //temporarily panic code for debugging
 			goto fail;
 		}
 

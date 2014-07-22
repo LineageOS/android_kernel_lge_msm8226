@@ -82,6 +82,12 @@ static int __devinit vfe_probe(struct platform_device *pdev)
 		of_property_read_u32((&pdev->dev)->of_node,
 			"cell-index", &pdev->id);
 		match_dev = of_match_device(msm_vfe_dt_match, &pdev->dev);
+/*                                                                                                                                         */
+		if(!match_dev){
+			pr_err("%s: no match dev found\n", __func__);
+			return -EINVAL;
+		}
+/*                                                                                                                                         */
 		vfe_dev->hw_info =
 			(struct msm_vfe_hardware_info *) match_dev->data;
 	} else {

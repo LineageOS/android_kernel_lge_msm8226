@@ -361,6 +361,17 @@ config BACKLIGHT_PANDORA
 	  If you have a Pandora console, say Y to enable the
 	  backlight driver.
 
+config BACKLIGHT_LM3630
+	tristate "Backlight Driver for LM3630 using WLED"
+	help
+	  If you have a LM3630 backlight on the device, enable this feature
+
+config BACKLIGHT_LM3530
+	tristate "select lm3530 device as LGE backlight management"
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  Say Y to enable the backlight driver for TI LM3530.
+
 endif # BACKLIGHT_CLASS_DEVICE
 
 endif # BACKLIGHT_LCD_SUPPORT

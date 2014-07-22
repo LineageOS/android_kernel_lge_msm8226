@@ -62,6 +62,7 @@ static const int subscribed_events[] = {
 	V4L2_EVENT_MSM_VIDC_CLOSE_DONE,
 	V4L2_EVENT_MSM_VIDC_FLUSH_DONE,
 	V4L2_EVENT_MSM_VIDC_SYS_ERROR,
+        V4L2_EVENT_MSM_VIDC_HW_OVERLOADED
 };
 
 int venc_load_fw(struct v4l2_subdev *sd)
@@ -177,6 +178,7 @@ static int venc_vidc_callback_thread(void *data)
 						"down normally\n");
 				bail_out = true;
 				break;
+			case V4L2_EVENT_MSM_VIDC_HW_OVERLOADED:
 			case V4L2_EVENT_MSM_VIDC_SYS_ERROR:
 				inst->vmops.on_event(inst->vmops.cbdata,
 						VENC_EVENT_HARDWARE_ERROR);

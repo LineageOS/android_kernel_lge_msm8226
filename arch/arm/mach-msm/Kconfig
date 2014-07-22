@@ -1141,6 +1141,14 @@ config MACH_FSM9XXX_SURF
 
 endmenu
 
+
+# LGE_CHANGED_BEGIN
+# lge specific kconfig
+# jungsu06.kim@lge.com
+source "arch/arm/mach-msm/lge/Kconfig"
+# LGE_CHANGED_END
+
+
 config MSM_STACKED_MEMORY
 	bool "Stacked Memory"
 	default y
@@ -2749,6 +2757,8 @@ config MSM_OCMEM_POWER_DISABLE
 
 config SENSORS_ADSP
 	bool "Enable Sensors Driver Support for ADSP"
+	depends on (ARCH_MSM8226 || ARCH_MSM8974)
+	default y
 	help
 	  Add support for sensors ADSP driver.
 	  This driver is used for exercising different sensors use cases,
@@ -3053,4 +3063,5 @@ config KRAIT_REGULATOR
 	 line from the PMIC. This supply line is powered by multiple
 	 regulators running in ganged mode inside the PMIC. Enable
 	 this option to support such configurations.
+
 endif

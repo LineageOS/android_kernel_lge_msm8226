@@ -27,6 +27,10 @@
 #include <linux/hrtimer.h>
 #include <linux/power_supply.h>
 #include <linux/cdev.h>
+#ifdef CONFIG_LGE_PM_USB_ID
+#include <linux/qpnp/qpnp-adc.h>
+#endif
+
 /*
  * The following are bit fields describing the usb_request.udc_priv word.
  * These bit fields are set by function drivers that wish to queue
@@ -103,6 +107,8 @@ enum msm_usb_phy_type {
 };
 
 #define IDEV_CHG_MAX	1500
+#define IDEV_CHG_CDP	900
+#define IDEV_CHG_DCP	800
 #define IDEV_CHG_MIN	500
 #define IUNIT		100
 
@@ -461,7 +467,11 @@ struct msm_otg {
 	bool ext_chg_opened;
 	bool ext_chg_active;
 	struct completion ext_chg_wait;
-	int ui_enabled;
+        int ui_enabled;
+
+#ifdef CONFIG_LGE_PM_USB_ID
+	struct qpnp_vadc_chip		*vadc_dev;
+#endif
 };
 
 struct ci13xxx_platform_data {

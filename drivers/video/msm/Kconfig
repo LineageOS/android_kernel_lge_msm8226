@@ -221,6 +221,10 @@ config FB_MSM_MIPI_DSI_NT35516
 	bool
 	select FB_MSM_MIPI_DSI
 
+config FB_MSM_MIPI_DSI_TIANMA
+	bool
+	select FB_MSM_MIPI_DSI
+
 config FB_MSM_MIPI_DSI_TC358764_DSI2LVDS
 	bool
 	select FB_MSM_MIPI_DSI
@@ -295,7 +299,6 @@ config FB_MSM_LCDC_TRULY_HVGA_IPS3P2335_PT_PANEL
         default n
         ---help---
         Support for LCDC Truly HVGA PT panel
-
 
 config FB_MSM_LCDC_SAMSUNG_OLED_PT
 	bool
@@ -387,6 +390,15 @@ config FB_MSM_MIPI_NT35516_CMD_QHD_PT
         select FB_MSM_MIPI_DSI_NT35516
         default n
 
+config FB_MSM_MIPI_TIANMA_CMD_HVGA_PT
+	bool
+	select FB_MSM_MIPI_DSI_TIANMA
+	default n
+
+config FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT
+	bool
+	select FB_MSM_MIPI_DSI_TIANMA
+	default n
 
 config FB_MSM_MIPI_CHIMEI_WXGA
 	bool "LVDS Chimei WXGA Panel using Toshiba MIPI DSI-to-LVDS bridge."
@@ -723,6 +735,12 @@ config FB_MSM_MIPI_NT35516_VIDEO_QHD_PT_PANEL
 config FB_MSM_MIPI_NT35516_CMD_QHD_PT_PANEL
         bool "MIPI NT35516 Command qHD PT Panel"
         select FB_MSM_MIPI_NT35516_CMD_QHD_PT
+
+config FB_MSM_MIPI_TIANMA_CMD_HVGA_PT_PANEL
+	bool "MIPI TIANMA CMD HVGA PT panel"
+	select FB_MSM_MIPI_TIANMA_CMD_HVGA_PT
+	---help---
+	Support for TIANMA CMD HVGA PT panel
 
 config FB_MSM_MIPI_SIMULATOR_VIDEO_PANEL
 	bool "MIPI Simulator Video Panel"

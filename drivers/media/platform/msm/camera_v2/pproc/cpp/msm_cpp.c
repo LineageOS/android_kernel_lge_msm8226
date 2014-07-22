@@ -67,8 +67,10 @@ struct msm_cpp_timer_t cpp_timer;
 /* dump the frame command before writing to the hardware */
 #define  MSM_CPP_DUMP_FRM_CMD 0
 
+/*                                                                                               */
 static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 	uint32_t buff_mgr_ops, struct msm_buf_mngr_info *buff_mgr_info);
+/*                                                                                              */
 
 #if CONFIG_MSM_CPP_DBG
 #define CPP_DBG(fmt, args...) pr_err(fmt, ##args)
@@ -94,6 +96,24 @@ static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 	spin_unlock_irqrestore(&__q->lock, flags);  \
 	qcmd;			 \
 })
+
+/*                                                                                             */
+#define msm_cpp_empty_list(queue, member) { \
+       unsigned long flags; \
+       struct msm_queue_cmd *qcmd = NULL; \
+       if (queue) { \
+               spin_lock_irqsave(&queue->lock, flags); \
+               while (!list_empty(&queue->list)) { \
+                       queue->len--; \
+                       qcmd = list_first_entry(&queue->list, \
+                               struct msm_queue_cmd, member); \
+                       list_del_init(&qcmd->member); \
+                       kfree(qcmd); \
+               } \
+               spin_unlock_irqrestore(&queue->lock, flags); \
+       } \
+}
+/*                                                                                             */
 
 static void msm_queue_init(struct msm_device_queue *queue, const char *name)
 {
@@ -141,6 +161,20 @@ static int msm_cpp_enable_debugfs(struct cpp_device *cpp_dev);
 
 static void msm_cpp_write(u32 data, void __iomem *cpp_base)
 {
+/*                                                                   */
+	uint32_t tmp;
+	int num_tries=50;
+	do {
+		tmp = msm_camera_io_r(cpp_base + MSM_CPP_MICRO_FIFO_RX_STAT);
+		num_tries --;
+	} while (((tmp & 0x1) == 0x0) && (num_tries > 0));
+
+	if(num_tries <= 0) {
+		pr_err("error: cant write, RX FIFO Full\n");
+		return;
+	}
+/*                                                                   */
+
 	writel_relaxed((data), cpp_base + MSM_CPP_MICRO_FIFO_RX_DATA);
 }
 
@@ -718,13 +752,15 @@ static int cpp_init_hardware(struct cpp_device *cpp_dev)
 		}
 		cpp_dev->buf_mgr_subdev = msm_buf_mngr_get_subdev();
 
+/*                                                                                               */
 		rc = msm_cpp_buffer_ops(cpp_dev,
 			VIDIOC_MSM_BUF_MNGR_INIT, NULL);
 		if (rc < 0) {
-			pr_err("buf mngr init failed\n");
+			pr_err("%s: buf mngr init failed\n",__func__);
 			free_irq(cpp_dev->irq->start, cpp_dev);
 			goto req_irq_fail;
 		}
+/*                                                                                              */
 	}
 
 	cpp_dev->hw_info.cpp_hw_version =
@@ -768,12 +804,20 @@ bus_scale_register_failed:
 
 static void cpp_release_hardware(struct cpp_device *cpp_dev)
 {
+/*                                                                                               */
+#if 0
+	if (cpp_dev->state != CPP_STATE_BOOT) {
+#else
 	int32_t rc;
 	if (cpp_dev->state != CPP_STATE_BOOT) {
 		rc = msm_cpp_buffer_ops(cpp_dev,
 			VIDIOC_MSM_BUF_MNGR_DEINIT, NULL);
-		if (rc < 0)
-			pr_err("error in buf mngr deinit rc=%d\n", rc);
+		if (rc < 0) {
+			pr_err("%s: error in buf mngr deinit\n", __func__);
+			rc = -EINVAL;
+		}
+#endif
+/*                                                                                              */
 		free_irq(cpp_dev->irq->start, cpp_dev);
 		tasklet_kill(&cpp_dev->cpp_tasklet);
 		atomic_set(&cpp_dev->irq_cnt, 0);
@@ -823,7 +867,7 @@ static void cpp_load_fw(struct cpp_device *cpp_dev, char *fw_name_bin)
 
 		/*Start firmware loading*/
 		msm_cpp_write(MSM_CPP_CMD_FW_LOAD, cpp_dev->base);
-		msm_cpp_write(fw->size, cpp_dev->base);
+		msm_cpp_write(MSM_CPP_END_ADDRESS, cpp_dev->base);
 		msm_cpp_write(MSM_CPP_START_ADDRESS, cpp_dev->base);
 
 		if (ptr_bin) {
@@ -914,7 +958,22 @@ static int cpp_close_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 	uint32_t i;
 	struct cpp_device *cpp_dev = v4l2_get_subdevdata(sd);
 
+/*                                                                                             */
+	struct msm_device_queue *processing_q = NULL;
+	struct msm_device_queue *eventData_q = NULL;
+
+	if (!cpp_dev) {
+			pr_err("failed: cpp_dev %p\n", cpp_dev);
+			return -EINVAL;
+	}
+/*                                                                                             */
+
 	mutex_lock(&cpp_dev->mutex);
+
+/*                                                                                             */
+    processing_q = &cpp_dev->processing_q;
+    eventData_q = &cpp_dev->eventData_q;
+/*                                                                                             */
 
 	if (cpp_dev->cpp_open_cnt == 0) {
 		mutex_unlock(&cpp_dev->mutex);
@@ -970,6 +1029,12 @@ static int cpp_close_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 		cpp_deinit_mem(cpp_dev);
 		iommu_detach_device(cpp_dev->domain, cpp_dev->iommu_ctx);
 		cpp_release_hardware(cpp_dev);
+
+/*                                                                                             */
+        msm_cpp_empty_list(processing_q, list_frame);
+        msm_cpp_empty_list(eventData_q, list_eventdata);
+/*                                                                                             */
+
 		cpp_dev->state = CPP_STATE_OFF;
 	}
 
@@ -997,15 +1062,24 @@ static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev)
 {
 	struct v4l2_event v4l2_evt;
-	struct msm_queue_cmd *frame_qcmd;
-	struct msm_queue_cmd *event_qcmd;
-	struct msm_cpp_frame_info_t *processed_frame;
-	struct msm_device_queue *queue = &cpp_dev->processing_q;
+/*                                                                                             */
+      struct msm_queue_cmd *frame_qcmd = NULL;
+      struct msm_queue_cmd *event_qcmd = NULL;
+      struct msm_cpp_frame_info_t *processed_frame = NULL;
+/*                                                                                             */
+      struct msm_device_queue *queue = &cpp_dev->processing_q;
 	struct msm_buf_mngr_info buff_mgr_info;
 	int rc = 0;
 
-	if (queue->len > 0) {
-		frame_qcmd = msm_dequeue(queue, list_frame);
+/*                                                                                             */
+#if 0
+      if (queue->len > 0) {
+	    frame_qcmd = msm_dequeue(queue, list_frame);
+#else
+      frame_qcmd = msm_dequeue(queue, list_frame);
+          if (frame_qcmd) {
+#endif
+/*                                                                                             */
 		processed_frame = frame_qcmd->command;
 		do_gettimeofday(&(processed_frame->out_time));
 		kfree(frame_qcmd);
@@ -1208,7 +1282,7 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 	uint32_t *cpp_frame_msg;
 	unsigned long in_phyaddr, out_phyaddr0, out_phyaddr1;
 	uint16_t num_stripes = 0;
-	struct msm_buf_mngr_info buff_mgr_info, dup_buff_mgr_info;
+	struct msm_buf_mngr_info buff_mgr_info, dup_buff_mgr_info;    /*                                                                                           */
 	struct msm_cpp_frame_info_t *u_frame_info =
 		(struct msm_cpp_frame_info_t *)ioctl_ptr->ioctl_ptr;
 	int32_t status = 0;
@@ -1273,7 +1347,7 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 		&buff_mgr_info);
 	if (rc < 0) {
 		rc = -EAGAIN;
-		pr_debug("error getting buffer rc:%d\n", rc);
+		pr_err("error getting buffer rc:%d\n", rc);
 		goto ERROR2;
 	}
 	new_frame->output_buffer_info[0].index = buff_mgr_info.index;
@@ -1295,6 +1369,16 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 			new_frame->duplicate_identity);
 		memset(&new_frame->output_buffer_info[1], 0,
 			sizeof(struct msm_cpp_buffer_info_t));
+/*                                                                                                  */
+#if 0 //QCT original
+		memset(&buff_mgr_info, 0, sizeof(struct msm_buf_mngr_info));
+		buff_mgr_info.session_id =
+			((new_frame->duplicate_identity >> 16) & 0xFFFF);
+		buff_mgr_info.stream_id =
+			(new_frame->duplicate_identity & 0xFFFF);
+		rc = msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_GET_BUF,
+			&buff_mgr_info);
+#else
 		memset(&dup_buff_mgr_info, 0, sizeof(struct msm_buf_mngr_info));
 		dup_buff_mgr_info.session_id =
 			((new_frame->duplicate_identity >> 16) & 0xFFFF);
@@ -1302,13 +1386,14 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 			(new_frame->duplicate_identity & 0xFFFF);
 		rc = msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_GET_BUF,
 			&dup_buff_mgr_info);
+#endif
+/*                                                                                                 */
 		if (rc < 0) {
 			rc = -EAGAIN;
-			pr_debug("error getting buffer rc:%d\n", rc);
-			goto ERROR3;
+			pr_err("error getting buffer rc:%d\n", rc);
+			goto ERROR3; //                                                                                               
 		}
-		new_frame->output_buffer_info[1].index =
-			dup_buff_mgr_info.index;
+		new_frame->output_buffer_info[1].index = dup_buff_mgr_info.index;  //                                                                                                            
 		out_phyaddr1 = msm_cpp_fetch_buffer_info(cpp_dev,
 			&new_frame->output_buffer_info[1],
 			((new_frame->duplicate_identity >> 16) & 0xFFFF),
@@ -1317,8 +1402,7 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 		if (!out_phyaddr1) {
 			pr_err("error gettting output physical address\n");
 			rc = -EINVAL;
-			msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_PUT_BUF,
-				&dup_buff_mgr_info);
+			msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_PUT_BUF,	&dup_buff_mgr_info);  /*                                                                                 */
 			goto ERROR3;
 		}
 		/* set duplicate enable bit */
@@ -1464,6 +1548,8 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 	}
 	case VIDIOC_MSM_CPP_CFG:
 		rc = msm_cpp_cfg(cpp_dev, ioctl_ptr);
+		if (rc < 0)
+			pr_err("%s: error in cpp_cfg\n", __func__); /*                                                        */
 		break;
 	case VIDIOC_MSM_CPP_FLUSH_QUEUE:
 		rc = msm_cpp_flush_frames(cpp_dev);
@@ -1601,6 +1687,7 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 		mutex_unlock(&cpp_dev->mutex);
 		while (cpp_dev->cpp_open_cnt != 0)
 			cpp_close_node(sd, NULL);
+		mutex_lock(&cpp_dev->mutex); /*                                                                                           */
 		rc = 0;
 		break;
 	}

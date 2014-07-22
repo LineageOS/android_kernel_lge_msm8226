@@ -206,6 +206,16 @@
 		compatible = "qcom,msm8x10-wcd-i2c";
 		reg = <0x55>;
 	};
+
+    sound {
+        qcom,audio-routing =
+            "RX_BIAS", "MCLK",
+            "INT_LDO_H", "MCLK",
+            "MIC BIAS Internal1", "Handset Mic",
+            "MIC BIAS Internal2", "Headset Mic",
+            "AMIC1", "MIC BIAS Internal1",
+            "AMIC2", "MIC BIAS Internal2";
+    };
 };
 
 &spmi_bus {

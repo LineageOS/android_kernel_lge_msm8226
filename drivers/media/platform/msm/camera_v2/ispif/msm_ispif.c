@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -98,12 +98,20 @@ static int msm_ispif_reset_hw(struct ispif_device *ispif)
 	long timeout = 0;
 	struct clk *reset_clk[ARRAY_SIZE(ispif_8974_reset_clk_info)];
 
+/*                                                                                                  */
+#if defined(CONFIG_HI351)
+	if(ispif->hw_num_isps > 1){
+#else
+	{
+#endif
+/*                                                                                                  */
 	rc = msm_cam_clk_enable(&ispif->pdev->dev,
 		ispif_8974_reset_clk_info, reset_clk,
 		ARRAY_SIZE(ispif_8974_reset_clk_info), 1);
-	if (rc < 0) {
-		pr_err("%s: cannot enable clock, error = %d",
-			__func__, rc);
+		if (rc < 0) {
+			pr_err("%s: cannot enable clock, error = %d",
+				__func__, rc);
+		}
 	}
 
 	init_completion(&ispif->reset_complete[VFE0]);
@@ -141,13 +149,20 @@ static int msm_ispif_reset_hw(struct ispif_device *ispif)
 			return -ETIMEDOUT;
 		}
 	}
-
+/*                                                                                                  */	
+#if defined(CONFIG_HI351)
+	if(ispif->hw_num_isps > 1){
+#else
+	{
+#endif
+/*                                                                                                  */
 	rc = msm_cam_clk_enable(&ispif->pdev->dev,
 		ispif_8974_reset_clk_info, reset_clk,
 		ARRAY_SIZE(ispif_8974_reset_clk_info), 0);
 	if (rc < 0) {
 		pr_err("%s: cannot disable clock, error = %d",
 			__func__, rc);
+	}
 	}
 	return rc;
 }
@@ -200,17 +215,28 @@ static int msm_ispif_reset(struct ispif_device *ispif)
 			ispif->base + ISPIF_VFE_m_INTF_CMD_0(i));
 		msm_camera_io_w(ISPIF_STOP_INTF_IMMEDIATELY,
 			ispif->base + ISPIF_VFE_m_INTF_CMD_1(i));
-		pr_debug("%s: base %lx", __func__, (unsigned long)ispif->base);
+/*                                                                                     */
+		pr_debug("%s: base %x", __func__, (unsigned int)ispif->base);
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CID_MASK(i, 0));
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CID_MASK(i, 1));
+#if 1 //                                                                                                    
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_CID_MASK(i, 0));
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_CID_MASK(i, 1));
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_CID_MASK(i, 2));
+#else // QCT original
+		msm_camera_io_w(0, ispif->base +
+			ISPIF_VFE_m_RDI_INTF_n_CID_MASK(i, 0));
+		msm_camera_io_w(0, ispif->base +
+			ISPIF_VFE_m_RDI_INTF_n_CID_MASK(i, 1));
+		msm_camera_io_w(0, ispif->base +
+			ISPIF_VFE_m_PIX_INTF_n_CID_MASK(i, 2));
+#endif
+/*                                                                                     */
 
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CROP(i, 0));
@@ -939,12 +965,17 @@ static int msm_ispif_init(struct ispif_device *ispif,
 		pr_err("%s: ahb_clk enable failed", __func__);
 		goto error_ahb;
 	}
-
+/*                                                                                                  */	
+#if defined(CONFIG_HI351)
+		msm_ispif_reset_hw(ispif);
+#else
 	if (of_device_is_compatible(ispif->pdev->dev.of_node,
 				    "qcom,ispif-v3.0")) {
 		/* currently HW reset is implemented for 8974 only */
 		msm_ispif_reset_hw(ispif);
 	}
+#endif
+/*                                                                                                  */	
 
 	rc = msm_ispif_reset(ispif);
 	if (rc == 0) {
@@ -1045,8 +1076,7 @@ static long msm_ispif_subdev_ioctl(struct v4l2_subdev *sd,
 	case MSM_SD_SHUTDOWN: {
 		struct ispif_device *ispif =
 			(struct ispif_device *)v4l2_get_subdevdata(sd);
-		if (ispif && ispif->base)
-			msm_ispif_release(ispif);
+		msm_ispif_release(ispif);
 		return 0;
 	}
 	default:

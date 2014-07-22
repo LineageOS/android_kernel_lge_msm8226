@@ -30,8 +30,39 @@ config FB_MSM_MDSS_DSI_CTRL_STATUS
 	  to HAL layer to reset the controller.
 
 config FB_MSM_MDSS_MDP3
-	depends on FB_MSM_MDSS
-	bool "MDP3 display controller"
+        depends on FB_MSM_MDSS
+        bool "MDP3 display controller"
+        ---help---
+        The MDP3 provides support for an older version display controller
+        included in latest display sub-system, known as MDSS.
+
+config LGE_LCD_DCDC
+        tristate "Display Mode - DCDC Mode Enable "
+        default n
+
+config LCD_KCAL
+        bool "Enable sysfs for LCD KCAL"
+        default n
+
+config LGE_MIPI_TOVIS_VIDEO_540P_PANEL
+        bool "MIPI TOVIS VIDEO 540P PANEL && MIPI TOVIS VIDEO 540 PANEL WITH DSV"
+        default n
+
+config LGE_MIPI_NT35521_VIDEO_720P_PANEL
+	bool "MIPI NT35521 VIDEO 720P PANEL && MIPI NT35521 VIDEO 720P PANEL WITH DSV"
+	default n
+
+config FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL
+	bool "MIPI TIANMA VIDEO QHD PT panel"
+	select FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT
 	---help---
-	The MDP3 provides support for an older version display controller
-	included in latest display sub-system, known as MDSS.
+	Support for TIANMA VIDEO QHD PT panel
+
+config FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
+	bool "MIPI LG Display HD PT Panel"
+	---help---
+	Support for LGIT LH470WX1  VIDEO QHD PT panel
+config FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL
+	bool "MIPI TOVIS Display HD PT Panel"
+	---help---
+	Support for TOVIS LM570HN1A  VIDEO HD PT panel

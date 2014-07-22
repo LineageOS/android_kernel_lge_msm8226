@@ -28,7 +28,7 @@
 	aliases {
 		sdhc1 = &sdhc_1; /* SDC1 eMMC slot */
 		sdhc2 = &sdhc_2; /* SDC2 SD card slot */
-		spi4 = &spi_4;
+		/*spi4 = &spi_4;*/
 	};
 
 	soc: soc { };
@@ -458,7 +458,7 @@
 		compatible = "qcom,msm-watchdog";
 		reg = <0xf9017000 0x1000>;
 		interrupts = <0 3 0>, <0 4 0>;
-		qcom,bark-time = <11000>;
+		qcom,bark-time = <15000>;
 		qcom,pet-time = <10000>;
 		qcom,ipi-ping;
 	};
@@ -591,7 +591,7 @@
                 qcom,master-id = <86>;
 	};
 
-	spi_4: spi@f9926000 { /* BLSP1 QUP4 */
+/*	spi_4: spi@f9926000 { BLSP1 QUP4
 		compatible = "qcom,spi-qup-v2";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -613,7 +613,7 @@
 		qcom,bam-consumer-pipe-index = <18>;
 		qcom,bam-producer-pipe-index = <19>;
 		qcom,master-id = <86>;
-	};
+	}; */
 
 	qcom,pronto@fb21b000 {
 		compatible = "qcom,pil-pronto";

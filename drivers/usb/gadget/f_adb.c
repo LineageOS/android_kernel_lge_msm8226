@@ -317,7 +317,9 @@ static ssize_t adb_read(struct file *fp, char __user *buf,
 	int r = count, xfer;
 	int ret;
 
+#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_read(%d)\n", count);
+#endif
 	if (!_adb_dev)
 		return -ENODEV;
 
@@ -355,7 +357,9 @@ requeue_req:
 		atomic_set(&dev->error, 1);
 		goto done;
 	} else {
+#ifndef CONFIG_USB_G_LGE_ANDROID
 		pr_debug("rx %p queue\n", req);
+#endif
 	}
 
 	/* wait for a request to complete */
@@ -373,7 +377,9 @@ requeue_req:
 		if (req->actual == 0)
 			goto requeue_req;
 
+#ifndef CONFIG_USB_G_LGE_ANDROID
 		pr_debug("rx %p %d\n", req, req->actual);
+#endif
 		xfer = (req->actual < count) ? req->actual : count;
 		if (copy_to_user(buf, req->buf, xfer))
 			r = -EFAULT;
@@ -386,7 +392,9 @@ done:
 		wake_up(&dev->write_wq);
 
 	adb_unlock(&dev->read_excl);
+#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_read returning %d\n", r);
+#endif
 	return r;
 }
 
@@ -400,7 +408,9 @@ static ssize_t adb_write(struct file *fp, const char __user *buf,
 
 	if (!_adb_dev)
 		return -ENODEV;
+#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_write(%d)\n", count);
+#endif
 
 	if (adb_lock(&dev->write_excl))
 		return -EBUSY;
@@ -457,7 +467,9 @@ static ssize_t adb_write(struct file *fp, const char __user *buf,
 		wake_up(&dev->read_wq);
 
 	adb_unlock(&dev->write_excl);
+#ifndef CONFIG_USB_G_LGE_ANDROID
 	pr_debug("adb_write returning %d\n", r);
+#endif
 	return r;
 }
 

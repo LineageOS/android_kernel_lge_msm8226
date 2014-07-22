@@ -42,6 +42,9 @@ enum {
 #define HAVE_WCNSS_CAL_DOWNLOAD 1
 #define HAVE_WCNSS_RX_BUFF_COUNT 1
 #define WLAN_MAC_ADDR_SIZE (6)
+// QCT_PATCH enable debug log when watchdog happens
+#define CONFIG_WCNSS_REGISTER_DUMP_ON_BITE 1
+// QCT_PATCH enable debug log when watchdog happens
 
 struct device *wcnss_wlan_get_device(void);
 struct resource *wcnss_wlan_get_memory_map(struct device *dev);

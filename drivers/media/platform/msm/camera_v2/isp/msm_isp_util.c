@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -277,43 +277,6 @@ int msm_isp_unsubscribe_event(struct v4l2_subdev *sd, struct v4l2_fh *fh,
 	return rc;
 }
 
-static int msm_isp_get_max_clk_rate(struct vfe_device *vfe_dev, long *rate)
-{
-	int           clk_idx = 0;
-	unsigned long max_value = ~0;
-	long          round_rate = 0;
-
-	if (!vfe_dev || !rate) {
-		pr_err("%s:%d failed: vfe_dev %p rate %p\n", __func__, __LINE__,
-			vfe_dev, rate);
-		return -EINVAL;
-	}
-
-	*rate = 0;
-	if (!vfe_dev->hw_info) {
-		pr_err("%s:%d failed: vfe_dev->hw_info %p\n", __func__,
-			__LINE__, vfe_dev->hw_info);
-		return -EINVAL;
-	}
-
-	clk_idx = vfe_dev->hw_info->vfe_clk_idx;
-	if (clk_idx >= ARRAY_SIZE(vfe_dev->vfe_clk)) {
-		pr_err("%s:%d failed: clk_idx %d max array size %d\n",
-			__func__, __LINE__, clk_idx,
-			ARRAY_SIZE(vfe_dev->vfe_clk));
-		return -EINVAL;
-	}
-
-	round_rate = clk_round_rate(vfe_dev->vfe_clk[clk_idx], max_value);
-	if (round_rate < 0) {
-		pr_err("%s: Invalid vfe clock rate\n", __func__);
-		return -EINVAL;
-	}
-
-	*rate = round_rate;
-	return 0;
-}
-
 static int msm_isp_set_clk_rate(struct vfe_device *vfe_dev, long *rate)
 {
 	int rc = 0;
@@ -544,6 +507,11 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 			reg_cfg_cmd->u.mask_info.reg_offset);
 		break;
 	}
+	case GET_MAX_CLK_RATE: { //Quarx we need it?
+		break;
+	}
+/*                                                                                                                       */
+#if 0 //QCT Original
 	case VFE_WRITE_DMI_16BIT:
 	case VFE_WRITE_DMI_32BIT:
 	case VFE_WRITE_DMI_64BIT: {
@@ -592,6 +560,72 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 		}
 		break;
 	}
+#else
+	case VFE_WRITE_DMI_16BIT:
+	case VFE_WRITE_DMI_32BIT: {
+		int i;
+		uint32_t *lo_tbl_ptr = NULL;
+		uint32_t lo_val, lo_val1;
+
+		if (reg_cfg_cmd->u.dmi_info.lo_tbl_offset +
+			reg_cfg_cmd->u.dmi_info.len > cmd_len) {
+			pr_err("Invalid Lo Table out of bounds\n");
+			return -EINVAL;
+		}
+		lo_tbl_ptr = cfg_data +
+			reg_cfg_cmd->u.dmi_info.lo_tbl_offset/4;
+
+		for (i = 0; i < reg_cfg_cmd->u.dmi_info.len/4; i++) {
+			lo_val = *lo_tbl_ptr++;
+			if (reg_cfg_cmd->cmd_type == VFE_WRITE_DMI_16BIT) {
+				lo_val1 = lo_val & 0x0000FFFF;
+				lo_val = (lo_val & 0xFFFF0000)>>16;
+				msm_camera_io_w(lo_val1, vfe_dev->vfe_base +
+					vfe_dev->hw_info->dmi_reg_offset + 0x4);
+			}
+			msm_camera_io_w(lo_val, vfe_dev->vfe_base +
+				vfe_dev->hw_info->dmi_reg_offset + 0x4);
+		}
+		break;
+	}
+
+	case VFE_WRITE_DMI_64BIT: {
+		int i;
+		uint32_t *hi_tbl_ptr = NULL, *lo_tbl_ptr = NULL;
+		uint32_t hi_val, lo_val;
+
+		if (reg_cfg_cmd->u.dmi_info.hi_tbl_offset +
+			reg_cfg_cmd->u.dmi_info.len > cmd_len) {
+			pr_err("Invalid Hi Table out of bounds\n");
+			return -EINVAL;
+		}
+
+		if (reg_cfg_cmd->u.dmi_info.lo_tbl_offset +
+			reg_cfg_cmd->u.dmi_info.len > cmd_len) {
+			pr_err("Invalid Lo Table out of bounds\n");
+			return -EINVAL;
+		}
+
+		hi_tbl_ptr = cfg_data +
+				reg_cfg_cmd->u.dmi_info.hi_tbl_offset/4;
+
+		lo_tbl_ptr = cfg_data +
+			reg_cfg_cmd->u.dmi_info.lo_tbl_offset/4;
+
+		for (i = 0; i < reg_cfg_cmd->u.dmi_info.len/8; i++) {
+			lo_val = *lo_tbl_ptr;
+			hi_val = *hi_tbl_ptr;
+			lo_tbl_ptr = lo_tbl_ptr + 2;
+			hi_tbl_ptr = hi_tbl_ptr + 2;
+			msm_camera_io_w(hi_val, vfe_dev->vfe_base +
+					vfe_dev->hw_info->dmi_reg_offset);
+			msm_camera_io_w(lo_val, vfe_dev->vfe_base +
+				vfe_dev->hw_info->dmi_reg_offset + 0x4);
+		}
+		break;
+	}
+#endif
+/*                                                                                                                      */
 	case VFE_READ_DMI_16BIT:
 	case VFE_READ_DMI_32BIT:
 	case VFE_READ_DMI_64BIT: {
@@ -655,23 +689,6 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 	case GET_SOC_HW_VER:
 		*cfg_data = vfe_dev->soc_hw_version;
 		break;
-	case GET_MAX_CLK_RATE: {
-		int rc = 0;
-
-		if (cmd_len < sizeof(unsigned long)) {
-			pr_err("%s:%d failed: invalid cmd len %d exp %d\n",
-				__func__, __LINE__, cmd_len,
-				sizeof(unsigned long));
-			return -EINVAL;
-		}
-		rc = msm_isp_get_max_clk_rate(vfe_dev,
-			(unsigned long *)cfg_data);
-		if (rc < 0) {
-			pr_err("%s:%d failed: rc %d\n", __func__, __LINE__, rc);
-			return -EINVAL;
-		}
-		break;
-	}
 	}
 	return 0;
 }
@@ -1102,7 +1119,7 @@ int msm_isp_open_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 		return -EBUSY;
 	}
 
-	rc = vfe_dev->hw_info->vfe_ops.core_ops.reset_hw(vfe_dev, ISP_RST_HARD);
+	rc = vfe_dev->hw_info->vfe_ops.core_ops.reset_hw(vfe_dev);
 	if (rc <= 0) {
 		pr_err("%s: reset timeout\n", __func__);
 		mutex_unlock(&vfe_dev->core_mutex);

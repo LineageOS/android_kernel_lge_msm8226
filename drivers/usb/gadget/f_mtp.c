@@ -1072,6 +1072,23 @@ out:
 
 static int mtp_open(struct inode *ip, struct file *fp)
 {
+#if defined CONFIG_USB_G_LGE_ANDROID && defined CONFIG_LGE_PM
+	enum lge_boot_mode_type boot_mode;
+	boot_mode = lge_get_boot_mode();
+	switch(boot_mode){
+		case LGE_BOOT_MODE_QEM_56K:
+		case LGE_BOOT_MODE_QEM_130K:
+		case LGE_BOOT_MODE_QEM_910K:
+		case LGE_BOOT_MODE_PIF_56K:
+		case LGE_BOOT_MODE_PIF_130K:
+		case LGE_BOOT_MODE_PIF_910K:
+			pr_info("%s : pif cable is plugged, bind factory composition, skip mtp open\n",__func__);
+			return -ENODEV;
+		default :
+			pr_info("%s : not factory mode, mtp open\n",__func__);
+			break;
+	}
+#endif
 	printk(KERN_INFO "mtp_open\n");
 	if (mtp_lock(&_mtp_dev->open_excl))
 		return -EBUSY;
@@ -1148,8 +1165,13 @@ static int mtp_ctrlrequest(struct usb_composite_dev *cdev,
 		DBG(cdev, "class request: %d index: %d value: %d length: %d\n",
 			ctrl->bRequest, w_index, w_value, w_length);
 
+#ifdef CONFIG_USB_G_LGE_ANDROID
+		if (ctrl->bRequest == MTP_REQ_CANCEL && (w_index == 0 || w_index == mtp_interface_desc.bInterfaceNumber)
+				&& w_value == 0) {
+#else
 		if (ctrl->bRequest == MTP_REQ_CANCEL && w_index == 0
 				&& w_value == 0) {
+#endif
 			DBG(cdev, "MTP_REQ_CANCEL\n");
 
 			spin_lock_irqsave(&dev->lock, flags);
@@ -1165,8 +1187,13 @@ static int mtp_ctrlrequest(struct usb_composite_dev *cdev,
 			 * the contents.
 			 */
 			value = w_length;
+#ifdef CONFIG_USB_G_LGE_ANDROID
+		} else if (ctrl->bRequest == MTP_REQ_GET_DEVICE_STATUS
+				&& (w_index == 0 || w_index == mtp_interface_desc.bInterfaceNumber) && w_value == 0) {
+#else
 		} else if (ctrl->bRequest == MTP_REQ_GET_DEVICE_STATUS
 				&& w_index == 0 && w_value == 0) {
+#endif
 			struct mtp_device_status *status = cdev->req->buf;
 			status->wLength =
 				__constant_cpu_to_le16(sizeof(*status));

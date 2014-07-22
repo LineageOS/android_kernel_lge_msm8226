@@ -50,6 +50,9 @@
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #include <mach/board.h>
+#ifdef CONFIG_MACH_LGE
+#include <mach/board_lge.h>
+#endif
 #include <mach/msm_serial_hs_lite.h>
 #include <mach/msm_bus.h>
 #include <asm/mach-types.h>
@@ -523,6 +526,11 @@ static void msm_hsl_start_tx(struct uart_port *port)
 {
 	struct msm_hsl_port *msm_hsl_port = UART_TO_MSM(port);
 
+#ifdef CONFIG_LGE_DEBUG_UART
+        if (!(lge_get_uart_mode() & UART_MODE_EN_BMSK) && is_console(port))
+                return;
+#endif
+
 	if (port->suspended) {
 		pr_err("%s: System is in Suspend state\n", __func__);
 		return;
@@ -749,6 +757,11 @@ static unsigned int msm_hsl_tx_empty(struct uart_port *port)
 	unsigned int ret;
 	unsigned int vid = UART_TO_MSM(port)->ver_id;
 
+#ifdef CONFIG_LGE_DEBUG_UART
+        if (!(lge_get_uart_mode() & UART_MODE_EN_BMSK) && is_console(port))
+                return 1;
+#endif
+
 	ret = (msm_hsl_read(port, regmap[vid][UARTDM_SR]) &
 	       UARTDM_SR_TXEMT_BMSK) ? TIOCSER_TEMT : 0;
 	return ret;
@@ -966,6 +979,7 @@ static void msm_hsl_set_baud_rate(struct uart_port *port,
 	msm_hsl_write(port, STALE_EVENT_ENABLE, regmap[vid][UARTDM_CR]);
 }
 
+#ifndef CONFIG_LGE_DEBUG_UART
 static void msm_hsl_init_clock(struct uart_port *port)
 {
 	clk_en(port, 1);
@@ -975,6 +989,7 @@ static void msm_hsl_deinit_clock(struct uart_port *port)
 {
 	clk_en(port, 0);
 }
+#endif
 
 static int msm_hsl_startup(struct uart_port *port)
 {
@@ -1446,6 +1461,11 @@ static void msm_hsl_console_write(struct console *co, const char *s,
 
 	BUG_ON(co->index < 0 || co->index >= UART_NR);
 
+#ifdef CONFIG_LGE_DEBUG_UART
+	if (!(lge_get_uart_mode() & UART_MODE_EN_BMSK))
+		return;
+#endif
+
 	port = get_port_from_line(co->index);
 	msm_hsl_port = UART_TO_MSM(port);
 	vid = msm_hsl_port->ver_id;
@@ -1482,12 +1502,14 @@ static int msm_hsl_console_setup(struct console *co, char *options)
 
 	port->cons = co;
 
+#ifndef CONFIG_LGE_DEBUG_UART
 	pm_runtime_get_noresume(port->dev);
 
 #ifndef CONFIG_PM_RUNTIME
 	msm_hsl_init_clock(port);
 #endif
 	pm_runtime_resume(port->dev);
+#endif
 
 	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
@@ -1840,6 +1862,17 @@ static int __devinit msm_serial_hsl_probe(struct platform_device *pdev)
 	if (msm_hsl_port->pclk)
 		clk_disable_unprepare(msm_hsl_port->pclk);
 
+#ifdef CONFIG_LGE_DEBUG_UART
+	if (!(lge_get_uart_mode() & UART_MODE_ALWAYS_ON_BMSK) && is_console(port))
+	{
+		lge_set_uart_mode(lge_get_uart_mode() | UART_MODE_INIT_BMSK);
+		if (lge_get_uart_mode() & UART_MODE_EN_BMSK)
+		{
+			pr_debug("%s(): Enable uart console from LK\n", __func__);
+			pm_runtime_get(port->dev);
+		}
+	}
+#endif
 err:
 	return ret;
 }
@@ -1881,13 +1914,16 @@ static int msm_serial_hsl_suspend(struct device *dev)
 	port = get_port_from_line(get_line(pdev));
 
 	if (port) {
-
+#ifdef CONFIG_LGE_DEBUG_UART
+		uart_suspend_port(&msm_hsl_uart_driver, port);
+#else
 		if (is_console(port))
 			msm_hsl_deinit_clock(port);
 
 		uart_suspend_port(&msm_hsl_uart_driver, port);
 		if (device_may_wakeup(dev))
 			enable_irq_wake(port->irq);
+#endif
 	}
 
 	return 0;
@@ -1900,13 +1936,16 @@ static int msm_serial_hsl_resume(struct device *dev)
 	port = get_port_from_line(get_line(pdev));
 
 	if (port) {
-
+#ifdef CONFIG_LGE_DEBUG_UART
+		uart_resume_port(&msm_hsl_uart_driver, port);
+#else
 		uart_resume_port(&msm_hsl_uart_driver, port);
 		if (device_may_wakeup(dev))
 			disable_irq_wake(port->irq);
 
 		if (is_console(port))
 			msm_hsl_init_clock(port);
+#endif
 	}
 
 	return 0;
@@ -1923,7 +1962,12 @@ static int msm_hsl_runtime_suspend(struct device *dev)
 	port = get_port_from_line(get_line(pdev));
 
 	dev_dbg(dev, "pm_runtime: suspending\n");
+#ifdef CONFIG_LGE_DEBUG_UART
+	if (port)
+		uart_suspend_port(&msm_hsl_uart_driver, port);
+#else
 	msm_hsl_deinit_clock(port);
+#endif
 	return 0;
 }
 
@@ -1934,7 +1978,12 @@ static int msm_hsl_runtime_resume(struct device *dev)
 	port = get_port_from_line(get_line(pdev));
 
 	dev_dbg(dev, "pm_runtime: resuming\n");
+#ifdef CONFIG_LGE_DEBUG_UART
+	if (port)
+		uart_resume_port(&msm_hsl_uart_driver, port);
+#else
 	msm_hsl_init_clock(port);
+#endif
 	return 0;
 }
 

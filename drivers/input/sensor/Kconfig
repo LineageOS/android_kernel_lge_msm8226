@@ -1,0 +1,69 @@
+# LGE_CHANGE_S: define kconfig for sensors
+#
+# Sensor driver configuration
+#
+menuconfig INPUT_SENSOR
+	bool "Sensors"
+	help
+	  Say Y here, and a list of supported touchscreens will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+if INPUT_SENSOR
+
+
+config SENSORS_BMC150_COMMON
+	bool
+	default n
+
+config SENSORS_BMA2X2
+	tristate "BMA255/BMA250E/BMA222E/BMA280 acceleration sensor support"
+	depends on I2C=y
+	select SENSORS_BMC150_COMMON
+	help
+	  If you say yes here you get support for Bosch Sensortec's
+	  acceleration sensors BMA255/BMA250E/BMA222E/BMA280.
+
+
+config SENSORS_BMM050
+	tristate "BMM050 Magnetic Sensor Driver"
+	depends on I2C=y
+	select SENSORS_BMC150_COMMON
+	help
+	 BMM050 Magnetic Sensor Driver implemented by Bosch-Sensortec.
+
+config SENSORS_K2DH
+	tristate "K2DH STM acceleration sensor"
+	depends on I2C=y
+	help
+	 acceleration sensor STM K2DH
+
+config SENSOR_APDS9130
+       tristate "APDS9130 Proximity Sensor Driver"
+       depends on I2C
+       help
+        APDS9130 Proximity Sensor Driver implemented by Avago Tech.
+
+config SENSOR_APDS9190
+       tristate "APDS9190 Proximity Sensor Driver"
+       depends on I2C
+       help
+        APDS9190 Proximity Sensor Driver implemented by Avago Tech.
+
+config SENSOR_K303C
+       tristate "K303C Accelerometer & Magnetometer Driver"
+       depends on I2C
+       help
+       K303C Accelerometer & Magnetomerer Sensor Driver implemented by ST Micro Electronics.
+
+config SENSOR_LGE_DT
+       tristate "KNOCK-ON Driver"
+       depends on I2C
+       default n
+       help
+         Say Y here if you use lge knock-on
+         If unsure, say N.
+
+endif
+# LGE_CHANGE_E

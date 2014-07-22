@@ -224,8 +224,15 @@ void snd_jack_report(struct snd_jack *jack, int status)
 		int testbit = SND_JACK_BTN_0 >> i;
 
 		if (jack->type & testbit)
-			input_report_key(jack->input_dev, jack->key[i],
+		{
+			if((testbit == SND_JACK_BTN_0)||(testbit == SND_JACK_BTN_2)||(testbit == SND_JACK_BTN_7))
+			{
+				input_report_key(jack->input_dev, jack->key[i],
 					 status & testbit);
+			}
+
+			printk("[LGE MBHC] code %d, value %d \n", jack->key[i],status & testbit) ;
+		}
 	}
 
 	for (i = 0; i < ARRAY_SIZE(jack_switch_types); i++) {

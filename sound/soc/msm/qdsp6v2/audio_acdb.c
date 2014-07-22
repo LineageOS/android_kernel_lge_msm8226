@@ -402,6 +402,10 @@ int get_hw_delay(int32_t path, struct hw_delay_entry *entry)
 		       __func__, entry->sample_rate);
 		result = -EFAULT;
 	}
+	//                                                
+	pr_debug("ACDB=> %s: Path = %d samplerate = %u usec = %u status %d\n",
+			 __func__, path, entry->sample_rate, entry->delay_usec, result);
+	//             
 
 done:
 	mutex_unlock(&acdb_data.acdb_mutex);

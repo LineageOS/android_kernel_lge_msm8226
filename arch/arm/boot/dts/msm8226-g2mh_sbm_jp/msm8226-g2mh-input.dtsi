@@ -1,0 +1,37 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		melfas_mms136@48 {
+			melfas,product = "S0A47A";
+			melfas,fw-image-name = "melfas/g2mh_sbm_jp/g2mh_sbm_jp_rev_0_v101.mfsb";
+			melfas,panel-spec-name = "melfas/g2mh_sbm_jp/g2mh_sbm_jp_limit.txt";
+			vdd-supply = <0>;
+			melfas,ce = <60>;
+			melfas,button-map = <0>;
+			melfas,enalbe_active_mode = <0>;
+			revision = "rev_0...";
+			status = "ok";
+		};
+
+		lge_ts_misc {
+			revision = "rev_0...";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="ok";
+		};
+	};
+
+};

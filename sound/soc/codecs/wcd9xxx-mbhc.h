@@ -14,6 +14,10 @@
 
 #include "wcd9xxx-resmgr.h"
 
+#ifdef CONFIG_MACH_LGE // hj74.kim : add switch dev
+#include <linux/switch.h>
+#endif
+
 #define WCD9XXX_CFILT_FAST_MODE 0x00
 #define WCD9XXX_CFILT_SLOW_MODE 0x40
 #define WCD9XXX_CFILT_EXT_PRCHG_EN 0x30
@@ -342,6 +346,10 @@ struct wcd9xxx_mbhc {
 	bool update_z;
 	/* Holds codec specific interrupt mapping */
 	const struct wcd9xxx_mbhc_intr *intr_ids;
+	
+#ifdef CONFIG_MACH_LGE // hj74.kim : add switch dev
+	struct switch_dev sdev;
+#endif
 
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_poke;

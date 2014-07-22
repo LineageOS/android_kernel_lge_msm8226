@@ -26,6 +26,7 @@
 #define MSM_CSID_DRV_NAME                    "msm_csid"
 
 #define DBG_CSID 0
+//#define CONFIG_MSMB_CAMERA_DEBUG
 
 #define TRUE   1
 #define FALSE  0

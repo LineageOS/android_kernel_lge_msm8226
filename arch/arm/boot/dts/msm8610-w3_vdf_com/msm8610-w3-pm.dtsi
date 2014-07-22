@@ -1,0 +1,355 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+/ {
+
+};
+
+&spmi_bus {
+	qcom,pm8110@0 {
+		qcom,leds@a100 {
+			status = "disabled";
+			qcom,led_mpp_2 {
+				label = "mpp";
+				linux,name = "button-backlight";
+				linux-default-trigger = "hr-trigger";
+				qcom,default-state = "off";
+				qcom,max-current = <40>;
+				qcom,id = <6>;
+				qcom,source-sel = <1>;
+				qcom,mode-ctrl = <0x60>;
+				qcom,mode = "manual";
+			};
+		};
+
+		qcom,leds@a200 {
+			status = "disabled";
+			qcom,led_mpp_3 {
+				label = "mpp";
+				linux,name = "wled-backlight";
+				linux,default-trigger = "bkl-trigger";
+				qcom,default-state = "on";
+				qcom,max-current = <40>;
+				qcom,id = <6>;
+				qcom,source-sel = <1>;
+				qcom,mode-ctrl = <0x10>;
+				qcom,mode = "manual";
+			};
+		};
+	};
+};
+
+&spmi_bus {
+	qcom,pm8110@1 {
+		qcom,vibrator@c000 {
+			status = "okay";
+			qcom,vib-timeout-ms = <15000>;
+			qcom,vib-vtg-level-mV = <3100>;
+		};
+	};
+};
+
+&soc{
+	/* Cable type definition.
+	* Modify the USB cable and move to SoC
+	* to get each table for different USB Pull up resistor via HW Rev
+	* This must have the compatible property "lge,usb-id".
+	* If you don't want to use revision you can remove status & revision property.
+	* If this node is not exist, the charger driver would not be probed.
+	* Each cable type has 3 values
+	* that we can configure the threshold of ADC value and TA/USB IUSB max current value.
+	* ex)
+	*    cable type = <adc_threshold, TA_MA, USB_MA>.
+	*/
+
+	lge,usb_cable@0 {
+		compatible = "lge,usb-id";
+		usb_adc_table@665{
+			status = "okay";
+			revision = "rev_0";
+			lge,no-init-cable = <100000 500 500>;
+			lge,cable-56k = <200000 1500 1500>;
+			lge,cable-100k = <239000 500 500>;
+			lge,cable-130k = <340000 1500 1500>;
+			lge,cable-180k = <400000 700 500>;
+			lge,cable-200k = <430000 700 500>;
+			lge,cable-220k = <485000 700 500>;
+			lge,cable-270k = <560000 700 500>;
+			lge,cable-330k = <735000 500 500>;
+			lge,cable-620k = <955000 500 500>;
+			lge,cable-910k = <1140000 1500 1500>;
+			lge,cable-none = <1900000 700  500>;
+		};
+		usb_adc_table@200{
+			status = "okay";
+			revision = "rev_a...";
+			lge,no-init-cable = <197000 500 500>;
+			lge,cable-56k = <496875 1500 1500>;
+			lge,cable-100k = <654545 500 500>;
+			lge,cable-130k = <780861 1500 1500>;
+			lge,cable-180k = <876316 700 500>;
+			lge,cable-200k = <921429 700 500>;
+			lge,cable-220k = <988450 700 500>;
+			lge,cable-270k = <1077399 700 500>;
+			lge,cable-330k = <1240865 500 500>;
+			lge,cable-620k = <1418326 500 500>;
+			lge,cable-910k = <1637838 1500 1500>;
+			lge,cable-none = <1900000 700  500>;
+		};
+	};
+};
+
+&pm8110_chg {
+	status = "ok";
+	qcom,vddmax-mv = <4200>;
+	qcom,vddsafe-mv = <4230>;
+	qcom,vbatdet-mv = <4150>;
+	qcom,vinmin-mv = <4350>;
+	qcom,ibatterm-ma = <100>;
+	qcom,vbatdet-delta-mv = <100>;
+	qcom,tchg-mins = <480>;	
+	
+	qcom,chgr@1000 {
+		status = "ok";
+	};
+
+	qcom,buck@1100 {
+		status = "ok";
+	};
+
+	qcom,bat-if@1200 {
+		status = "ok";
+	};
+
+	qcom,usb-chgpth@1300 {
+		status = "ok";
+	};
+
+	qcom,chg-misc@1600 {
+		status = "ok";
+	};
+};
+
+&pm8110_gpios {
+
+	/* GPIO 1 : EAR_MIC_MODE */
+	gpio@c000 {
+	};
+
+/* 2013-09-13, sungbo0.jung@lge.com, changed EAR_MIC_EN for rev.B [START] */
+
+    /* for rev.0~rev.A */
+	/* GPIO 2 : Reserved Pin */
+	/* QPNP_PIN_MODE_DIG_IN /QPNP_PIN_PULL_DOWN / Disable GPIO */
+	gpio@c100 {
+		status = "okay";
+		
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,master-en = <0>;
+		revision = "...rev_a";
+	};
+
+    /*for rev.B~ */
+	/* GPIO 2 : EAR_MIC_EN */
+	gpio@c101 {
+		status = "okay";
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <1>; /* set to default pull */
+		qcom,out-strength = <2>;
+		com,vin-sel = <2>; /* select 1.8 V source */
+		qcom,src-select = <0>;      /* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;
+		revision = "rev_b...rev_d";
+		reg = <0xc100 0x100>;
+		qcom,pin-num = <2>;
+	};
+/* 2013-09-13, sungbo0.jung@lge.com, changed EAR_MIC_EN for rev.B [END] */
+
+	/* GPIO 3 : Reserved Pin */
+	/* QPNP_PIN_MODE_DIG_IN /QPNP_PIN_PULL_DOWN / Disable GPIO */
+	gpio@c200 {
+		status = "okay";
+		
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,master-en = <0>;
+	};
+
+	/* GPIO 4 : BATT_UIM_ALARM - TBD */
+	gpio@c300 {
+	};
+
+};
+
+&pm8110_mpps {
+	/* MPP 1 : VREF_MSM_PX_MPP_1 */
+	mpp@a000 {
+	};
+
+
+	/* MPP 2 : EAR_MIC_JACK */
+	mpp@a100 {
+/* 2013-08-08, seungkyu.joo ,Maxim Detector Button Setting [Start] */	
+		reg = <0xa100 0x100>;
+		qcom,pin-num = <2>;
+		
+		status = "ok";
+		qcom,mode = <4>; /* QPNP_PIN_MODE_AIN */
+		qcom,invert = <0>; /*no invert*/
+		qcom,output-type = <0>; /* CMOS */
+		qcom,vin-sel = <2>; /* PM8226_S3 1.8V > 1.6V */
+		qcom,src-sel = <0>; /* CONSTANT */
+		qcom,ain-route = <1>;
+		qcom,master-en = <1>;
+/* 2013-08-08, seungkyu.joo ,Maxim Detector Button Setting [End] */	
+
+	};
+
+	/* MPP 3 : PM_USB_ID */
+	/* QPNP_PIN_MODE_AIN / QPNP_PIN_INVERT_ENABLE - Enable MPP / Enable MPP / QPNP_PIN_AIN_AMUX_CH7 */
+	mpp@a200 {
+		status = "okay";
+		
+		qcom,mode = <4>;		
+		qcom,invert = <1>;		
+		qcom,src-sel = <0>;			
+		qcom,master-en = <1>;	
+		qcom,ain-route = <2>;	
+	
+	};
+
+	/* MPP 4 : PA_THERM_0 */
+	/* QPNP_PIN_MODE_AIN / QPNP_PIN_INVERT_ENABLE - Enable MPP / Enable MPP / QPNP_PIN_AIN_AMUX_CH8 */
+	mpp@a300 {
+		status = "okay";
+
+		qcom,mode = <4>; 
+		qcom,invert = <1>; 
+		qcom,master-en = <1>;
+		qcom,src-sel = <0>; 
+		qcom,ain-route = <3>; 
+	};
+};
+
+&pm8110_bms {
+	status = "ok";
+	
+	qcom,r-sense-uohm = <10000>;
+	qcom,v-cutoff-uv = <3400000>;
+	qcom,max-voltage-uv = <4200000>;
+	qcom,r-conn-mohm = <18>;
+	qcom,shutdown-soc-valid-limit = <20>;
+	qcom,adjust-soc-low-threshold = <25>;
+	qcom,adjust-soc-high-threshold = <45>;
+	qcom,ocv-voltage-high-threshold-uv = <3900000>;
+	qcom,ocv-voltage-low-threshold-uv = <3650000>;
+	qcom,low-soc-calculate-soc-threshold = <15>;
+	qcom,low-soc-calculate-soc-ms = <5000>;
+	qcom,calculate-soc-ms = <20000>;
+	qcom,low-voltage-calculate-soc-ms=<1000>;
+	qcom,chg-term-ua = <100000>;
+	qcom,batt-type = <0>;
+	qcom,low-voltage-threshold = <3420000>;
+};
+
+&pm8110_vadc {
+
+/* 2013-08-08, seungkyu.joo ,Maxim Detector Button Setting [Start] */	
+	chan@11 {
+		status = "ok";
+		label = "mpp2_adc";
+		reg = <0x11>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+/* 2013-08-08, seungkyu.joo ,Maxim Detector Button Setting [End] */	
+
+
+	chan@12 {
+		label = "mpp3_usb_id";
+		reg = <0x12>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@13 {
+		label = "pa_therm0";
+		reg = <0x13>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <2>;		/* degC for 100k pull-up */
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@33 {
+		label = "hw_id_pcb_revision";
+		reg = <0x33>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+};
+
+&rpm_bus {
+
+	rpm-regulator-ldoa7 {
+		status = "okay";
+		pm8110_l7: regulator-l7 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			qcom,init-voltage = <1800000>;
+			status = "okay";
+		};
+	};
+
+	rpm-regulator-ldoa14 {
+		status = "okay";
+		pm8110_l14: regulator-l14 {
+			regulator-always-on;
+			status = "okay";
+		};
+	};
+
+	rpm-regulator-ldoa16 {
+		status = "okay";
+		pm8110_l16: regulator-l16 {
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3300000>;
+			qcom,init-voltage = <3300000>;
+			status = "okay";
+		};
+	};
+
+	rpm-regulator-ldoa19 {
+		status = "okay";
+		pm8110_l19: regulator-l19 {
+			regulator-always-on;
+			status = "okay";
+		};
+    };
+};

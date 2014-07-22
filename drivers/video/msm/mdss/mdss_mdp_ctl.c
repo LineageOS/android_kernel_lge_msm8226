@@ -1163,7 +1163,6 @@ int mdss_mdp_ctl_start(struct mdss_mdp_ctl *ctl, bool handoff)
 		} else if (ctl->mixer_right) {
 			struct mdss_mdp_mixer *mixer = ctl->mixer_right;
 			u32 out, off;
-
 			mdss_mdp_pp_resume(ctl, mixer->num);
 			mixer->params_changed++;
 			out = (mixer->height << 16) | mixer->width;
@@ -2092,3 +2091,41 @@ int mdss_mdp_mixer_handoff(struct mdss_mdp_ctl *ctl, u32 num,
 
 	return rc;
 }
+
+#if defined(CONFIG_MACH_MSM8926_X5_VZW) || defined(CONFIG_MACH_MSM8926_X5_SPR)
+void change_wb_block_request_num_to_high(void)
+{
+	struct mdss_mdp_ctl *ctl = NULL;
+
+	if(!mdss_res)
+		return;
+
+	pr_debug("%s is called .. \n", __func__);
+
+        ctl = mdss_mdp_ctl_alloc(mdss_res, mdss_res->nmixers_intf);
+        if (!ctl) {
+                pr_debug("unable to allocate wb ctl\n");
+                return;
+        }
+
+	writel_relaxed(0x10101010, (ctl->mdata->vbif_base + 0xc0));
+}
+
+void change_wb_block_request_num_to_low(void)
+{
+	struct mdss_mdp_ctl *ctl = NULL;
+
+	if(!mdss_res)
+                return;
+
+	pr_debug("%s is called .. \n", __func__);
+
+        ctl = mdss_mdp_ctl_alloc(mdss_res, mdss_res->nmixers_intf);
+        if (!ctl) {
+                pr_debug("unable to allocate wb ctl\n");
+                return;
+        }
+
+	writel_relaxed(0x02101010, (ctl->mdata->vbif_base + 0xc0));
+}
+#endif

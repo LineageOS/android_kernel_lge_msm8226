@@ -101,6 +101,8 @@ enum device_status {
 
 #define RMI4_COORDS_ARR_SIZE 4
 
+u32 gpio_vdd_en = 0;
+
 static int synaptics_rmi4_i2c_read(struct synaptics_rmi4_data *rmi4_data,
 		unsigned short addr, unsigned char *data,
 		unsigned short length);
@@ -1493,6 +1495,14 @@ static int synaptics_rmi4_parse_dt(struct device *dev,
 			return -EINVAL;
 		}
 	}
+	/* Temporary solution, in case of using vdd_en_gpio not regulator */
+	rc = of_property_read_u32(np, "synaptics,gpio_vdd_en", &temp_val);
+	printk("[Touch]gpio_vdd_en : %d \n", temp_val);
+	if (!rc)
+		gpio_vdd_en = temp_val;
+	else if (rc != -EINVAL) {
+		dev_err(dev, "Unable to read gpio_vdd_en\n");
+	}
 	return 0;
 }
 #else
@@ -2556,25 +2566,28 @@ static int synaptics_rmi4_regulator_configure(struct synaptics_rmi4_data
 	if (on == false)
 		goto hw_shutdown;
 
-	rmi4_data->vdd = regulator_get(&rmi4_data->i2c_client->dev,
-					"vdd");
-	if (IS_ERR(rmi4_data->vdd)) {
-		dev_err(&rmi4_data->i2c_client->dev,
-				"%s: Failed to get vdd regulator\n",
-				__func__);
-		return PTR_ERR(rmi4_data->vdd);
-	}
-
-	if (regulator_count_voltages(rmi4_data->vdd) > 0) {
-		retval = regulator_set_voltage(rmi4_data->vdd,
-			RMI4_VTG_MIN_UV, RMI4_VTG_MAX_UV);
-		if (retval) {
+	if(!gpio_vdd_en) {
+		rmi4_data->vdd = regulator_get(&rmi4_data->i2c_client->dev,
+						"vdd");
+		if (IS_ERR(rmi4_data->vdd)) {
 			dev_err(&rmi4_data->i2c_client->dev,
-				"regulator set_vtg failed retval =%d\n",
-				retval);
-			goto err_set_vtg_vdd;
+					"%s: Failed to get vdd regulator\n",
+					__func__);
+			return PTR_ERR(rmi4_data->vdd);
+		}
+
+		if (regulator_count_voltages(rmi4_data->vdd) > 0) {
+			retval = regulator_set_voltage(rmi4_data->vdd,
+				RMI4_VTG_MIN_UV, RMI4_VTG_MAX_UV);
+			if (retval) {
+				dev_err(&rmi4_data->i2c_client->dev,
+					"regulator set_vtg failed retval =%d\n",
+					retval);
+				goto err_set_vtg_vdd;
+			}
 		}
 	}
+
 
 	if (rmi4_data->board->i2c_pull_up) {
 		rmi4_data->vcc_i2c = regulator_get(&rmi4_data->i2c_client->dev,
@@ -2608,14 +2621,18 @@ err_get_vtg_i2c:
 		regulator_set_voltage(rmi4_data->vdd, 0,
 			RMI4_VTG_MAX_UV);
 err_set_vtg_vdd:
-	regulator_put(rmi4_data->vdd);
+	if(!gpio_vdd_en)
+		regulator_put(rmi4_data->vdd);
 	return retval;
 
 hw_shutdown:
-	if (regulator_count_voltages(rmi4_data->vdd) > 0)
-		regulator_set_voltage(rmi4_data->vdd, 0,
-			RMI4_VTG_MAX_UV);
-	regulator_put(rmi4_data->vdd);
+	if(!gpio_vdd_en) {
+		if (regulator_count_voltages(rmi4_data->vdd) > 0)
+			regulator_set_voltage(rmi4_data->vdd, 0,
+				RMI4_VTG_MAX_UV);
+		regulator_put(rmi4_data->vdd);
+	}
+
 	if (rmi4_data->board->i2c_pull_up) {
 		if (regulator_count_voltages(rmi4_data->vcc_i2c) > 0)
 			regulator_set_voltage(rmi4_data->vcc_i2c, 0,
@@ -2632,21 +2649,25 @@ static int synaptics_rmi4_power_on(struct synaptics_rmi4_data *rmi4_data,
 	if (on == false)
 		goto power_off;
 
-	retval = reg_set_optimum_mode_check(rmi4_data->vdd,
+	if(gpio_vdd_en)
+		gpio_direction_output(gpio_vdd_en, 1);
+	else {
+		retval = reg_set_optimum_mode_check(rmi4_data->vdd,
 		RMI4_ACTIVE_LOAD_UA);
-	if (retval < 0) {
-		dev_err(&rmi4_data->i2c_client->dev,
-			"Regulator vdd set_opt failed rc=%d\n",
-			retval);
-		return retval;
-	}
+		if (retval < 0) {
+			dev_err(&rmi4_data->i2c_client->dev,
+				"Regulator vdd set_opt failed rc=%d\n",
+				retval);
+			return retval;
+		}
 
-	retval = regulator_enable(rmi4_data->vdd);
-	if (retval) {
-		dev_err(&rmi4_data->i2c_client->dev,
-			"Regulator vdd enable failed rc=%d\n",
-			retval);
-		goto error_reg_en_vdd;
+		retval = regulator_enable(rmi4_data->vdd);
+		if (retval) {
+			dev_err(&rmi4_data->i2c_client->dev,
+				"Regulator vdd enable failed rc=%d\n",
+				retval);
+			goto error_reg_en_vdd;
+		}
 	}
 
 	if (rmi4_data->board->i2c_pull_up) {
@@ -2679,8 +2700,13 @@ error_reg_en_vdd:
 	return retval;
 
 power_off:
-	reg_set_optimum_mode_check(rmi4_data->vdd, 0);
-	regulator_disable(rmi4_data->vdd);
+	if(gpio_vdd_en)
+		gpio_direction_output(gpio_vdd_en, 0);
+	else {
+		reg_set_optimum_mode_check(rmi4_data->vdd, 0);
+		regulator_disable(rmi4_data->vdd);
+	}
+
 	if (rmi4_data->board->i2c_pull_up) {
 		reg_set_optimum_mode_check(rmi4_data->vcc_i2c, 0);
 		regulator_disable(rmi4_data->vcc_i2c);
@@ -2897,6 +2923,12 @@ static int __devinit synaptics_rmi4_probe(struct i2c_client *client,
 	set_bit(INPUT_PROP_DIRECT, rmi4_data->input_dev->propbit);
 #endif
 
+	if(gpio_vdd_en)
+		gpio_request(gpio_vdd_en, "rmi4_gpio_vdd_en");
+
+	init_waitqueue_head(&rmi4_data->wait);
+	mutex_init(&(rmi4_data->rmi4_io_ctrl_mutex));
+	
 	retval = synaptics_rmi4_regulator_configure(rmi4_data, true);
 	if (retval < 0) {
 		dev_err(&client->dev, "Failed to configure regulators\n");
@@ -2914,9 +2946,6 @@ static int __devinit synaptics_rmi4_probe(struct i2c_client *client,
 		dev_err(&client->dev, "Failed to configure gpios\n");
 		goto err_gpio_config;
 	}
-
-	init_waitqueue_head(&rmi4_data->wait);
-	mutex_init(&(rmi4_data->rmi4_io_ctrl_mutex));
 
 	INIT_LIST_HEAD(&rmi->support_fn_list);
 	mutex_init(&rmi->support_fn_list_mutex);
@@ -3400,9 +3429,12 @@ static int synaptics_rmi4_regulator_lpm(struct synaptics_rmi4_data *rmi4_data,
 			}
 		}
 	}
-
-	load_ua = rmi4_data->board->power_down_enable ? 0 : RMI4_LPM_LOAD_UA;
-	retval = reg_set_optimum_mode_check(rmi4_data->vdd, load_ua);
+	
+	if(!gpio_vdd_en) {
+		load_ua = rmi4_data->board->power_down_enable ? 0 : RMI4_LPM_LOAD_UA;
+		retval = reg_set_optimum_mode_check(rmi4_data->vdd, load_ua);
+	}
+	
 	if (retval < 0) {
 		dev_err(&rmi4_data->i2c_client->dev,
 			"Regulator vdd_ana set_opt failed rc=%d\n",
@@ -3411,7 +3443,10 @@ static int synaptics_rmi4_regulator_lpm(struct synaptics_rmi4_data *rmi4_data,
 	}
 
 	if (rmi4_data->board->power_down_enable) {
-		retval = regulator_disable(rmi4_data->vdd);
+		if(!gpio_vdd_en)
+			retval = regulator_disable(rmi4_data->vdd);
+		else
+			retval = gpio_direction_output(gpio_vdd_en, 0);
 		if (retval) {
 			dev_err(&rmi4_data->i2c_client->dev,
 				"Regulator vdd disable failed rc=%d\n",
@@ -3424,6 +3459,7 @@ static int synaptics_rmi4_regulator_lpm(struct synaptics_rmi4_data *rmi4_data,
 
 regulator_hpm:
 
+	if(!gpio_vdd_en) {
 	retval = reg_set_optimum_mode_check(rmi4_data->vdd,
 				RMI4_ACTIVE_LOAD_UA);
 	if (retval < 0) {
@@ -3432,9 +3468,13 @@ regulator_hpm:
 			retval);
 		goto fail_regulator_hpm;
 	}
+	}
 
 	if (rmi4_data->board->power_down_enable) {
-		retval = regulator_enable(rmi4_data->vdd);
+		if(!gpio_vdd_en)
+			retval = regulator_enable(rmi4_data->vdd);
+		else
+			retval = gpio_direction_output(gpio_vdd_en, 1);
 		if (retval) {
 			dev_err(&rmi4_data->i2c_client->dev,
 				"Regulator vdd enable failed rc=%d\n",
@@ -3467,7 +3507,8 @@ regulator_hpm:
 	return 0;
 
 fail_regulator_lpm:
-	reg_set_optimum_mode_check(rmi4_data->vdd, RMI4_ACTIVE_LOAD_UA);
+	if(!gpio_vdd_en)
+		reg_set_optimum_mode_check(rmi4_data->vdd, RMI4_ACTIVE_LOAD_UA);
 	if (rmi4_data->board->i2c_pull_up)
 		reg_set_optimum_mode_check(rmi4_data->vcc_i2c,
 						RMI4_I2C_LOAD_UA);
@@ -3476,7 +3517,8 @@ fail_regulator_lpm:
 
 fail_regulator_hpm:
 	load_ua = rmi4_data->board->power_down_enable ? 0 : RMI4_LPM_LOAD_UA;
-	reg_set_optimum_mode_check(rmi4_data->vdd, load_ua);
+	if(!gpio_vdd_en)
+		reg_set_optimum_mode_check(rmi4_data->vdd, load_ua);
 	if (rmi4_data->board->i2c_pull_up) {
 		load_ua = rmi4_data->board->power_down_enable ?
 				0 : RMI4_I2C_LPM_LOAD_UA;

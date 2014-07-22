@@ -37,6 +37,10 @@
 #include <linux/regulator/consumer.h>
 #include <linux/msm_thermal_ioctl.h>
 
+#ifdef CONFIG_LGE_PM
+#include <mach/board_lge.h>
+#endif
+
 #define MAX_CURRENT_UA 1000000
 #define MAX_RAILS 5
 #define MAX_THRESHOLD 2
@@ -871,6 +875,8 @@ static void __ref do_core_control(long temp)
 	}
 	mutex_unlock(&core_control_mutex);
 }
+#ifndef CONFIG_LGE_PM
+/*                                    */
 /* Call with core_control_mutex locked */
 static int __ref update_offline_cores(int val)
 {
@@ -928,12 +934,14 @@ static __ref int do_hotplug(void *data)
 
 	return ret;
 }
+#endif
 #else
 static void do_core_control(long temp)
 {
 	return;
 }
-
+#endif
+#ifdef CONFIG_LGE_PM
 static __ref int do_hotplug(void *data)
 {
 	return 0;
@@ -2164,10 +2172,18 @@ static int probe_vdd_rstr(struct device_node *node,
 	if (ret)
 		goto read_node_fail;
 
+    #if defined(CONFIG_MACH_MSM8X10_W5)
+        (data->vdd_rstr_temp_degC) -= 30;
+    #endif
+
 	key = "qcom,vdd-restriction-temp-hysteresis";
 	ret = of_property_read_u32(node, key, &data->vdd_rstr_temp_hyst_degC);
 	if (ret)
 		goto read_node_fail;
+
+    #if defined(CONFIG_MACH_MSM8X10_W5)
+        (data->vdd_rstr_temp_hyst_degC) -= 30;
+    #endif
 
 	for_each_child_of_node(node, child_node) {
 		rails_cnt++;
@@ -2439,6 +2455,13 @@ static int probe_cc(struct device_node *node, struct msm_thermal_data *data,
 		cpus[cpu].hotplug_thresh_clear = false;
 		ret = of_property_read_string_index(node, key, cpu,
 				&cpus[cpu].sensor_type);
+#ifdef CONFIG_MACH_MSM8226_W7DS_OPEN_CIS
+			if (lge_get_board_revno() == HW_REV_0) {
+				if (!strcmp(cpus[cpu].sensor_type,"tsens_tz_sensor5")) {
+					cpus[cpu].sensor_type = "tsens_tz_sensor1";
+				}
+			}
+#endif
 		if (ret)
 			goto hotplug_node_fail;
 	}

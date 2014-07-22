@@ -143,5 +143,7 @@ obj-$(CONFIG_MOBICORE_SUPPORT)  += gud/
 
 obj-$(CONFIG_CORESIGHT)		+= coresight/
 
+#Oneseg
+obj-$(CONFIG_LGE_BROADCAST_ONESEG) += broadcast/
 obj-$(CONFIG_BIF)		+= bif/
 obj-$(CONFIG_SENSORS)		+= sensors/

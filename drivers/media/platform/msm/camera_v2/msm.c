@@ -159,6 +159,9 @@ static void msm_enqueue(struct msm_queue_head *qhead,
 		struct list_head *entry)
 {
 	unsigned long flags;
+
+	BUG_ON(!qhead);  /*                                               */ 
+	
 	spin_lock_irqsave(&qhead->lock, flags);
 	qhead->len++;
 	if (qhead->len > qhead->max)
@@ -341,26 +344,17 @@ int msm_create_session(unsigned int session_id, struct video_device *vdev)
 {
 	struct msm_session *session = NULL;
 
-	if (!msm_session_q) {
-		pr_err("%s : session queue not available Line %d\n",
-				__func__, __LINE__);
+	if (!msm_session_q)
 		return -ENODEV;
-	}
 
 	session = msm_queue_find(msm_session_q, struct msm_session,
 		list, __msm_queue_find_session, &session_id);
-	if (session) {
-		pr_err("%s : Session not found Line %d\n",
-				__func__, __LINE__);
+	if (session)
 		return -EINVAL;
-	}
 
 	session = kzalloc(sizeof(*session), GFP_KERNEL);
-	if (!session) {
-		pr_err("%s : Memory not available Line %d\n",
-				__func__, __LINE__);
+	if (!session)
 		return -ENOMEM;
-	}
 
 	session->session_id = session_id;
 	session->event_q.vdev = vdev;
@@ -376,25 +370,17 @@ int msm_create_command_ack_q(unsigned int session_id, unsigned int stream_id)
 	struct msm_session *session;
 	struct msm_command_ack *cmd_ack;
 
-	if (!msm_session_q) {
-		pr_err("%s : Session queue not available Line %d\n",
-				__func__, __LINE__);
+	if (!msm_session_q)
 		return -ENODEV;
-	}
 
 	session = msm_queue_find(msm_session_q, struct msm_session,
 		list, __msm_queue_find_session, &session_id);
-	if (!session) {
-		pr_err("%s : Session not found Line %d\n",
-				__func__, __LINE__);
+	if (!session)
 		return -EINVAL;
-	}
 	mutex_lock(&session->lock);
 	cmd_ack = kzalloc(sizeof(*cmd_ack), GFP_KERNEL);
 	if (!cmd_ack) {
 		mutex_unlock(&session->lock);
-		pr_err("%s : memory not available Line %d\n",
-				__func__, __LINE__);
 		return -ENOMEM;
 	}
 
@@ -669,8 +655,6 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 	spin_lock_irqsave(&msm_eventq_lock, flags);
 	if (!msm_eventq) {
 		spin_unlock_irqrestore(&msm_eventq_lock, flags);
-		pr_err("%s : msm event queue not available Line %d\n",
-				__func__, __LINE__);
 		return -ENODEV;
 	}
 	spin_unlock_irqrestore(&msm_eventq_lock, flags);
@@ -680,19 +664,14 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 	/* send to imaging server and wait for ACK */
 	session = msm_queue_find(msm_session_q, struct msm_session,
 		list, __msm_queue_find_session, &session_id);
-	if (WARN_ON(!session)) {
-		pr_err("%s : session not found Line %d\n",
-				__func__, __LINE__);
+	if (WARN_ON(!session))
 		return -EIO;
-	}
 	mutex_lock(&session->lock);
 	cmd_ack = msm_queue_find(&session->command_ack_q,
 		struct msm_command_ack, list,
 		__msm_queue_find_command_ack_q, &stream_id);
 	if (WARN_ON(!cmd_ack)) {
 		mutex_unlock(&session->lock);
-		pr_err("%s : cmd_ack not found Line %d\n",
-				__func__, __LINE__);
 		return -EIO;
 	}
 
@@ -700,8 +679,6 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 
 	if (timeout < 0) {
 		mutex_unlock(&session->lock);
-		pr_err("%s : timeout cannot be negative Line %d\n",
-				__func__, __LINE__);
 		return rc;
 	}
 
@@ -722,6 +699,11 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 		if (rc < 0) {
 			pr_err("%s: rc = %d\n", __func__, rc);
 			mutex_unlock(&session->lock);
+/*                                                                    */
+			pr_err("%s: ===== Camera Recovery Start! ===== \n", __func__);
+			dump_stack();
+			send_sig(SIGKILL, current, 0);
+/*                                                                    */
 			return rc;
 		}
 	}
@@ -730,8 +712,6 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 		struct msm_command, list);
 	if (!cmd) {
 		mutex_unlock(&session->lock);
-		pr_err("%s : cmd dequeue failed Line %d\n",
-				__func__, __LINE__);
 		return -EINVAL;
 	}
 
@@ -739,15 +719,9 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 
 	/* compare cmd_ret and event */
 	if (WARN_ON(event->type != cmd->event.type) ||
-			WARN_ON(event->id != cmd->event.id)) {
-		pr_err("%s : Either event type or id didnot match Line %d\n",
-				__func__, __LINE__);
-		pr_err("%s : event->type %d event->id %d\n", __func__,
-				event->type, event->id);
-		pr_err("%s : cmd->event.type %d cmd->event.id %d\n", __func__,
-				cmd->event.type, cmd->event.id);
+			WARN_ON(event->id != cmd->event.id))
 		rc = -EINVAL;
-	}
+
 	*event = cmd->event;
 
 	kzfree(cmd);
@@ -783,7 +757,6 @@ static int msm_close(struct file *filep)
 	spin_unlock_irqrestore(&msm_pid_lock, flags);
 
 	atomic_set(&pvdev->opened, 0);
-
 	return rc;
 }
 
@@ -823,7 +796,7 @@ static int msm_open(struct file *filep)
 	spin_lock_irqsave(&msm_eventq_lock, flags);
 	msm_eventq = filep->private_data;
 	spin_unlock_irqrestore(&msm_eventq_lock, flags);
-
+       pr_err("%s: rc = %d\n", __func__, rc);
 	return rc;
 }
 

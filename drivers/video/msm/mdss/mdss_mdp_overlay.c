@@ -35,6 +35,10 @@
 #include "mdss_mdp_rotator.h"
 
 #include "splash.h"
+#if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL)
+extern int is_dsv_cont_splash_screening_f;
+extern int has_dsv_f;
+#endif
 
 #define VSYNC_PERIOD 16
 #define BORDERFILL_NDX	0x0BF000BF
@@ -842,8 +846,10 @@ static int mdss_mdp_overlay_start(struct msm_fb_data_type *mfd)
 	if (ctl->power_on) {
 		if (!mdp5_data->mdata->batfet)
 			mdss_mdp_batfet_ctrl(mdp5_data->mdata, true);
+
 		if (!mfd->panel_info->cont_splash_enabled)
 			mdss_iommu_attach(mdp5_data->mdata);
+
 		return 0;
 	}
 
@@ -966,6 +972,17 @@ int mdss_mdp_overlay_kickoff(struct msm_fb_data_type *mfd,
 		mutex_lock(ctl->shared_lock);
 
 	mutex_lock(&mdp5_data->ov_lock);
+
+	//workaround for kernel crash while power off
+	//return if mdp_overlay_kickoff is called after mdp power off
+	if(!mdp5_data->ctl->power_on) {
+		pr_info("mdp power is off, %s will be ignored \n", __func__);
+		mutex_unlock(&mdp5_data->ov_lock);
+		if(ctl->shared_lock)
+			mutex_unlock(ctl->shared_lock);
+		return 0;
+	}
+
 	mutex_lock(&mfd->lock);
 
 	/*
@@ -1228,6 +1245,7 @@ static int __mdss_mdp_overlay_release_all(struct msm_fb_data_type *mfd,
 
 	return 0;
 }
+/* QCT_PATCH_END,  Case#01379533*/
 
 static int mdss_mdp_overlay_play_wait(struct msm_fb_data_type *mfd,
 				      struct msmfb_overlay_data *req)

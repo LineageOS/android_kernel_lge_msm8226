@@ -442,6 +442,10 @@ config SND_SOC_WM9712
 config SND_SOC_WM9713
 	tristate
 
+# Boost
+config SND_SPK_BOOST
+	tristate "spk boost"
+
 # Amp
 config SND_SOC_LM4857
 	tristate
@@ -461,3 +465,5 @@ config SND_SOC_MSM_HDMI_CODEC_RX
 	help
 	HDMI audio drivers should be built only if the platform
         supports hdmi panel.
+
+

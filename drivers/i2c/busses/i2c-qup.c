@@ -142,6 +142,9 @@ enum msm_i2c_state {
 #define QUP_OUT_FIFO_NOT_EMPTY		0x10
 #define I2C_GPIOS_DT_CNT		(2)		/* sda and scl */
 
+#if defined(CONFIG_TOUCHSCREEN_ATMEL_S540)
+bool i2c_suspended = false;		/* Use atme touch IC for checking i2c suspend */
+#endif
 static char const * const i2c_rsrcs[] = {"i2c_clk", "i2c_sda"};
 
 static struct gpiomux_setting recovery_config = {
@@ -1804,6 +1807,9 @@ static int i2c_qup_pm_suspend_sys(struct device *device)
 		pm_runtime_enable(device);
 	}
 	dev->pwr_state = MSM_I2C_SYS_SUSPENDED;
+#if defined(CONFIG_TOUCHSCREEN_ATMEL_S540)
+	i2c_suspended = true;
+#endif
 	return 0;
 }
 
@@ -1818,6 +1824,9 @@ static int i2c_qup_pm_resume_sys(struct device *device)
 	 */
 	dev_dbg(device, "system resume\n");
 	dev->pwr_state = MSM_I2C_PM_SUSPENDED;
+#if defined(CONFIG_TOUCHSCREEN_ATMEL_S540)
+	i2c_suspended = false;
+#endif
 	return 0;
 }
 #endif /* CONFIG_PM */

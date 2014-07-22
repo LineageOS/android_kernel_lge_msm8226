@@ -129,11 +129,38 @@ struct bms_battery_data {
 #if defined(CONFIG_PM8921_BMS) || \
 	defined(CONFIG_PM8921_BMS_MODULE) || \
 	defined(CONFIG_QPNP_BMS)
+
+#ifdef CONFIG_LGE_PM_BATTERY_PROFILE_DATA
+
+#ifdef CONFIG_LGE_PM_BATTERY_CAPACITY_1540mAh
+extern struct bms_battery_data LGC_BL44JR_1540_data;
+#elif defined(CONFIG_LGE_PM_BATTERY_CAPACITY_1700mAh)
+extern struct bms_battery_data LGC_BL44JH_1700_data;
+extern struct bms_battery_data LG_LGC_BL44JH_1700_data;
+extern struct bms_battery_data LG_TOCAD_BL44JH_1700_data;
+#elif defined(CONFIG_LGE_PM_BATTERY_CAPACITY_2440mAh)
+extern struct bms_battery_data LGE_BL_59UH_2440mAh_LG_Chem_data;
+extern struct bms_battery_data LGE_BL_59UH_2440mAh_TOCAD_data;
+#elif defined(CONFIG_LGE_PM_BATTERY_CAPACITY_2540mAh)
+extern struct bms_battery_data LGE_BL_54SH_2540mAh_LG_Chem_data;
+extern struct bms_battery_data LGE_BL_54SH_2540mAh_LG_Sanyo_data;
+#elif defined(CONFIG_LGE_PM_BATTERY_CAPACITY_3000mAh)
+extern struct bms_battery_data LGE_BL_64SH_3000mAh_LG_Chem_data;
+extern struct bms_battery_data LGE_BL_64SH_3000mAh_Technohill_data;
+#elif defined(CONFIG_LGE_PM_BATTERY_CAPACITY_2100mAh)
+extern struct bms_battery_data LGE_LGC_2040mAH_data;
+extern struct bms_battery_data LGE_Tocad_2040mAh_data;
+#else
+extern struct bms_battery_data LGE_BL_54SH_2540mAh_LG_Chem_data;
+#endif
+
+#else
 extern struct bms_battery_data  palladium_1500_data;
 extern struct bms_battery_data  desay_5200_data;
 extern struct bms_battery_data  oem_batt_data;
 extern struct bms_battery_data QRD_4v35_2000mAh_data;
 extern struct bms_battery_data  qrd_4v2_1300mah_data;
+#endif
 
 int interpolate_fcc(struct single_row_lut *fcc_temp_lut, int batt_temp);
 int interpolate_scalingfactor(struct sf_lut *sf_lut, int row_entry, int pc);

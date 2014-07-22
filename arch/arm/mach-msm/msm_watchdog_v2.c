@@ -28,6 +28,10 @@
 #include <mach/scm.h>
 #include <mach/msm_memory_dump.h>
 
+#ifdef CONFIG_LGE_HANDLE_PANIC
+#include <mach/lge_handle_panic.h>
+#endif
+
 #define MODULE_NAME "msm_watchdog"
 #define WDT0_ACCSCSSNBARK_INT 0
 #define TCSR_WDT_CFG	0x30
@@ -82,6 +86,20 @@ module_param(enable, int, 0);
 static long WDT_HZ = 32765;
 module_param(WDT_HZ, long, 0);
 
+#ifdef CONFIG_LGE_HANDLE_PANIC
+static void __iomem *msm_timer0_base;
+
+void __iomem *wdt_timer_get_timer0_base(void)
+{
+	return msm_timer0_base;
+}
+
+static void wdt_timer_set_timer0_base(void __iomem * iomem)
+{
+	msm_timer0_base = iomem;
+}
+#endif
+
 static void pet_watchdog_work(struct work_struct *work);
 static void init_watchdog_work(struct work_struct *work);
 
@@ -102,6 +120,8 @@ static int msm_watchdog_suspend(struct device *dev)
 	__raw_writel(1, wdog_dd->base + WDT0_RST);
 	__raw_writel(0, wdog_dd->base + WDT0_EN);
 	mb();
+
+	pr_err("MSM Apps Watchdog suspended.\n");
 	return 0;
 }
 
@@ -114,6 +134,8 @@ static int msm_watchdog_resume(struct device *dev)
 	__raw_writel(1, wdog_dd->base + WDT0_EN);
 	__raw_writel(1, wdog_dd->base + WDT0_RST);
 	mb();
+
+	pr_err("MSM Apps Watchdog resumed.\n");
 	return 0;
 }
 
@@ -153,7 +175,7 @@ static void wdog_disable(struct msm_watchdog_data *wdog_dd)
 	/* may be suspended after the first write above */
 	__raw_writel(0, wdog_dd->base + WDT0_EN);
 	mb();
-	pr_info("MSM Apps Watchdog deactivated.\n");
+	pr_err("MSM Apps Watchdog deactivated.\n");
 }
 
 struct wdog_disable_work_data {
@@ -199,7 +221,7 @@ static ssize_t wdog_disable_set(struct device *dev,
 	if (disable == 1) {
 		mutex_lock(&wdog_dd->disable_lock);
 		if (enable == 0) {
-			pr_info("MSM Apps Watchdog already disabled\n");
+			pr_err("MSM Apps Watchdog already disabled\n");
 			mutex_unlock(&wdog_dd->disable_lock);
 			return count;
 		}
@@ -234,6 +256,10 @@ static void pet_watchdog(struct msm_watchdog_data *wdog_dd)
 	unsigned long long time_ns;
 	unsigned long long slack_ns;
 	unsigned long long bark_time_ns = wdog_dd->bark_time * 1000000ULL;
+
+#ifdef CONFIG_MACH_LGE
+	printk(KERN_INFO "%s\n", __func__);
+#endif
 
 	for (i = 0; i < 2; i++) {
 		count = (__raw_readl(wdog_dd->base + WDT0_STS) >> 1) & 0xFFFFF;
@@ -334,6 +360,9 @@ static irqreturn_t wdog_bark_handler(int irq, void *dev_id)
 	if (wdog_dd->do_ipi_ping)
 		dump_cpu_alive_mask(wdog_dd);
 	printk(KERN_INFO "Causing a watchdog bite!");
+#ifdef CONFIG_LGE_HANDLE_PANIC
+	lge_set_restart_reason(LGE_RB_MAGIC | LGE_ERR_TZ | LGE_ERR_TZ_WDT_BARK);
+#endif
 	__raw_writel(1, wdog_dd->base + WDT0_BITE_TIME);
 	mb();
 	__raw_writel(1, wdog_dd->base + WDT0_RST);
@@ -491,7 +520,9 @@ static int __devinit msm_wdog_dt_to_pdata(struct platform_device *pdev,
 				__func__);
 		return -ENXIO;
 	}
-
+#ifdef CONFIG_LGE_HANDLE_PANIC
+	wdt_timer_set_timer0_base(pdata->base);
+#endif
 	pdata->bark_irq = platform_get_irq(pdev, 0);
 	pdata->bite_irq = platform_get_irq(pdev, 1);
 	ret = of_property_read_u32(node, "qcom,bark-time", &pdata->bark_time);
