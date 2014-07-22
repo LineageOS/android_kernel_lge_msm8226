@@ -118,6 +118,7 @@ static inline int get_load_for_all_cpu(void)
 	int cpu;
 	int load = 0;
 
+	get_online_cpus();
 	for_each_online_cpu(cpu) {
 
 		hot_data->cpu_load_stats[cpu] = 0;
@@ -128,6 +129,7 @@ static inline int get_load_for_all_cpu(void)
 #endif
 		load = load + hot_data->cpu_load_stats[cpu];
 	}
+	put_online_cpus();
 	
 	return (load / hot_data->online_cpus);
 }
@@ -285,6 +287,7 @@ static void suspend_func(struct work_struct *work)
 	for_each_online_cpu(cpu) 
 		if (cpu)
 			cpu_down(cpu);
+
 	hot_data->online_cpus = num_online_cpus();
 
 #ifdef FALCON_DEBUG
