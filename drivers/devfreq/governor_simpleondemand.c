@@ -14,17 +14,31 @@
 #include <linux/devfreq.h>
 #include <linux/math64.h>
 #include <linux/msm_adreno_devfreq.h>
+#include <linux/slab.h>
 #include "governor.h"
 
 #define DEVFREQ_SIMPLE_ONDEMAND	"simple_ondemand"
 
 /* Default constants for DevFreq-Simple-Ondemand (DFSO) */
-#define DFSO_UPTHRESHOLD	60
-#define DFSO_DOWNDIFFERENCTIAL	20
+#define DFSO_UPTHRESHOLD	20
+#define DFSO_DOWNDIFFERENCTIAL	10
 
-unsigned int dfso_upthreshold = DFSO_UPTHRESHOLD;
-unsigned int dfso_downdifferential = DFSO_DOWNDIFFERENCTIAL;
+static unsigned int dfso_upthreshold = DFSO_UPTHRESHOLD;
+static unsigned int dfso_downdifferential = DFSO_DOWNDIFFERENCTIAL;
 
+static unsigned int level = 0;
+static unsigned int load = 0;
+
+static int get_gpu_freq(struct devfreq *df) {
+
+	int num = 0; 
+	int i;
+
+	for (i = 0; df->profile->freq_table[i]; i++)
+		num++;
+
+	return num;
+}
 
 static int devfreq_simple_ondemand_func(struct devfreq *df,
 					unsigned long *freq,
@@ -34,7 +48,6 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 	struct devfreq_msm_adreno_tz_data *priv = df->data;
 	struct xstats xs;
 	int err;
-	unsigned long long a, b;
 	unsigned long max = (df->max_freq) ? df->max_freq : UINT_MAX;
 
 	if (priv->bus.num)
@@ -52,21 +65,17 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 		stat.total_time >>= 7;
 	}
 
-	/* Assume MAX if it is going to be divided by zero */
-	if (stat.total_time == 0) {
-		*freq = max;
-		return 0;
-	}
-
-	/* Set MAX if it's busy enough */
-	if (stat.busy_time * 100 >
-	    stat.total_time * dfso_upthreshold) {
-		*freq = max;
-		return 0;
-	}
-
-	/* Set MAX if we do not know the initial frequency */
-	if (stat.current_frequency == 0) {
+	/*
+	 * Assume the max frequency if;
+	 * 1.) The total time is 0 (division by 0)
+	 * 2.) It's already really busy
+	 * 3.) The driver has no clue about the initial frequency
+	 *
+	 */
+	if (stat.total_time == 0
+		|| stat.busy_time * 100 >
+	    		stat.total_time * dfso_upthreshold
+		|| stat.current_frequency == 0) {
 		*freq = max;
 		return 0;
 	}
@@ -79,17 +88,22 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 	}
 
 	/* Set the desired frequency based on the load */
-	a = stat.busy_time;
-	a *= stat.current_frequency;
-	b = div_u64(a, stat.total_time);
-	b *= 100;
-	b = div_u64(b, (dfso_upthreshold - dfso_downdifferential / 2));
-	*freq = (unsigned long) b;
+	load = (100 * (unsigned int)stat.busy_time) /
+			(unsigned int)stat.total_time;
 
-	if (df->min_freq && *freq < df->min_freq)
-		*freq = df->min_freq;
-	if (df->max_freq && *freq > df->max_freq)
-		*freq = df->max_freq;
+	if (load >= dfso_upthreshold) {
+		if (level > 0)		
+			level--;		
+	} else if (load <= dfso_downdifferential) {
+		if (level < get_gpu_freq(df))		
+			level++;
+	} else {
+		/* If unsure about the frequency, stay at the current */
+		*freq = stat.current_frequency;
+		return 0;
+	}
+
+	*freq = df->profile->freq_table[level];
 
 	return 0;
 }
