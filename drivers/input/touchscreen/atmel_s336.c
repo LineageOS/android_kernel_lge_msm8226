@@ -4580,7 +4580,7 @@ int mxt_update_firmware(struct mxt_data *data, const char *fwname)
 	return 0;
 
 }
-
+static int mxt_fb_resume(struct mxt_data *data);
 static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct mxt_data *data = NULL;
@@ -4762,6 +4762,9 @@ static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_devic
 
 	TOUCH_INFO_MSG("%s success \n", __func__);
 	is_probing = false;
+
+	/*Fix touch init, eg. in TWRP */
+	mxt_fb_resume(data);
 
 	return 0;
 
