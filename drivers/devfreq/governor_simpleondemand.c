@@ -12,12 +12,16 @@
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/devfreq.h>
-#include <linux/math64.h>
 #include <linux/msm_adreno_devfreq.h>
-#include <linux/slab.h>
 #include "governor.h"
 
 #define DEVFREQ_SIMPLE_ONDEMAND	"simple_ondemand"
+
+/*
+ * CEILING is 50msec, larger than any standard
+ * frame length.
+ */
+#define CEILING			50000
 
 /* Default constants for DevFreq-Simple-Ondemand (DFSO) */
 #define DFSO_UPTHRESHOLD	20
@@ -29,7 +33,7 @@ static unsigned int dfso_downdifferential = DFSO_DOWNDIFFERENCTIAL;
 static unsigned int level = 0;
 static unsigned int load = 0;
 
-static int get_gpu_freq(struct devfreq *df) {
+static inline int get_freq_num(struct devfreq *df) {
 
 	int num = 0; 
 	int i;
@@ -45,24 +49,28 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 					u32 *flag)
 {
 	struct devfreq_dev_status stat;
-	struct devfreq_msm_adreno_tz_data *priv = df->data;
-	struct xstats xs;
-	int err;
+	int ret = 0;
 	unsigned long max = (df->max_freq) ? df->max_freq : UINT_MAX;
 
-	if (priv->bus.num)
-		stat.private_data = &xs;
-	else
-		stat.private_data = NULL;
+	stat.private_data = NULL;
 
-	err = df->profile->get_dev_status(df->dev.parent, &stat);
-	if (err)
-		return err;
+	ret = df->profile->get_dev_status(df->dev.parent, &stat);
+	if (ret)
+		return ret;
 
 	/* Prevent overflow */
 	if (stat.busy_time >= (1 << 24) || stat.total_time >= (1 << 24)) {
 		stat.busy_time >>= 7;
 		stat.total_time >>= 7;
+	}
+
+	/*
+	 * If there is an extended block of busy processing,
+	 * increase frequency. Otherwise run the normal algorithm.
+	 */
+	if (stat.busy_time > CEILING) {
+		*freq = max;
+		return ret;
 	}
 
 	/*
@@ -77,14 +85,14 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 	    		stat.total_time * dfso_upthreshold
 		|| stat.current_frequency == 0) {
 		*freq = max;
-		return 0;
+		return ret;
 	}
 
 	/* Keep the current frequency */
 	if (stat.busy_time * 100 >
 	    stat.total_time * (dfso_upthreshold - dfso_downdifferential)) {
 		*freq = stat.current_frequency;
-		return 0;
+		return ret;
 	}
 
 	/* Set the desired frequency based on the load */
@@ -95,17 +103,17 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 		if (level > 0)		
 			level--;		
 	} else if (load <= dfso_downdifferential) {
-		if (level < get_gpu_freq(df))		
+		if (level < get_freq_num(df))		
 			level++;
 	} else {
 		/* If unsure about the frequency, stay at the current */
 		*freq = stat.current_frequency;
-		return 0;
+		return ret;
 	}
 
 	*freq = df->profile->freq_table[level];
 
-	return 0;
+	return ret;
 }
 
 static ssize_t simple_ondemand_upthreshold_show(struct kobject *kobj,
