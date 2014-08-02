@@ -142,7 +142,15 @@ config IMX179
 		Support for IMX179 sensor driver.
 		This is a Sony 8MP Bayer Sensor with autofocus.
 		Say Y if the platform uses IMX179 sensor.
-		
+
+config IMX219
+	bool "Sensor imx219 (Sony 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX219 sensor driver.
+		This is a Sony 8MP Bayer Sensor with autofocus.
+		Say Y if the platform uses IMX219 sensor.
+
 config HI543
     bool "Sensor hi543 (Hynix 5MP)"
     depends on MSMB_CAMERA
