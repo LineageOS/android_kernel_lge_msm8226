@@ -2358,6 +2358,13 @@ config CPU_FREQ_S3C24XX_DEBUGFS
 	help
 	  Export status information via debugfs.
 
+config AERO_HOTPLUG
+	bool "Aero simple CPU Hotplug driver"
+	depends on POWERSUSPEND || HAS_EARLYSUSPEND
+	help
+	  Enable a simple hotplug driver with low latency mode
+	  and fundamental low battery drainage.
+
 endif
 
 source "drivers/cpuidle/Kconfig"
