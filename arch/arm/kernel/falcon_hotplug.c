@@ -16,10 +16,6 @@
  * Simple no bullshit hot[un]plug driver for SMP
  */
 
-/*
- * TODO:  - Add debug tunable
- */
-
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/cpu.h>
@@ -41,7 +37,6 @@
 #define SAMPLING_RATE		10
 #define DEFAULT_MIN_ONLINE	4
 #define SMART_LOAD_CALC
-// #define FALCON_DEBUG
 
 struct hotplug_data {
 	/* The threshold level for the average load of all onlined cpus */
@@ -58,6 +53,9 @@ struct hotplug_data {
 
 	/* Short load spikes will be forcing cpus to come online */
 	bool low_latency;
+
+	/* Debug flag */
+	bool debug;
 
 	unsigned long timestamp;
 	unsigned int online_cpus;
@@ -138,9 +136,10 @@ static void __ref set_cpu_up(int cpu)
 {
 	if (!cpu_online(cpu)
 		&& hot_data->online_cpus != hot_data->possible_cpus) {
-#ifdef FALCON_DEBUG
-		printk("[Hot-Plug]: CPU%u ready for onlining\n", cpu);
-#endif
+
+		if (hot_data->debug)
+			pr_info("[Hot-Plug]: CPU%u ready for onlining\n", cpu);
+
 		cpu_up(cpu);
 		hot_data->timestamp = jiffies;
 		hot_data->online_cpus = num_online_cpus();
@@ -172,24 +171,27 @@ static void calculate_load_for_cpu(int cpu)
 	 */
 	if (cpu_load >= hot_data->single_cpu_threshold &&
 		avg_load >= hot_data->all_cpus_threshold
-		&& likely(hot_data->counter[cpu] < HIGH_LOAD_COUNTER)
+		&& hot_data->counter[cpu] < HIGH_LOAD_COUNTER
 		&& cpufreq_quick_get(cpu) == policy.max) {
-			hot_data->counter[cpu] += 2;
 
-			/* CPU is stressed */
-			if (hot_data->low_latency) {
-				if (cpu_load >= 100 &&
-					avg_load >= 100 && hot_data->counter[cpu] >= 4) {
-#ifdef FALCON_DEBUG
-					printk("[Hot-Plug]: CPU%u is stressed, considering boosting CPU%u \n", cpu, (cpu + 2));
-#endif
-					set_cpu_up(cpu + 2);
-					return;
-				}
+		hot_data->counter[cpu] += 2;
+
+		/* CPU is stressed */
+		if (hot_data->low_latency) {
+			if (cpu_load >= 100 &&
+				avg_load >= 100 && hot_data->counter[cpu] >= 4) {
+				
+				if (hot_data->debug)
+					pr_info("[Hot-Plug]: CPU%u is stressed, "
+						"considering boosting CPU%u \n", 
+						cpu, (cpu + 2));
+
+				set_cpu_up(cpu + 2);
+				return;
 			}
+		}
 
-	}
-	else {
+	} else {
 		if (hot_data->counter[cpu] > 0)
 			hot_data->counter[cpu]--;
 	}	
@@ -233,9 +235,9 @@ static void put_cpu_down(int cpu)
 		}
 	}
 
-#ifdef FALCON_DEBUG						
-	printk("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
-#endif	
+	if (hot_data->debug)						
+		pr_info("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
+
 	cpu_down(current_cpu);
 	hot_data->cpu_load_stats[current_cpu] = 0;
 	hot_data->timestamp = jiffies;
@@ -290,10 +292,8 @@ static void suspend_func(struct work_struct *work)
 
 	hot_data->online_cpus = num_online_cpus();
 
-#ifdef FALCON_DEBUG
-	pr_info("[Hot-Plug]: Early Suspend stopping Hotplug work. CPUs online: %d\n", hot_data->online_cpus);
-#endif
-    
+	if (hot_data->debug)
+		pr_info("[Hot-Plug]: Early Suspend stopping Hotplug work. CPUs online: %d\n", hot_data->online_cpus);
 }
 
 static void resume_func(struct work_struct *work)
@@ -307,9 +307,9 @@ static void resume_func(struct work_struct *work)
 	hot_data->counter[0] = 0;
 	hot_data->counter[1] = 0;
 
-#ifdef FALCON_DEBUG
-	pr_info("[Hot-Plug]: Late Resume starting Hotplug work. CPUs online: %d\n", hot_data->online_cpus);
-#endif
+	if (hot_data->debug)
+		pr_info("[Hot-Plug]: Late Resume starting Hotplug work. CPUs online: %d\n", hot_data->online_cpus);
+
 	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(hot_data->hotplug_sampling * HZ));
 }
 
@@ -437,6 +437,27 @@ static ssize_t store_low_latency(struct kobject *kobj,
 static struct global_attr low_latency_attr = __ATTR(low_latency, 0664,
 					show_low_latency, store_low_latency);
 
+static ssize_t show_debug(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", hot_data->debug);
+}
+
+static ssize_t store_debug(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	unsigned int val;
+
+	sscanf(buf, "%u", &val);
+
+	hot_data->debug = val;
+	return count;
+}
+
+static struct global_attr debug_attr = __ATTR(debug, 0664,
+					show_debug, store_debug);
+
 static struct attribute *falcon_hotplug_attributes[] = 
 {
 	&hotplug_sampling_rate_attr.attr,
@@ -444,6 +465,7 @@ static struct attribute *falcon_hotplug_attributes[] =
 	&min_online_time_attr.attr,
 	&all_cpus_threshold_attr.attr,
 	&low_latency_attr.attr,
+	&debug_attr.attr,
 	NULL
 };
 
@@ -457,9 +479,7 @@ static struct kobject *hotplug_control_kobj;
 int __init falcon_hotplug_init(void)
 {
 	int ret;
-#ifdef FALCON_DEBUG
-	pr_info("[Hot-Plug]: Falcon Hotplug driver started.\n");
-#endif
+
 	hot_data = kzalloc(sizeof(*hot_data), GFP_KERNEL);
 	if (!hot_data)
 		return -ENOMEM;
@@ -469,6 +489,10 @@ int __init falcon_hotplug_init(void)
 	hot_data->single_cpu_threshold = DEFAULT_FIRST_LEVEL;
 	hot_data->all_cpus_threshold = DEFAULT_SECOND_LEVEL;
 	hot_data->low_latency = false;
+	hot_data->debug = false;
+
+	if (hot_data->debug)
+		pr_info("[Hot-Plug]: Falcon Hotplug driver started.\n");
 
 	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
 	if (!hotplug_control_kobj) {
@@ -509,6 +533,6 @@ int __init falcon_hotplug_init(void)
 MODULE_AUTHOR("Francisco Franco <franciscofranco.1990@gmail.com>, "
 	      "Alexander Christ <alex.christ@hotmail.de");
 MODULE_DESCRIPTION("Simple SMP hotplug driver");
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPLv2");
 
 late_initcall(falcon_hotplug_init);
