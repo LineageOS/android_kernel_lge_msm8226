@@ -40,8 +40,11 @@
 			revision = "rev_e...";
 			status = "ok";
 
-			atmel,fw_name = "atmel/E2A47P2_1_05.fw";
+			atmel,t15_key_array = <0 0 1 0>;
+			atmel,fw_name = "atmel/E2A47P2_2_07.fw";
 			atmel,panel_check = <0>;
+			atmel,ghost_detection_enable = <1>;
+			atmel,butt_check_enable = <1>;
 		};
 
 		lge_touch@48 {

@@ -4993,7 +4993,8 @@ static void __exit mxt_exit(void)
 		destroy_workqueue(touch_wq);
 }
 
-module_init(mxt_init);
+//module_init(mxt_init);
+late_initcall(mxt_init);
 module_exit(mxt_exit);
 
 /* Module information */

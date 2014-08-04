@@ -115,7 +115,14 @@ ifeq ($(CONFIG_MACH_LGE),y)
 		msm8226-w7_open_eu_v1.dtb \
 		msm8226-w7_open_eu_v2.dtb \
 		msm8226-w7_tmo_us_v1.dtb \
-		msm8226-w7_tmo_us_v2.dtb
+		msm8226-w7_tmo_us_v2.dtb \
+		msm8226-w7dsn_global_com_v1.dtb \
+		msm8226-w7dsn_global_com_v2.dtb \
+		msm8226-w7dsn_global_com_v1.dtb \
+		msm8226-w7dsn_global_com_v2.dtb \
+		msm8226-w7n_global_sca_v1.dtb \
+		msm8226-w7n_global_sca_v2.dtb
+
 else # not CONFIG_MACH_LGE
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-sim.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-fluid.dtb

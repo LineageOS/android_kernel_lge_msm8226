@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Samsung Electronics Co.Ltd
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
- * Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute  it and/or modify it
  * under  the terms of  the GNU General  Public License as published by the
@@ -882,7 +882,7 @@ static void mxt_input_report(struct mxt_data *data, int single_id)
 		status = MXT_RELEASE;
 	}
 
-	if ((status != MXT_RELEASE) && status) {
+	if (status != MXT_RELEASE) {
 		input_report_abs(input_dev, ABS_X, finger[single_id].x);
 		input_report_abs(input_dev, ABS_Y, finger[single_id].y);
 		input_report_abs(input_dev,
@@ -2049,17 +2049,14 @@ static ssize_t mxt_secure_touch_show(struct device *dev,
 	return scnprintf(buf, PAGE_SIZE, "%u", val);
 }
 
-static DEVICE_ATTR(secure_touch_enable, S_IRUGO | S_IWUSR | S_IWGRP ,
-			 mxt_secure_touch_enable_show,
-			 mxt_secure_touch_enable_store);
-static DEVICE_ATTR(secure_touch, S_IRUGO, mxt_secure_touch_show, NULL);
+static DEVICE_ATTR(secure_touch_enable, 0666, mxt_secure_touch_enable_show,
+	mxt_secure_touch_enable_store);
+static DEVICE_ATTR(secure_touch, 0444, mxt_secure_touch_show, NULL);
 #endif
 
-static DEVICE_ATTR(object, S_IRUGO, mxt_object_show, NULL);
-static DEVICE_ATTR(update_fw, S_IWUSR | S_IWGRP , NULL, mxt_update_fw_store);
-static DEVICE_ATTR(force_cfg_update, S_IWUSR | S_IWGRP ,
-			 NULL,
-			 mxt_force_cfg_update_store);
+static DEVICE_ATTR(object, 0444, mxt_object_show, NULL);
+static DEVICE_ATTR(update_fw, 0664, NULL, mxt_update_fw_store);
+static DEVICE_ATTR(force_cfg_update, 0664, NULL, mxt_force_cfg_update_store);
 
 static struct attribute *mxt_attrs[] = {
 	&dev_attr_object.attr,
@@ -2549,15 +2546,6 @@ static const struct dev_pm_ops mxt_pm_ops = {
 	.suspend	= mxt_suspend,
 	.resume		= mxt_resume,
 #endif
-};
-#else
-static int mxt_suspend(struct device *dev)
-{
-	return 0;
-};
-static int mxt_resume(struct device *dev)
-{
-	return 0;
 };
 #endif
 

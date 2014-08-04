@@ -571,7 +571,7 @@ void mxt_patch_dump_source(struct mxt_data *data, bool do_action)
 {
 	if (do_action) {
 		__mxt_patch_debug(data, "TA:%d FCNT:%d AREA:%d AMP:%d"
-			" SUM:%d TCH:%d ATCH:%d KCNT:%d KVAL:%d S:%d U1:%d U2:%d U3:%d U4:%d U5:%d Charger : %d\n",
+			" SUM:%d TCH:%d ATCH:%d KCNT:%d KVAL:%d S:%d U1:%d U2:%d U3:%d U4:%d U5:%d U6:%d U7:%d Charger : %d\n",
 			data->patch.src_item[1], data->patch.src_item[2],
 			data->patch.src_item[3], data->patch.src_item[4],
 			data->patch.src_item[5], data->patch.src_item[6],
@@ -579,7 +579,8 @@ void mxt_patch_dump_source(struct mxt_data *data, bool do_action)
 			data->patch.src_item[9], data->patch.src_item[10],
 			data->patch.src_item[11], data->patch.src_item[12],
 			data->patch.src_item[13], data->patch.src_item[14],
-			data->patch.src_item[15], data->charging_mode);
+			data->patch.src_item[15], data->patch.src_item[16],
+			data->patch.src_item[17], data->charging_mode);
 	}
 }
 
@@ -883,10 +884,10 @@ static int mxt_patch_parse_header(struct mxt_data *data, u8* ppatch, u16* pstage
 	}
 
 	if (ppheader->size != ulpos) { /* Patch Size Check */
-		__mxt_patch_debug(data, "PATCH SIZE ERROR %d != %d\n\n", ppheader->size, ulpos);
+		TOUCH_PATCH_INFO_MSG("Size Error %d != %d \n", ppheader->size, ulpos);
 		return 0;
 	} else{
-		__mxt_patch_debug(data, "PATCH SIZE OK= %d\n\n", ulpos);
+		TOUCH_PATCH_INFO_MSG("Size OK= %d \n", ulpos);
 	}
 
 	return ulpos;
@@ -1010,6 +1011,8 @@ static void mxt_patch_init_tsrc(struct test_src* tsrc)
 	tsrc->user3 = t255_user[2];
 	tsrc->user4 = t255_user[3];
 	tsrc->user5 = t255_user[4];
+	tsrc->user6 = t255_user[5];
+	tsrc->user7 = t255_user[6];
 }
 
 static int mxt_patch_make_source(struct mxt_data *data, struct test_src* tsrc)
@@ -1044,6 +1047,11 @@ static int mxt_patch_make_source(struct mxt_data *data, struct test_src* tsrc)
 		data->patch.src_item[MXT_PATCH_ITEM_USER4] = tsrc->user4;
 	if (tsrc->user5 >= 0)
 		data->patch.src_item[MXT_PATCH_ITEM_USER5] = tsrc->user5;
+	//if (tsrc->user7 >= 0)
+	//	data->patch.src_item[MXT_PATCH_ITEM_USER7] = tsrc->user7;
+	/* using err_cnt for reference */
+	//if (tsrc->user6 >= 0)
+	//	data->patch.src_item[MXT_PATCH_ITEM_USER6] = tsrc->user6;
 
 	//mxt_patch_dump_source(data, true);
 
@@ -1099,12 +1107,20 @@ static int mxt_patch_test_trigger(struct mxt_data *data, struct mxt_message *mes
 
 int mxt_patch_event(struct mxt_data *data, u8 event_id)
 {
-	u8* ppatch = data->patch.patch;
-	u16* pevent_addr = data->patch.event_addr;
+	u8* ppatch = NULL;
+	u16* pevent_addr = NULL;
 
 	TOUCH_INFO_MSG("Patch event %d\n", event_id);
 
-	if (!data || !ppatch || !pevent_addr) {
+	if (!data) {
+		TOUCH_PATCH_INFO_MSG("%s addr is null\n", __func__);
+		return 1;
+	}
+
+	ppatch = data->patch.patch;
+	pevent_addr = data->patch.event_addr;
+
+	if (!ppatch || !pevent_addr) {
 		TOUCH_PATCH_INFO_MSG("%s addr is null\n", __func__);
 		return 1;
 	}
@@ -1370,9 +1386,9 @@ int mxt_patch_init(struct mxt_data *data, u8* ppatch)
 {
 	struct mxt_patch *patch_info = &data->patch;
 	struct patch_header *ppheader = NULL;
-	u16 stage_addr[32] = {0};
-	u16 trigger_addr[32] = {0};
-	u16 event_addr[32] = {0};
+	u16 stage_addr[64] = {0};
+	u16 trigger_addr[64] = {0};
+	u16 event_addr[64] = {0};
 	u32 patch_size = 0;
 
 	TOUCH_PATCH_INFO_MSG("%s \n", __func__);

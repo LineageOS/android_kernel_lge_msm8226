@@ -35,6 +35,8 @@
 #define NODE_PER_PAGE		64
 #define DATA_PER_NODE		2
 
+#define MS_TO_NS(x)		(x * 1E6L)
+
 /* Diagnostic command defines  */
 #define MXT_DIAG_PAGE_UP		0x01
 #define MXT_DIAG_PAGE_DOWN		0x02
@@ -79,6 +81,7 @@
 #define MXT_GLOVEDETECTION_T78				78
 #define MXT_RETRANSMISSIONCOMPENSATION_T80		80
 #define MXT_PROCI_GESTUREPROCESSOR_T84			84
+#define MXT_PROCI_TOUCH_SEQUENCE_LOGGER_T93		93
 #define MXT_PROCI_SCHNOISESUPPRESSION_T103	103
 #define MXT_SPT_COMMSCONFIG_T18		18
 #define MXT_SPT_GPIOPWM_T19		19
@@ -134,8 +137,10 @@
 #define MXT_POWER_CFG_DEEPSLEEP		1
 
 /* MXT_TOUCH_MULTI_T9 field */
+#define MXT_T9_TCHDI		8
 #define MXT_T9_ORIENT		9
 #define MXT_T9_RANGE		18
+#define MXT_T9_JUMPLIMIT	30
 
 /* MXT_TOUCH_MULTI_T9 status */
 #define MXT_T9_UNGRIP		(1 << 0)
@@ -164,6 +169,10 @@
 /* Define for MXT_PROCI_TOUCHSUPPRESSION_T42 */
 #define MXT_T42_MSG_TCHSUP	(1 << 0)
 
+#define UDF_MESSAGE_COMMAND 50
+#define MAX_POINT_SIZE_FOR_LPWG 10
+#define MAX_T37_MSG_SIZE	9
+
 /* Delay times */
 #define MXT_BACKUP_TIME		20	/* msec */
 #define MXT_RESET_TIME		30	/* msec */
@@ -175,6 +184,7 @@
 #define MXT_REGULATOR_DELAY	150	/* msec */
 #define MXT_POWERON_DELAY	150	/* msec */
 #define MXT_SELFTEST_TIME	3000	/* msec */
+#define MXT_WAITED_UDF_TIME 200 /* msec */
 
 /* Command to unlock bootloader */
 #define MXT_UNLOCK_CMD_MSB	0xaa
@@ -202,12 +212,24 @@
 #define MXT_STATE_MOVE                       3
 
 #define MXT_MAX_KEY			4
-#define MXT_MAX_FINGER			10
+#define MXT_MAX_FINGER			8
 #define MXT_MAX_FW_PATH			30
 #define MXT_DISALEEVT_VALUE		0x33
 
 #define TOUCHEVENTFILTER	0
 
+#if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
+#define CHARGER_PLUGGED             0
+#define CHARGER_UNplugged           1
+#define DEEP_SLEEP_WAKEUP			2
+
+#define CHARGER_KNOCKON_SLEEP     	3
+#define CHARGER_KNOCKON_WAKEUP   	4
+#define NOCHARGER_KNOCKON_SLEEP   	5
+#define NOCHARGER_KNOCKON_WAKEUP	6
+
+#define PATCH_EVENT_PAIR_NUM 4
+#else
 /* patch Event */
 #define CHARGER_PLUGGED             0
 #define CHARGER_UNplugged            1
@@ -216,6 +238,7 @@
 #define NOCHARGER_KNOCKON_SLEEP   4
 #define NOCHARGER_KNOCKON_WAKEUP	5
 #define DEEP_SLEEP_WAKEUP			6
+#endif
 
 #define MXT_INFOMATION_BLOCK_SIZE		7
 #define MXT_OBJECT_TABLE_ELEMENT_SIZE	6
@@ -226,7 +249,7 @@
 #define POWERLOCK_FW_UP		(0x01 << 1)
 #define POWERLOCK_SYSFS		(0x01 << 2)
 
-#define SELF_DIAGNOSTIC_FILE_PATH "/data/touch_self_test.txt"
+#define SELF_DIAGNOSTIC_FILE_PATH "/mnt/sdcard/touch_self_test.txt"
 #define SELF_DIAGNOSTIC_STATUS_COMPLETE	0
 #define SELF_DIAGNOSTIC_STATUS_RUNNING	1
 
@@ -248,6 +271,78 @@ enum {
 	POWER_WAKE
 };
 
+
+enum{
+	TIME_EX_INIT_TIME,
+	TIME_EX_FIRST_INT_TIME,
+	TIME_EX_T72_NOISE_INT_TIME,
+	TIME_EX_CURR_INT_TIME,
+	TIME_EX_GHOST_INT_TIME,
+	TIME_EX_PROFILE_MAX,
+};
+
+enum{
+	NEED_TO_OUT	= 101,
+	NEED_TO_INIT,
+};
+
+enum{
+	JITTER_VALUE,
+	GHOST_DETECT_LIMIT_TIME,
+	GHOST_DETECT_X,
+	LIMIT_OF_Z,
+	LIMIT_OF_COUNT,
+	CAL_OF_TIME,
+	PALM_CAL_TIME,
+	GHOST_DETECTION_VALUE_MAX,
+};
+
+enum{
+    LPWG_READ = 1,
+    LPWG_ENABLE,
+    LPWG_LCD_X,
+    LPWG_LCD_Y,
+    LPWG_ACTIVE_AREA_X1,
+    LPWG_ACTIVE_AREA_X2,
+    LPWG_ACTIVE_AREA_Y1,
+    LPWG_ACTIVE_AREA_Y2,
+    LPWG_TAP_COUNT,
+    LPWG_REPLY,
+    LPWG_LENGTH_BETWEEN_TAP,
+    LPWG_EARLY_MODE,
+    LPWG_ENABLED_BY_PROXI,
+};
+
+enum{
+    LPWG_NONE = 0,
+    LPWG_DOUBLE_TAP,
+    LPWG_MULTI_TAP,
+};
+
+enum{
+	IDLE_STATE,
+	HW_RESET_STATE,
+};
+
+typedef enum error_type {
+    NO_ERROR = 0,
+    ERROR,
+    IGNORE_EVENT,
+    IGNORE_EVENT_BUT_SAVE_IT,
+} err_t;
+
+struct point
+{
+	int x;
+	int y;
+};
+
+enum{
+	INCOMING_CALL_IDLE,
+	INCOMING_CALL_RINGING,
+	INCOMING_CALL_OFFHOOK,
+};
+
 /* The platform data for the Atmel maXTouch touchscreen driver */
 struct mxt_platform_data {
 	size_t config_array_size;
@@ -255,10 +350,13 @@ struct mxt_platform_data {
 	int   max_x;    /* The default reported X range   */
 	int   max_y;    /* The default reported Y range   */
 	bool i2c_pull_up;
-	unsigned long irqflags;
 	int t15_num_keys;
 	unsigned int t15_keystate[MXT_MAX_KEY];
+	unsigned int t15_key_array_x[MXT_MAX_KEY];
+	unsigned int t15_key_array_y[MXT_MAX_KEY];
 	unsigned int t15_extra_keystate[MXT_MAX_KEY];
+	unsigned int t15_extra_key_array_x[MXT_MAX_KEY];
+	unsigned int t15_extra_key_array_y[MXT_MAX_KEY];
 	unsigned int t15_keymap[MXT_MAX_KEY];
 	unsigned long gpio_reset;
 	unsigned long gpio_int;
@@ -268,9 +366,20 @@ struct mxt_platform_data {
 	const char *extra_fw_name;
 	unsigned char auto_fw_update;
 	char knock_on_type;
+	unsigned int lcd_x;
+	unsigned int lcd_y;
 	int global_access_pixel;
+	u8 use_mfts;
 	u8 fw_ver[2];
 	u8 product[10];
+	unsigned int diff_scaling;
+	unsigned int time_reset_threshold;
+	unsigned int time_reset_error_node_chk;
+	unsigned int ghost_detection_enable;
+	unsigned int ghost_detection_value[GHOST_DETECTION_VALUE_MAX];
+	unsigned int ref_reg_weight_val;
+	unsigned int butt_check_enable;
+	u8 error_check_count[5];
 };
 
 struct mxt_finger {
@@ -360,6 +469,29 @@ struct mxt_fw_info {
 	struct mxt_data *data;
 };
 
+/*Reference Check*/
+struct mxt_channel_size{
+	u8 start_x;
+	u8 start_y;
+	u8 size_x;
+	u8 size_y;
+};
+
+struct mxt_ref_limit{
+	u8 ref_chk_using;
+	u8 ref_x_all_err_line;
+	u8 ref_y_all_err_line;
+	u8 xline_max_err_cnt;
+	u8 yline_max_err_cnt;
+	u8 err_weight;
+	u8 ref_rng_limit;
+	u8 ref_diff_max;
+	u8 ref_err_cnt;
+	s8 y_line_dif[14];
+	s8 butt_dif[3];
+	u8 diff_scaling;
+};
+
 struct mxt_patch{
 	u8* patch;
 	u16* stage_addr;
@@ -397,6 +529,54 @@ struct mxt_reportid {
 	u8 index;
 };
 
+struct t_data
+{
+	u16	id;
+	u16	x_position;
+	u16	y_position;
+	u16	width_major;
+	u16	width_minor;
+	u16	width_orientation;
+	u16	pressure;
+	u8	status;
+};
+
+struct b_data
+{
+	u16	key_code;
+	u16	state;
+};
+
+struct touch_data
+{
+	u8		total_num;
+	u8		prev_total_num;
+	u8		touch_count;
+	u8		state;
+	u8		palm;
+	u8		prev_palm;
+	struct t_data	curr_data[MXT_MAX_FINGER];
+	struct t_data	prev_data[MXT_MAX_FINGER];
+	struct b_data	curr_button;
+	struct b_data	prev_button;
+};
+
+struct quickcover_size
+{
+	int x_max;
+	int y_max;
+	int x_min;
+	int y_min;
+};
+
+struct hw_reset_data
+{
+	u16 x_position;
+	u16 y_position;
+	u8 state;
+	u8 total_num;
+};
+
 /* Each client has this additional data */
 struct mxt_data {
 	struct i2c_client *client;
@@ -406,10 +586,12 @@ struct mxt_data {
 	struct mxt_object *object_table;
 	struct mxt_reportid *reportids;
 	struct mxt_info *info;
+	struct mxt_fw_info fw_info;
 	void *raw_info_block;
 	unsigned int irq;
 	unsigned int max_x;
 	unsigned int max_y;
+	unsigned int bad_sample;
 	bool in_bootloader;
 	u16 mem_size;
 
@@ -427,7 +609,6 @@ struct mxt_data {
 	u8 last_message_count;
 	u8 num_touchids;
 	unsigned long t15_keystatus;
-	bool use_retrigen_workaround;
 	bool use_regulator;
 	u8 regulator_status;
 	struct regulator *vdd_ana;
@@ -466,6 +647,14 @@ struct mxt_data {
 	u16 T71_address;
 	u16 T72_address;
 
+	u16 T93_address;
+    u8 T93_reportid;
+	u8 g_tap_cnt;
+
+	struct mxt_channel_size channel_size;
+	struct mxt_ref_limit ref_limit;
+	u8 ref_chk;
+
 	/* for fw update in bootloader */
 	struct completion bl_completion;
 
@@ -481,11 +670,12 @@ struct mxt_data {
 	/* Enable reporting of input events */
 	bool enable_reporting;
 
+	struct touch_data			ts_data;
+
 	/* Indicates whether device is in suspend */
 	bool suspended;
 	struct mxt_raw_data *rawdata;
 	bool mxt_knock_on_enable;
-	bool mxt_character_enable;
 	bool self_test_result;
 	u8 self_test_status[4];
 	u8 self_test_result_status;
@@ -494,10 +684,43 @@ struct mxt_data {
 	struct mxt_finger fingers[MXT_MAX_FINGER];
 	bool	button_lock;
 	struct delayed_work	work_button_lock;
+	struct delayed_work	work_palm_unlock;
+	struct delayed_work	work_deepsleep;
+	u8	work_deepsleep_enabled;
+	u8 mfts_enable;
 	u8 charging_mode; /*Charger mode in patch*/
+	u8 palm;
+	u16 anti_touch_area;
+	int **full_cap;
+	int err_node_cnt;
+
+	/* qwindow_size */
+	u8 mxt_multi_tap_enable;
+	u8 lpwg_mode;
+
+	struct quickcover_size *qwindow_size;
+
+	struct hrtimer multi_tap_timer;
+	struct work_struct	multi_tap_work;
+
+	/* T71 tmp using before firmware change */
+	u8 t71_diff_using;
+	u8 t71_diff_val[32];
+
+	int incoming_call;
+	int lockscreen;
+	bool t72_noise_state;
+	u8 cal_cnt;
+	struct hw_reset_data reset;
+};
+
+struct tci_abs {
+	int x;
+	int y;
 };
 
 #define TOUCH_INFO_MSG(fmt, args...) 	printk(KERN_ERR "[Touch] " fmt, ##args)
+#define TOUCH_ERR_MSG(fmt, args...) printk(KERN_ERR "[Touch E] [%s %d] " fmt, __FUNCTION__, __LINE__, ##args)
 #define TOUCH_PATCH_INFO_MSG(fmt, args...) 	printk(KERN_ERR "[Touch Patch] " fmt, ##args)
 
 int fb_notifier_callback(struct notifier_block *self, unsigned long event, void *data);
@@ -509,5 +732,6 @@ int mxt_write_object(struct mxt_data *data, u8 type, u8 offset, u8 val);
 struct mxt_object *mxt_get_object(struct mxt_data *data, u8 type);
 int mxt_read_object(struct mxt_data *data, u8 type, u8 offset, u8 *val);
 int mxt_update_firmware(struct mxt_data *data, const char *fwname);
+int mxt_get_reference_chk(struct mxt_data *data);
 
 #endif /* __LINUX_ATMEL_MXT_TS_H__ */

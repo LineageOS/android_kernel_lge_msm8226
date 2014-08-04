@@ -957,82 +957,7 @@ static int RMI4WritePage(struct synaptics_fw_data *fw, struct synaptics_ts_data 
 
 	return ret;
 }
-#if 0
 
-static unsigned long ExtractLongFromHeader(const unsigned char* SynaImage)	/* Endian agnostic */
-{
-	return ((unsigned long)SynaImage[0] +
-			(unsigned long)SynaImage[1] * 0x100 +
-			(unsigned long)SynaImage[2] * 0x10000 +
-			(unsigned long)SynaImage[3] * 0x1000000);
-}
-
-static int RMI4ReadFirmwareHeader(struct synaptics_fw_data *fw, struct synaptics_ts_data *ts)
-{
-	int ret = 0;
-	unsigned long checkSumCode = 0;
-
-	if (touch_debug_mask & DEBUG_FW_UPGRADE)
-		TOUCH_DEBUG_MSG("RMI4ReadFirmwareHeader start\n");
-
-	fw->m_fileSize = fw->image_size;
-
-	checkSumCode = ExtractLongFromHeader(&(fw->image_bin[0]));
-	fw->m_bootloadImgID = (unsigned int)fw->image_bin[4] + (unsigned int)fw->image_bin[5] * 0x100;
-	fw->m_firmwareImgVersion = fw->image_bin[31];
-	fw->m_firmwareImgSize = ExtractLongFromHeader(&(fw->image_bin[8]));
-	fw->m_configImgSize = ExtractLongFromHeader(&(fw->image_bin[12]));
-
-	if (touch_debug_mask & DEBUG_FW_UPGRADE) {
-		TOUCH_DEBUG_MSG("Target = %s, ", &fw->image_bin[16]);
-		TOUCH_DEBUG_MSG("Cksum = 0x%lX, Id = 0x%X, Ver = %d, FwSize = 0x%lX, ConfigSize = 0x%lX \n",
-				checkSumCode, fw->m_bootloadImgID, fw->m_firmwareImgVersion, fw->m_firmwareImgSize, fw->m_configImgSize);
-	}
-
-#if !defined(TEST_WRONG_CHIPSET_FW_FORCE_UPGRADE)
-	/* Check prpoer FW */
-	if (strncmp(ts->fw_info->fw_image_product_id , &fw->image_bin[16], 10)) {
-		printk(KERN_INFO "[Touch E] IC = %s, Firmware Target = %s\n ", ts->fw_info->fw_image_product_id, &fw->image_bin[16]);
-		printk(KERN_INFO "[Touch E] WARNING - Firmware is mismatched with Touch IC\n");
-		printk(KERN_INFO "[Touch E] Firmware upgrade stop\n");
-		return -ENODEV;
-	}
-#endif
-
-	ret = RMI4ReadFirmwareInfo(fw, ts);	/* Determine firmware organization - read firmware block size and firmware size */
-	if (ret < 0) {
-		TOUCH_ERR_MSG("Config info. read fail\n");
-		return ret;
-	}
-
-	RMI4CalculateChecksum((unsigned short*)&(fw->image_bin[4]),
-			(unsigned short)((fw->m_fileSize - 4) >> 1),
-			(unsigned long *)&fw->m_FirmwareImgFile_checkSum);
-
-	if (fw->m_fileSize != (0x100 + fw->m_firmwareImgSize + fw->m_configImgSize))
-		TOUCH_ERR_MSG("SynaFirmware[] size = 0x%lX, expected 0x%lX\n",
-				fw->m_fileSize, (0x100 + fw->m_firmwareImgSize + fw->m_configImgSize));
-
-	if (fw->m_firmwareImgSize != GetFirmwareSize(fw))
-		TOUCH_ERR_MSG("Firmware image size verfication failed, size in image 0x%lX did not match device size 0x%X\n",
-				fw->m_firmwareImgSize, GetFirmwareSize(fw));
-
-	if (fw->m_configImgSize != GetConfigSize(fw))
-		TOUCH_ERR_MSG("Configuration size verfication failed, size in image 0x%lX did not match device size 0x%X\n",
-				fw->m_configImgSize, GetConfigSize(fw));
-
-	fw->m_firmwareImgData = (unsigned char *)((&fw->image_bin[0]) + 0x100);
-	fw->m_configImgData = (unsigned char *)((&fw->image_bin[0]) + 0x100 + fw->m_firmwareImgSize);
-
-	ret = SynaReadRegister(ts->client, fw->m_uF34Reflash_FlashControl, &fw->m_uPageData[0], 1);
-	if (ret < 0) {
-		TOUCH_ERR_MSG("m_uF34Reflash_FlashControl read fail\n");
-		return ret;
-	}
-
-	return ret;
-}
-#endif
 static int RMI4isExpectedRegFormat(struct synaptics_fw_data *fw, struct synaptics_ts_data *ts)
 {
 	/* Flash Properties query 1: registration map format version 1
@@ -1136,13 +1061,7 @@ int FirmwareUpgrade(struct synaptics_ts_data *ts, struct firmware *fw_img)
 		TOUCH_ERR_MSG("Flash address setting fail\n");
 		goto exit_upgrade;
 	}
-/*
-	ret = RMI4ReadFirmwareHeader(fw, ts);
-	if (ret < 0) {
-		TOUCH_ERR_MSG("Firmware header read fail\n");
-		goto exit_upgrade;
-	}
-*/
+
 	ret = RMI4ProgramFirmware(fw, ts);					/* issues the "eraseAll" so must call before any write */
 	if (ret < 0) {
 		TOUCH_ERR_MSG("Program Firmware fail\n");

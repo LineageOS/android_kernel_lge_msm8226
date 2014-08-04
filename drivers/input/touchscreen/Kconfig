@@ -122,13 +122,6 @@ config TOUCHSCREEN_ATMEL_MXT
 	  To compile this driver as a module, choose M here: the
 	  module will be called atmel_mxt_ts.
 
-config TOUCHSCREEN_ATMEL_MAXTOUCH_TS
-	tristate "Atmel Maxtouch Touchscreen Family"
-	depends on I2C
-	help
-	  Say Y here if you have Atmel MaXTouch Touchscreen
-	  using i2c connected to your system.
-
 config TOUCHSCREEN_ATMEL_S336
 	tristate "Atmel mXT S336 I2C Touchscreen"
 	depends on I2C
@@ -136,6 +129,10 @@ config TOUCHSCREEN_ATMEL_S336
 	  Say Y here if you have Atmel mXT series I2C touchscreen,
 	  such as AT42QT602240/ATMXT224, connected to your system.
 
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_s336.
 
 config TOUCHSCREEN_AUO_PIXCIR
 	tristate "AUO in-cell touchscreen using Pixcir ICs"
@@ -1102,6 +1099,14 @@ config TOUCHSCREEN_LGE_TS_MISC
 	default n
 	help
 	 Say Y here if you use lge touch misc
+	 if unsure, say N
+
+config TOUCHSCREEN_LGE_LPWG
+	bool "LGE Touch LPWG feature"
+	depends on I2C
+	default n
+	help
+	 Say Y here if you use lge LPWG feature
 	 if unsure, say N
 
 config LGE_TOUCHSCREEN_SYNAPTIC

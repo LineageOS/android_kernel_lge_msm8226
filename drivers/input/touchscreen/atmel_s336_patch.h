@@ -30,7 +30,7 @@
 #define MXT_PATCH_MAX_CON		255
 #define MXT_PATCH_MAX_EVENT		255
 #define MXT_PATCH_MAX_MSG_SIZE		10
-#define MXT_PATCH_T71_DATA_MAX		70
+#define MXT_PATCH_T71_DATA_MAX		112
 #define MXT_PATCH_T71_PTN_OPT		1
 #define MXT_PATCH_T71_PTN_CAL		2
 #define MXT_PATCH_LOCK_CHECK		1
@@ -114,6 +114,8 @@ enum {
 	MXT_PATCH_ITEM_USER3,
 	MXT_PATCH_ITEM_USER4,
 	MXT_PATCH_ITEM_USER5,
+	MXT_PATCH_ITEM_USER6,
+	MXT_PATCH_ITEM_USER7,
 	//...
 	MXT_PATCH_ITEM_END
 };
@@ -248,6 +250,8 @@ struct test_src{
 	int	user3;
 	int	user4;
 	int	user5;
+	int	user6;
+	int	user7;
 };
 
 struct touch_pos{
