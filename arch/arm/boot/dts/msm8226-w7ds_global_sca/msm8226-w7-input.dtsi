@@ -54,11 +54,10 @@
 			atmel,t15_key_state = <1 2 4 8>;
 			atmel,t15_key_map = <158 172 139 249>;
 
-			atmel,fw_name = "atmel/E4A47P2_1_06.fw";
+			atmel,fw_name = "atmel/E4A47P2_1_05.fw";
 			atmel,panel_check = <1>;
 			atmel,t15_extra_key_state = <2 128 8 1>;
-			atmel,extra_fw_name = "atmel/E4A47P1_1_06.fw";
-			atmel,ghost_detection_enable = <1>;
+			atmel,extra_fw_name = "atmel/E4A47P1_1_05.fw";
 		};
 
 		lge_touch@48 {

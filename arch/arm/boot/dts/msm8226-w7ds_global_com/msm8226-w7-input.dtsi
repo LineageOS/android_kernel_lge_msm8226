@@ -53,15 +53,11 @@
 
 			atmel,t15_key_state = <1 2 4 8>;
 			atmel,t15_key_map = <158 172 139 249>;
-			atmel,t15_key_array = <0 0 1 0 2 0 3 0>;
 
-			atmel,fw_name = "atmel/E4A47P2_2_04.fw";
+			atmel,fw_name = "atmel/E4A47P2_1_05.fw";
 			atmel,panel_check = <1>;
 			atmel,t15_extra_key_state = <2 128 8 1>;
-			atmel,t15_extra_key_array = <11 0 8 0 4 0 1 0>;
-			atmel,extra_fw_name = "atmel/E4A47P1_2_04.fw";
-			atmel,ghost_detection_enable = <1>;
-			atmel,butt_check_enable = <1>;
+			atmel,extra_fw_name = "atmel/E4A47P1_1_05.fw";
 		};
 
 		lge_touch@48 {
