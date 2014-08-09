@@ -5105,7 +5105,7 @@ static int __init device_model_name(char *s)
 		return 1;
 	}
 
-	if (!strcmp(s,"LG-D415")) {
+	if (!strcmp(s,"LG-D415") || !strcmp(s,"LG-D405")) {
 		device_is_d415 = 1;
 	} else {
 		device_is_d415 = 0;
