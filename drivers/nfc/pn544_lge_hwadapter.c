@@ -1,6 +1,17 @@
 
 #include "pn544_lge_hwadapter.h"
 
+bool pn544_validate_boot_mode(void) {
+    enum lge_boot_mode_type boot_mode;
+    boot_mode = lge_get_boot_mode();
+	printk("pn544_probe() boot_mode : %d\n",boot_mode);
+    if (boot_mode == LGE_BOOT_MODE_NORMAL) {
+        printk("boot_mode :LGE_BOOT_MODE_NORMAL\n");
+        return false;
+    }
+    return true;
+}
+
 int pn544_get_hw_revision(void)
 {
 #if defined(CONFIG_LGE_NFC_HW_TI_OMAP4430)

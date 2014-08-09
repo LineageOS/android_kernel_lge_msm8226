@@ -1183,9 +1183,27 @@ static int mmc_sd_alive(struct mmc_host *host)
 /*
  * Card detection callback from host.
  */
+
+
+#ifdef CONFIG_MACH_LGE	
+extern int mmc_cd_get_status(struct mmc_host *host);
+extern bool mmc_gpio_irq_flag ;	
+#endif 
+
+
+#ifdef CONFIG_MACH_LGE	
+static int mmc_sd_detect(struct mmc_host *host)
+#else
 static void mmc_sd_detect(struct mmc_host *host)
+#endif 
+
 {
 	int err = 0;
+	int status=0;
+#ifdef CONFIG_MACH_LGE		
+	int return_value=0;
+#endif 
+
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
         int retries = 5;
 #endif
@@ -1216,7 +1234,8 @@ static void mmc_sd_detect(struct mmc_host *host)
 		break;
 	}
 	if (!retries) {
-#ifdef CONFIG_MACH_MSM8X10_W3DS_OPEN_SCA // Try re-init the card when card detection is failed. 
+#if defined(CONFIG_MACH_MSM8X10_W3DS_OPEN_SCA) || defined(CONFIG_LGE_REINIT_SDCARD_FOR_DETECT_FAIL)
+	// Try re-init the card when card detection is failed.
         pr_warning("%s(%s): Unable to re-detect card (%d)\n", __func__, mmc_hostname(host), err); 
         mmc_power_off(host); 
         usleep_range(5000, 5500); 
@@ -1242,6 +1261,27 @@ static void mmc_sd_detect(struct mmc_host *host)
 #else
 	err = _mmc_detect_card_removed(host);
 #endif
+#ifdef CONFIG_MACH_LGE	
+	//gpio int check && gpio  eject re-check ...	// 
+	 if(mmc_gpio_irq_flag )
+	 {
+		
+		status = mmc_cd_get_status(host);
+		pr_info("%s: mmc_gpio_status !!!!! %d\n" ,__func__,status ); 
+		
+			if(!status)  // active High / Low always Low when sdcard ejected ..
+			 {
+			 mmc_card_set_removed(host->card);;
+			 printk(KERN_ERR "%s(%s): re removed card 191919 active HIGH model (%d)\n",
+						 __func__, mmc_hostname(host), status);
+			 err = 1;
+			 return_value=1;
+			 }
+		
+	 }
+	 mmc_gpio_irq_flag=0;
+#endif 
+
 	mmc_release_host(host);
 
 	/*
@@ -1259,6 +1299,9 @@ static void mmc_sd_detect(struct mmc_host *host)
 		mmc_power_off(host);
 		mmc_release_host(host);
 	}
+#ifdef CONFIG_MACH_LGE
+	return return_value;
+#endif 
 }
 
 /*

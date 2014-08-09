@@ -95,12 +95,12 @@ void pn544_factory_standby_set(void)
     pn544_dev = i2c_get_clientdata(pn544_client);
     // 1. Go To Dnld mode 2
             
-    gpio_set_value(pn544_pData.ven_gpio, 1);
-    gpio_set_value(pn544_pData.firm_gpio, 1);
+    gpio_set_value(pn544_dev->ven_gpio, 1);
+    gpio_set_value(pn544_dev->firm_gpio, 1);
     msleep(10);
-    gpio_set_value(pn544_pData.ven_gpio, 0);
+    gpio_set_value(pn544_dev->ven_gpio, 0);
     msleep(10);
-    gpio_set_value(pn544_pData.ven_gpio, 1);
+    gpio_set_value(pn544_dev->ven_gpio, 1);
     msleep(10);
 
     // 2. I2c write
@@ -116,25 +116,25 @@ void pn544_factory_standby_set(void)
     dprintk("%s Go To PN544 reset\n", __func__);
            
     //--> # reset 1
-    gpio_set_value(pn544_pData.firm_gpio, 0);
-    gpio_set_value(pn544_pData.ven_gpio, 1);
+    gpio_set_value(pn544_dev->firm_gpio, 0);
+    gpio_set_value(pn544_dev->ven_gpio, 1);
     msleep(10);
                      
     //--> # reset 0   
-    gpio_set_value(pn544_pData.firm_gpio, 0);
-    gpio_set_value(pn544_pData.ven_gpio, 0);
+    gpio_set_value(pn544_dev->firm_gpio, 0);
+    gpio_set_value(pn544_dev->ven_gpio, 0);
     msleep(10);
 
     //--> # reset 1                              
-    gpio_set_value(pn544_pData.firm_gpio, 0);
-    gpio_set_value(pn544_pData.ven_gpio, 1);
+    gpio_set_value(pn544_dev->firm_gpio, 0);
+    gpio_set_value(pn544_dev->ven_gpio, 1);
     msleep(10);
 
            
     // 4. power off
     dprintk(PN544_DRV_NAME ":%s power off\n", __func__);
-    gpio_set_value(pn544_pData.firm_gpio, 0);
-    gpio_set_value(pn544_pData.ven_gpio, 0);
+    gpio_set_value(pn544_dev->firm_gpio, 0);
+    gpio_set_value(pn544_dev->ven_gpio, 0);
     msleep(10);
 }
 #elif defined(CONFIG_LGE_NFC_PN544_C3)
@@ -187,12 +187,12 @@ static int __pn544_kread(void *dev, unsigned int length)
     dprintk(PN544_DRV_NAME ":IRQ GPIO = %d\n", irq_gpio_val);
     if (irq_gpio_val == 0) {
         pn544_dev->irq_enabled = true;
-#ifdef READ_IRQ_MODIFY
+#ifdef LGE_NFC_READ_IRQ_MODIFY
         do_reading=0;//DY_TEST
 #endif
         enable_irq_wake(pn544_get_irq_pin(pn544_dev));
         enable_irq(pn544_get_irq_pin(pn544_dev));
-#ifdef READ_IRQ_MODIFY
+#ifdef LGE_NFC_READ_IRQ_MODIFY
         ret = wait_event_interruptible(pn544_dev->read_wq, do_reading);
 #else
         ret = wait_event_interruptible(pn544_dev->read_wq, gpio_get_value(pn544_dev->irq_gpio));
@@ -235,10 +235,10 @@ void pn544_factory_standby_set(void)
     pn544_dev = i2c_get_clientdata(pn544_client);
     // 1. Go To Dnld mode 2
     dprintk("%s Go To Dnld mode 2\n", __func__);
-    gpio_set_value(pn544_pData.ven_gpio, 0);
-    gpio_set_value(pn544_pData.firm_gpio, 0);
+    gpio_set_value(pn544_dev->ven_gpio, 0);
+    gpio_set_value(pn544_dev->firm_gpio, 0);
     msleep(10);
-    gpio_set_value(pn544_pData.ven_gpio, 1);
+    gpio_set_value(pn544_dev->ven_gpio, 1);
     msleep(10);
 
     // 2. I2c write

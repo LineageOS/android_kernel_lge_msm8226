@@ -968,7 +968,7 @@ static int mxt_get_cap_diff(struct mxt_data *data)
 	}
 
 	/* Key Button write to device */
-	if (object!=NULL) {
+        if (object!=NULL && data->pdata->butt_check_enable) {
 		for (i = 0; i < data->pdata->t15_num_keys-1; i++) {
 			b_diff = (data->full_cap[data->pdata->t15_key_array_x[i+1]][data->pdata->t15_key_array_y[i+1]] - \
 						data->full_cap[data->pdata->t15_key_array_x[i]][data->pdata->t15_key_array_y[i]]) / 8;
@@ -986,12 +986,12 @@ static int mxt_get_cap_diff(struct mxt_data *data)
 	for( y = 0; y < 14; y++) {
 		TOUCH_INFO_MSG("verify cap:diff Y%d Line, %d\n", y, (s8)buf_t71[y]);
 	}
-
-	ret = mxt_read_mem(data, object->start_address + 74, data->pdata->t15_num_keys - 1, diff_butt_ref);
-	for( i = 0; i < data->pdata->t15_num_keys - 1; i++) {
-		TOUCH_INFO_MSG("verify button cap:diff %d, %d\n", i, (s8)diff_butt_ref[i]);
-	}
-
+        if (data->pdata->butt_check_enable) {
+	    ret = mxt_read_mem(data, object->start_address + 74, data->pdata->t15_num_keys - 1, diff_butt_ref);
+	    for( i = 0; i < data->pdata->t15_num_keys - 1; i++) {
+		    TOUCH_INFO_MSG("verify button cap:diff %d, %d\n", i, (s8)diff_butt_ref[i]);
+	    }
+        }
 	// Manual Reference Check Uploading Byte Writing
 	ref_new_chk = 1;
 	ret = mxt_write_mem(data, object->start_address + 107, 1, &ref_new_chk);

@@ -3272,8 +3272,18 @@ void mmc_rescan(struct work_struct *work)
 	 */
 	if (host->bus_ops && host->bus_ops->detect && !host->bus_dead
 	    && !(host->caps & MMC_CAP_NONREMOVABLE))
-		host->bus_ops->detect(host);
-
+	{
+		
+	#ifdef CONFIG_MACH_LGE	
+		if(host->bus_ops->detect(host))
+		{
+			mmc_bus_put(host);
+			goto out;
+		}
+	#else
+	host->bus_ops->detect(host);
+	#endif 
+	}
 	host->detect_change = 0;
 	/* If the card was removed the bus will be marked
 	 * as dead - extend the wakelock so userspace
