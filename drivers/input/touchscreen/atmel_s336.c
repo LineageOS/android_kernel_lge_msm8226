@@ -5096,6 +5096,25 @@ static void mxt_input_close(struct input_dev *dev)
 	mxt_stop(data);
 }
 
+static int device_is_d415;
+
+static int __init device_model_name(char *s)
+{
+	if (s == NULL) {
+		device_is_d415 = 0;
+		return 1;
+	}
+
+	if (!strcmp(s,"LG-D415")) {
+		device_is_d415 = 1;
+	} else {
+		device_is_d415 = 0;
+	}
+
+	return 1;
+}
+__setup("model.name=", device_model_name);
+
 static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 {
 	struct device_node *node = dev->of_node;
@@ -5106,11 +5125,18 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 	u32 temp_val = 0;
 
 	TOUCH_INFO_MSG("%s\n", __func__);
-
+	
 	/* reset, irq gpio info */
 	if (node == NULL)
 		return -ENODEV;
 
+	/* Check if device D415/D405 */
+	if (device_is_d415) {
+		node = of_find_node_by_path("/soc/i2c@f9927000/atmel_s336_d415@4a");
+		printk("Use D405/415 touch params\n");
+	} else {
+		printk("Use D410 touch params\n");
+	}
 	pdata->gpio_reset= of_get_named_gpio_flags(node, "atmel,reset-gpio", 0, NULL);
 	if (pdata->gpio_reset)
 		TOUCH_INFO_MSG("DT : gpio_reset = %lu\n", pdata->gpio_reset);
