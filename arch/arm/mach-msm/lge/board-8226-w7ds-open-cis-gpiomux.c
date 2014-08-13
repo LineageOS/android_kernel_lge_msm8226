@@ -217,6 +217,10 @@ static int gpio_reserved_pin_rev_B[] = {
 	MSM8x26_GPIO_END // This is included to notify the end of reserved GPIO configuration.
 	};
 //Rev B +16, -17, -31, +67, +97, +98, -114
+static int gpio_reserved_pin_rev_E[] = {
+	2, 3, 5, 12, 13, 14, 15, 16, 34, 35, 49, 50, 51, 52, 56, 63, 64, 65, 67, 78, 80, 91, 92, 94, 97, 98, 104,
+	MSM8x26_GPIO_END // This is included to notify the end of reserved GPIO configuration.
+	};
 
 static struct gpiomux_setting reserved_pin_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -383,7 +387,14 @@ static struct gpiomux_setting atmel_reset_sus_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_NONE,
-	.dir = GPIOMUX_OUT_LOW,
+	.dir = GPIOMUX_IN,
+};
+
+static struct gpiomux_setting atmel_reserved_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
 };
 
 static struct msm_gpiomux_config msm_synaptics_configs[] __initdata = {
@@ -449,6 +460,13 @@ static struct msm_gpiomux_config msm_melfas_configs_rev_c[] __initdata = {
 
 static struct msm_gpiomux_config msm_atmel_configs_rev_e[] __initdata = {
 	{
+		.gpio = 16,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &atmel_reserved_cfg,
+			[GPIOMUX_SUSPENDED] = &atmel_reserved_cfg,
+		},
+	},
+	{
 		.gpio = 17,
 		.settings = {
 			[GPIOMUX_ACTIVE] = &atmel_chg_cfg,
@@ -460,6 +478,13 @@ static struct msm_gpiomux_config msm_atmel_configs_rev_e[] __initdata = {
 		.settings = {
 			[GPIOMUX_ACTIVE] = &atmel_reset_act_cfg,
 			[GPIOMUX_SUSPENDED] = &atmel_reset_sus_cfg,
+		},
+	},
+	{
+		.gpio = 116,
+		.settings = {
+			[GPIOMUX_ACTIVE] = &atmel_reserved_cfg,
+			[GPIOMUX_SUSPENDED] = &atmel_reserved_cfg,
 		},
 	},
 };
@@ -1162,6 +1187,93 @@ static struct msm_gpiomux_config gpio_func_logic_configs[] __initdata = {
 };
 #endif
 
+/* Applied Rev_E board changes */
+static struct gpiomux_setting pcb_indicator_active_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+
+static struct gpiomux_setting pcb_indicator_suspend_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+
+static struct msm_gpiomux_config pcb_indicator_configs[] __initdata = {
+	{
+		.gpio	   = 73,		/* PCB_INDICATOR_1 */
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &pcb_indicator_active_config,
+			[GPIOMUX_SUSPENDED]	= &pcb_indicator_suspend_config,
+		},
+	},
+	{
+		.gpio	   = 74,		/* PCB_INDICATOR_2 */
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &pcb_indicator_active_config,
+			[GPIOMUX_SUSPENDED]	= &pcb_indicator_suspend_config,
+		},
+	},
+	{
+		.gpio      = 0,			/* PCB_INDICATOR_3 */
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &pcb_indicator_active_config,
+			[GPIOMUX_SUSPENDED]	= &pcb_indicator_suspend_config,
+		},
+	},
+};
+
+static struct gpiomux_setting radiation_pwr_ant_active_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+
+static struct gpiomux_setting radiation_pwr_ant_suspend_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+
+static struct msm_gpiomux_config radiation_pwr_ant_configs[] __initdata = {
+	{
+		.gpio	   = 88,		/* RADIATION_PWR_ANT */
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &radiation_pwr_ant_active_config,
+			[GPIOMUX_SUSPENDED]	= &radiation_pwr_ant_suspend_config,
+		},
+	},
+};
+
+static struct gpiomux_setting vt_maker_id_active_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+
+static struct gpiomux_setting vt_maker_id_suspend_config = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_IN,
+};
+
+static struct msm_gpiomux_config vt_maker_id_configs[] __initdata = {
+	{
+		.gpio	   = 1,			/* VT_MAKER_ID */
+		.settings = {
+			[GPIOMUX_ACTIVE]	= &vt_maker_id_active_config,
+			[GPIOMUX_SUSPENDED]	= &vt_maker_id_suspend_config,
+		},
+	},
+};
+
 void __init msm8226_init_gpiomux(void)
 {
 	int rc;
@@ -1227,11 +1339,16 @@ void __init msm8226_init_gpiomux(void)
 		case HW_REV_C :
 		case HW_REV_D :
 		case HW_REV_E :
+            for ( gpio_index = 0 ; gpio_reserved_pin_rev_E[gpio_index] < MSM8x26_GPIO_END ; gpio_index++ ){
+				gpio_func_reserved_pin_config.gpio = gpio_reserved_pin_rev_E[gpio_index];
+				msm_gpiomux_install(&gpio_func_reserved_pin_config, 1);
+				}
+			break;
 		case HW_REV_1_0 :
 		case HW_REV_1_1 :
 		default :
-            for ( gpio_index = 0 ; gpio_reserved_pin_rev_B[gpio_index] < MSM8x26_GPIO_END ; gpio_index++ ){
-				gpio_func_reserved_pin_config.gpio = gpio_reserved_pin_rev_B[gpio_index];
+            for ( gpio_index = 0 ; gpio_reserved_pin_rev_E[gpio_index] < MSM8x26_GPIO_END ; gpio_index++ ){
+				gpio_func_reserved_pin_config.gpio = gpio_reserved_pin_rev_E[gpio_index];
 				msm_gpiomux_install(&gpio_func_reserved_pin_config, 1);
 				}
 			break;
@@ -1377,6 +1494,14 @@ void __init msm8226_init_gpiomux(void)
 		msm_gpiomux_install(usb_otg_sw_configs,
 					ARRAY_SIZE(usb_otg_sw_configs));
 #endif
+
+/* Applied Rev_E board changes */
+	if( hw_rev >= HW_REV_E )
+	{
+		msm_gpiomux_install(pcb_indicator_configs, ARRAY_SIZE(pcb_indicator_configs));
+		msm_gpiomux_install(radiation_pwr_ant_configs, ARRAY_SIZE(radiation_pwr_ant_configs));
+		msm_gpiomux_install(vt_maker_id_configs, ARRAY_SIZE(vt_maker_id_configs));
+	}
 }
 
 
