@@ -5153,8 +5153,8 @@ static void mxt_input_close(struct input_dev *dev)
 	mxt_stop(data);
 }
 
-static int device_is_d415;
-
+static int device_is_d415 = 0;
+/*
 static int __init device_model_name(char *s)
 {
        if (s == NULL) {
@@ -5171,7 +5171,7 @@ static int __init device_model_name(char *s)
        return 1;
 }
 __setup("model.name=", device_model_name);
-
+*/
 static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 {
 	struct device_node *node = dev->of_node;
