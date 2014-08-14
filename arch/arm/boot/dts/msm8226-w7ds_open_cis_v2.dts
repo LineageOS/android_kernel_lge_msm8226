@@ -14,7 +14,7 @@
 /include/ "msm8226-w7ds_open_cis/msm8226-w7.dtsi"
 
 / {
-	model = "Qualcomm MSM 8226v2 w7dsopencis";
+	model = "Qualcomm MSM 8226v2 w7dsopencis, Quarx2k Edition: https://github.com/Quarx2k";
 	compatible = "qcom,msm8226-w7dsopencis", "qcom,msm8226", "qcom,mtp";
 	qcom,board-id = <101 0>;
 };
