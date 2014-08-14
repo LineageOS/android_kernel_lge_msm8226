@@ -70,9 +70,9 @@ enum msm_camera_i2c_data_type {
 	MSM_CAMERA_I2C_SET_WORD_MASK,
 	MSM_CAMERA_I2C_UNSET_WORD_MASK,
 	MSM_CAMERA_I2C_SET_BYTE_WRITE_MASK_DATA,
-//                                                                                             
+//LGE_CHANGE_S: V3 HI351 Camera Bringup I2C speed up burst mode - hong.junki@lge.com 2012/10/05
         MSM_CAMERA_I2C_BURST_DATA,
-//                                                                                             
+//LGE_CHANGE_E: V3 HI351 Camera Bringup I2C speed up burst mode - hong.junki@lge.com 2012/10/05
 	MSM_CAMERA_I2C_DATA_TYPE_MAX,
 };
 
@@ -250,15 +250,15 @@ struct msm_camera_i2c_reg_setting {
 	enum msm_camera_i2c_reg_addr_type addr_type;
 	enum msm_camera_i2c_data_type data_type;
 	uint16_t delay;
-	uint16_t *value;	/*                                                            */
+	uint16_t *value;	/*LGE_CHANGE, add soc exif, 2013-10-04, kwangsik83.kim@lge.com*/
 };
 
-/*                                                                                                                   */
+/*LGE_CHANGE_E, this is for sending fps variables via Hal to Kernel as of integer, 2013-10-04, youngwook.song@lge.com*/
 struct msm_fps_range_setting{
    int32_t min_fps;
    int32_t max_fps;
 };
-/*                                                                                                                    */
+/*LGE_CHANGE_X, this is for sending fps variables via Hal to Kernel as of interger, 2013-10-04, youngwook.song@lge.com*/
 
 struct msm_camera_i2c_seq_reg_array {
 	uint16_t reg_addr;
@@ -361,6 +361,7 @@ struct msm_sensor_init_params {
 	enum camb_position_t position;
 	/* sensor mount angle */
 	uint32_t            sensor_mount_angle;
+	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
 };
 
 struct sensorb_cfg_data {
@@ -424,6 +425,7 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_SLAVE_INFO,
 	CFG_SLAVE_READ_I2C,
 	CFG_WRITE_I2C_ARRAY,
+    CFG_READ_I2C_ARRAY_LG,
 	CFG_SLAVE_WRITE_I2C_ARRAY,
 	CFG_WRITE_I2C_SEQ_ARRAY,
 	CFG_POWER_UP,
@@ -446,13 +448,13 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_WHITE_BALANCE,
 	CFG_SET_AUTOFOCUS,
 	CFG_CANCEL_AUTOFOCUS,
-	CFG_PAGE_MODE_READ_I2C_ARRAY,	/*                                                            */
-	CFG_SET_FRAMERATE_FOR_SOC,		/*                                                                     */
-/*                                                                              */
+	CFG_PAGE_MODE_READ_I2C_ARRAY,	/*LGE_CHANGE, add soc exif, 2013-10-04, kwangsik83.kim@lge.com*/
+	CFG_SET_FRAMERATE_FOR_SOC,		/*LGE_CHANGE, add Framerate for SoC, 2013-10-27, youngwook.song@lge.com*/
+/* LGE_CHANGE_S, Enable touch AE in soc sensor , 2013-11-12, dongsu.bag@lge.com */
 	CFG_SET_AEC_ROI,
 	CFG_SET_AWB_LOCK,
 	CFG_SET_AEC_LOCK,
-/*                                                                              */
+/* LGE_CHANGE_E, Enable touch AE in soc sensor , 2013-11-12, dongsu.bag@lge.com */
 };
 
 enum msm_actuator_cfg_type_t {

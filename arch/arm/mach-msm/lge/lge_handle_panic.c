@@ -102,7 +102,7 @@ void lge_set_restart_reason(unsigned int reason)
 }
 EXPORT_SYMBOL(lge_set_restart_reason);
 
-//                                              
+//[START] LGE Ram teset module .. p1_fs@lge.com 
 unsigned int set_ram_test_flag=0;
 static int set_ram_test(const char *val, struct kernel_param *kp)
 {
@@ -113,7 +113,7 @@ static int set_ram_test(const char *val, struct kernel_param *kp)
 	return 0;
 }
 module_param_call(set_ram_test, set_ram_test, param_get_bool, &dummy_arg,	S_IWUSR | S_IRUGO);
-//                                           
+//[END]LGE Ram teset module .. p1_fs@lge.com 
 
 static int gen_bug(const char *val, struct kernel_param *kp)
 {

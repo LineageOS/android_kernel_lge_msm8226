@@ -239,6 +239,57 @@ static struct msm_sensor_power_setting imx179_power_setting_rev_c[] = {
 		.delay = 0,
 	},
 };
+static struct msm_sensor_power_setting imx179_power_setting_rev_d[] = {
+	 /* Set GPIO_RESET to low to disable power on reset*/
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VDIG,
+		.config_val = 0,
+		.delay = 0,
+	},
+	{								//VANA, GPIO 62
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{								//VIO, GPIO 113
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VIO,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 2,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_STANDBY,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 30,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+};
 #else
 static struct msm_sensor_power_setting imx179_power_setting[] = {
 	 /* Set GPIO_RESET to low to disable power on reset*/
@@ -460,6 +511,64 @@ static struct msm_sensor_power_setting imx179_power_setting_rev_c[] = {
 		.delay = 0,
 	},
 };
+static struct msm_sensor_power_setting imx179_power_setting_rev_d[] = {
+	 /* Set GPIO_RESET to low to disable power on reset*/
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VDIG,
+		.config_val = 0,
+		.delay = 0,
+	},
+	/*CAM_VAF is added for Rev.B*/
+	{
+		.seq_type = SENSOR_VREG,        //added VAF on rev.b
+		.seq_val = CAM_VAF,
+		.config_val = 0,
+		.delay = 0,
+	},
+	{								//VANA, GPIO 62
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{								//VIO, GPIO 113
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VIO,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 2,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_STANDBY,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 30,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+};
 #endif
 
 static struct v4l2_subdev_info imx179_subdev_info[] = {
@@ -531,7 +640,7 @@ static int __init imx179_init_module(void)
 	pr_info("%s:%d\n", __func__, __LINE__);
 
       rev_type = lge_get_board_revno();
-#if 1//                         
+#if 1// defined(CONFIG_MACH_LGE)
 	switch(rev_type) {
 		case HW_REV_0:
 			pr_err("%s: Sensor power is set as Rev.0\n", __func__);
@@ -554,12 +663,19 @@ static int __init imx179_init_module(void)
 			imx179_s_ctrl.power_setting_array.power_setting = imx179_power_setting_rev_c;
 			imx179_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx179_power_setting_rev_c);
 			break;
+		case HW_REV_D:
+		       pr_err("%s: Sensor power is set as Rev.D\n", __func__);
+			imx179_s_ctrl.power_setting_array.power_setting = imx179_power_setting_rev_d;
+			imx179_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx179_power_setting_rev_d);
+			break;
 		default:
 			pr_err("%s: Sensor power is set as Default mode and Rev. %d\n", __func__,rev_type);
+			imx179_s_ctrl.power_setting_array.power_setting = imx179_power_setting_rev_d;
+			imx179_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx179_power_setting_rev_d);
 			break;
 	}
 #endif
-/*                                                                                                            */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.7.30, To separate power settings depending on HW revisions.,  [ENDS HERE] */
 
 	rc = platform_driver_probe(&imx179_platform_driver,
 		imx179_platform_probe);

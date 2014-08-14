@@ -556,6 +556,12 @@ config LGE_PM_CHARGING_TEMP_SCENARIO
 	help
 	  Say Y here to enable LGE Charging Temp Scenario
 
+config LGE_PM_VZW_CHARGING_TEMP_SCENARIO
+	bool "VZW Charging Temp Scenario"
+	depends on LGE_PM
+	help
+	  Say Y here to enable LGE Charging Temp Scenario
+
 config LGE_PM_BATTERY_PROFILE_DATA
 	bool "Apply battery profile data for W7"
 	depends on LGE_PM
@@ -655,5 +661,23 @@ config LGE_PM_WORKAROUND_PORT_OPEN_FAIL_IN_FACTORY_TEST
 	depends on LGE_PM
 	help
 	  This code is workaround code for OVD detection by USBIN Voltage in factory test
+	  
+config LGE_PM_BMS_FACTORY_TEST
+	bool "Workaround code for fuel gauge fail in factory test"
+	depends on LGE_PM
+	help
+	  This code is workaround code for fuel gauge fail in factory test.
+
+config LGE_USING_CHG_LED
+	bool "PM8226 LED Indicator is connected CHG_LED"
+	depends on LGE_PM
+	help
+	  Using CHG_LED
+
+config LGE_PM_BMS_CC_ACCURACY_PATCH
+	bool "Workaround code for cc accuracy problem after EOC with TA"
+	depends on LGE_PM
+	help
+	  This code is workaround code for cc accuracy problem after EOC with TA.
 
 endif # POWER_SUPPLY

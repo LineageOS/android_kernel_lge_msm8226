@@ -220,6 +220,7 @@
    interrupt-names = "hc_irq", "pwr_irq", "status_irq";
    cd-gpios = <&msmgpio 37 0x0>; /* card detect 1:Low-Active, 0:High-Active  */
 
+		revision = "rev_b...";
    status = "ok";
 };
 

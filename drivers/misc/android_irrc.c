@@ -291,7 +291,7 @@ struct miscdevice irrc_misc = {
 	.fops	= &IRRC_pcm_fops,
 };
 
-#ifdef CONFIG_DEBUG_FS //                             
+#ifdef CONFIG_DEBUG_FS //2013-07-08 beekay.lee@lge.com
 static struct dentry *debugfs_wcd9xxx_dent;
 static struct dentry *debugfs_poke;
 

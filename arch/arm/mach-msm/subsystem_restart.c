@@ -854,7 +854,7 @@ int subsys_modem_restart(void)
 	rsl = dev->restart_level;
 	dev->restart_level = RESET_SUBSYS_COUPLED;
 	subsys_set_crash_status(dev, true);
-	ignore_errors_by_subsys_modem_restart = true; //                         
+	ignore_errors_by_subsys_modem_restart = true; //dj.seo@lge.com , temp add
 	ret = subsystem_restart_dev(dev);
 	dev->restart_level = rsl;
 #ifdef CONFIG_MACH_LGE

@@ -243,5 +243,5 @@ int mms_100s_isc(struct mms_data *ts, struct touch_fw_info *info);
 int mms_100a_fw_upgrade(struct mms_data *ts, struct touch_fw_info *info);
 int mms_set_gpio_mode(struct touch_platform_data *pdata, int mode);
 int mms_power_ctrl(struct i2c_client* client, int power_ctrl);
-#endif //                
+#endif // LGE_TS_MELFAS_H
 

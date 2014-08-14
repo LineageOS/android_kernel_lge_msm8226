@@ -98,7 +98,7 @@ static int hi351_sysfs_add(struct kobject* kobj)
 static struct msm_sensor_ctrl_t hi351_s_ctrl;
 
 static struct msm_sensor_power_setting hi351_power_setting[] = {
-/*                                                                                  */
+/* LGE_CHANGE_E, Power Setting for TIM_BR Model, youngwook.song@lge.com, 2013.08.26 */
 #if defined(CONFIG_MACH_MSM8X10_W3C_TRF_US) || \
 	defined(CONFIG_MACH_MSM8X10_W3C_VZW)
 	{
@@ -156,7 +156,7 @@ static struct msm_sensor_power_setting hi351_power_setting[] = {
 		.delay = 20,
 	},
 
-/*                                                                                  */
+/* LGE_CHANGE_X, Power Setting for TIM_BR Model, youngwook.song@lge.com, 2013.08.26 */
 #else
 	{
 		.seq_type = SENSOR_GPIO,
@@ -207,9 +207,9 @@ static struct msm_sensor_power_setting hi351_power_setting[] = {
 		.delay = 20,
 	},
 
-/*                                                                                  */
+/* LGE_CHANGE_E, Power Setting for VZW_US Model, youngwook.song@lge.com, 2013.08.26 */
 #endif
-/*                                                                                  */
+/* LGE_CHANGE_X, Power Setting for VZW_US Model, youngwook.song@lge.com, 2013.08.26 */
 };
 
 static struct msm_camera_i2c_conf_array hi351_init_conf[] = {
@@ -363,7 +363,7 @@ static struct platform_driver hi351_platform_driver = {
 	},
 };
 
-/*                                                                                            */
+/* LGE_CHANGE_E, To make short for init. register setting, youngwook.song@lge.com, 2013.08.29 */
 
 static int32_t msm_camera_qup_i2c_txdata(
 	struct msm_camera_i2c_client *dev_client, unsigned char *txdata,
@@ -496,7 +496,7 @@ static void hi351_i2c_write_table(struct msm_sensor_ctrl_t *s_ctrl,
 	}
 }
 
-/*                                                                                            */
+/* LGE_CHANGE_X, To make short for init. register setting, youngwook.song@lge.com, 2013.08.29 */
 
 static int32_t hi351_platform_probe(struct platform_device *pdev)
 {
@@ -504,13 +504,13 @@ static int32_t hi351_platform_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 	printk("%s, E.", __func__);
 	match = of_match_device(hi351_dt_match, &pdev->dev);
-/*                                                    */
+/* LGE_CHANGE_S : WBT, 2013-5-31, jonghwan.ko@lge.com */
 		if(!match)
 		{
 			  pr_err(" %s failed ",__func__);
 			  return -ENODEV;
 		 }
-/*                                                    */
+/* LGE_CHANGE_E : WBT, 2013-5-31, jonghwan.ko@lge.com */
 	rc = msm_sensor_platform_probe(pdev, match->data);
 	return rc;
 }
@@ -538,7 +538,7 @@ static void __exit hi351_exit_module(void)
 	return;
 }
 
-/*                                                                                  */
+/* LGE_CHANGE_E, Kernel Driver Modifying on MR2, youngwook.song@lge.com, 2013.08.29 */
 static int32_t hi351_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	int32_t rc = 0;
@@ -561,7 +561,7 @@ static int32_t hi351_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	}
 	return rc;
 }
-/*                                                                                  */
+/* LGE_CHANGE_X, Kernel Driver Modifying on MR2, youngwook.song@lge.com, 2013.08.29 */
 #if 0
 static void hi351_set_stauration(struct msm_sensor_ctrl_t *s_ctrl, int value)
 {
@@ -596,7 +596,7 @@ static void hi351_set_iso(struct msm_sensor_ctrl_t *s_ctrl, int value)
 static void hi351_set_exposure_compensation(struct msm_sensor_ctrl_t *s_ctrl,
 	int value)
 {
-	int val = value + ((12 - value)/2); //                                                                                      
+	int val = value + ((12 - value)/2); // LGE CHNAGE, for HI351 SoC Sensor Brightness Array. youngwook.song@lge.com, 2013-10-17
 	pr_debug("%s %d", __func__, val);
 	hi351_i2c_write_table(s_ctrl, &hi351_reg_exposure_compensation[val][0],
 		ARRAY_SIZE(hi351_reg_exposure_compensation[val]));
@@ -744,14 +744,14 @@ static void hi351_set_white_balance_mode(struct msm_sensor_ctrl_t *s_ctrl,
 }
 
 
-//                                                                                                                                     
+//LGE_CHANGE_E,  This Function has been added only for fps of VIDEO Recording from SoC Camera Module. youngwook.song@lge.com 2013-11-04
 static void hi351_set_framerate_for_soc(struct msm_sensor_ctrl_t *s_ctrl, struct msm_fps_range_setting *framerate)
 {
 	int32_t value = 0;
-	 //                                                                                                              
+	 // LGE_CHANGE, youngwook.song@lge.com, in case of MMS, fixed 15fps is in use. 1097859072 is 15.0 in float value.
 	if((framerate->min_fps == 1097859072) && (framerate->max_fps == 1097859072))
 		value = 0;
-	 //                                                                                                                                 
+	 // LGE_CHANGE, youngwook.song@lge.com, in case of Video(640x480 or over), fixed 30fps is in use. 1106247680 is 30.0 in float value.
 	else if((framerate->min_fps == 1103101952) && (framerate->max_fps == 1106247680))
 		value = 1;
 	else value = 2;
@@ -780,7 +780,7 @@ static void hi351_set_framerate_for_soc(struct msm_sensor_ctrl_t *s_ctrl, struct
 			break;
 	}
 }
-//                                                                                                                                     
+//LGE_CHANGE_X,  This Function has been added only for fps of VIDEO Recording from SoC Camera Module. youngwook.song@lge.com 2013-11-04
 
 int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 	void __user *argp)
@@ -817,13 +817,13 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		int32_t retry;
 		pr_err("%s, CFG_SET_INIT_SETTING!!", __func__);
 
-/*                                                                                                    */
+/* LGE_CHANGE_S, Kernel Driver Modifying for dual module setting , youngwook.song@lge.com, 2014.01.09 */
 		if((main_cam_id_value == HI351_SUNNY)&&(hi351_antibanding == HI351_60HZ)) hi351_ab_mod = 0;
 			else if((main_cam_id_value == HI351_SUNNY)&&(hi351_antibanding == HI351_50HZ)) hi351_ab_mod = 1;
 				else if((main_cam_id_value == HI351_COWELL)&&(hi351_antibanding == HI351_60HZ)) hi351_ab_mod = 2;
 					else if((main_cam_id_value == HI351_COWELL)&&(hi351_antibanding == HI351_50HZ)) hi351_ab_mod = 3;
 		pr_err("%s, hi351_ab_mod vaule : %d", __func__, hi351_ab_mod);
-/*                                                                                                    */
+/* LGE_CHANGE_E, Kernel Driver Modifying for dual module setting , youngwook.song@lge.com, 2014.01.09 */
 
 		for (retry = 0; retry < 3; ++retry) {
 				rc = hi351_sensor_write_init_settings(s_ctrl->sensor_i2c_client,
@@ -835,7 +835,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		break;
 		}
 	case CFG_SET_RESOLUTION: {
-		/*                                                                                                                          */
+		/* LGE_CHANGE_E, Kernel Driver Modifying on MR2 for change resolution to take pictures , youngwook.song@lge.com, 2013.08.29 */
 		int val = 0;
 		pr_err("%s, CFG_SET_RESOLUTION!!", __func__);
 		if (copy_from_user(&val,
@@ -855,7 +855,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 			pr_err("%s, prevsettings!!", __func__);
 		}
 		break;
-		/*                                                                                                                          */
+		/* LGE_CHANGE_X, Kernel Driver Modifying on MR2 for change resolution to take pictures , youngwook.song@lge.com, 2013.08.29 */
 		}
 	case CFG_SET_STOP_STREAM:
 		pr_err("%s, CFG_SET_STOP_STREAM!!", __func__);
@@ -1018,7 +1018,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		break;
 	}
 
-/*                                                              */
+/*LGE_CHANGE_S, add soc exif, 2013-10-04, kwangsik83.kim@lge.com*/
 		case CFG_PAGE_MODE_READ_I2C_ARRAY:{
 			int16_t size=0;
 			uint16_t read_data_size = 0;
@@ -1113,9 +1113,9 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 
 			break;
 		}
-/*                                                              */
+/*LGE_CHANGE_E, add soc exif, 2013-10-04, kwangsik83.kim@lge.com*/
 
-/*                                                                                          */
+/*LGE_CHANGE_S, modified power-up/down status for recovery, 2013-12-27, hyungtae.lee@lge.com*/
 	case CFG_POWER_UP:{
 
 		if (s_ctrl->sensor_state != MSM_SENSOR_POWER_DOWN) {
@@ -1167,7 +1167,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		}
 		break;
 	}
-/*                                                                                          */
+/*LGE_CHANGE_E, modified power-up/down status for recovery, 2013-12-27, hyungtae.lee@lge.com*/
 	case CFG_SET_STOP_STREAM_SETTING: {
 		struct msm_camera_i2c_reg_setting *stop_setting =
 			&s_ctrl->stop_setting;
@@ -1323,14 +1323,14 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		hi351_set_white_balance_mode(s_ctrl, wb_mode);
 		break;
 	}
-//                                                                                                          
+//LGE_CHANGE_E,  These options has beend added due to colour effect issue. youngwook.song@lge.com 2013-11-25
 	case CFG_SET_AEC_LOCK:
 	case CFG_SET_AWB_LOCK:
 	case CFG_SET_AEC_ROI:
 		pr_debug("%s: We do not support features value related to LOCK now", __func__);
 		break;
-//                                                                                                          
-//                                                                                                                                     
+//LGE_CHANGE_X,  These options has beend added due to colour effect issue. youngwook.song@lge.com 2013-11-25
+//LGE_CHANGE_E,  This Function has been added only for fps of VIDEO Recording from SoC Camera Module. youngwook.song@lge.com 2013-11-04
 	case CFG_SET_FRAMERATE_FOR_SOC: {
 		struct msm_fps_range_setting *framerate;
 		if (copy_from_user(&framerate, (void *)cdata->cfg.setting, sizeof(struct msm_fps_range_setting))) {
@@ -1340,7 +1340,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		hi351_set_framerate_for_soc(s_ctrl, framerate);
 		break;
 	}
-//                                                                                                                                     
+//LGE_CHANGE_X,  This Function has been added only for fps of VIDEO Recording from SoC Camera Module. youngwook.song@lge.com 2013-11-04
 	default:
 		rc = -EFAULT;
 		break;

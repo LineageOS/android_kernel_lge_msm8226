@@ -782,10 +782,10 @@ static enum flash_area fwu_go_nogo(void)
 	firmware_id[3] = 0;
 	deviceFirmwareID = extract_uint(firmware_id);
 
-/*           
-                                                 
-                                                   
-                                   */
+/* LGE_CHANGE
+ * fix read data length method : sizeof -> strlen
+ * strnstr compare to string with length not a size
+ * 2013-04-29 kenneth.kang@lge.com */
 	/* .img firmware id */
 	if (img->is_contain_build_info) {
 		dev_err(&i2c_client->dev,
@@ -831,10 +831,10 @@ static enum flash_area fwu_go_nogo(void)
 	if (imageFirmwareID > deviceFirmwareID) {
 		flash_area = UI_FIRMWARE;
 		goto exit;
-/*           
-                                      
-                                                            
-                                   */
+/* LGE_CHANGE
+ * fix Firmware version compare method
+ * if firmware version is same then it couldn't need update.
+ * 2013-04-29 kenneth.kang@lge.com */
 	} else if (imageFirmwareID <= deviceFirmwareID) {
 		flash_area = NONE;
 		dev_info(&i2c_client->dev,

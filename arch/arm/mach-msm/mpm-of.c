@@ -584,19 +584,44 @@ static void msm_mpm_sys_low_power_modes(bool allow)
 	}
 }
 
+#if 1 // 2014-01-29 QCT CR596765 apply start
+static bool in_suspend;
+#endif // 2014-01-29 QCT CR596765 apply end
 void msm_mpm_suspend_prepare(void)
 {
+#if 1 // 2014-01-29 QCT CR596765 apply start
+	bool allow;
+	unsigned long flags;
+	spin_lock_irqsave(&msm_mpm_lock, flags);
+	in_suspend = true;
+	allow = msm_mpm_irqs_detectable(false) &&
+		msm_mpm_gpio_irqs_detectable(false);
+	spin_unlock_irqrestore(&msm_mpm_lock, flags);
+	msm_mpm_sys_low_power_modes(allow);
+#else
 	bool allow = msm_mpm_irqs_detectable(false) &&
 		msm_mpm_gpio_irqs_detectable(false);
 	msm_mpm_sys_low_power_modes(allow);
+#endif // 2014-01-29 QCT CR596765 apply end
 }
 EXPORT_SYMBOL(msm_mpm_suspend_prepare);
 
 void msm_mpm_suspend_wake(void)
 {
+#if 1 // 2014-01-29 QCT CR596765 apply start
+	bool allow;
+	unsigned long flags;
+	spin_lock_irqsave(&msm_mpm_lock, flags);
+	allow = msm_mpm_irqs_detectable(true) &&
+		msm_mpm_gpio_irqs_detectable(true);
+	in_suspend = false;
+	spin_unlock_irqrestore(&msm_mpm_lock, flags);
+	msm_mpm_sys_low_power_modes(allow);
+#else
 	bool allow = msm_mpm_irqs_detectable(true) &&
 		msm_mpm_gpio_irqs_detectable(true);
 	msm_mpm_sys_low_power_modes(allow);
+#endif // 2014-01-29 QCT CR596765 apply end
 }
 EXPORT_SYMBOL(msm_mpm_suspend_wake);
 
@@ -607,6 +632,12 @@ static void msm_mpm_work_fn(struct work_struct *work)
 		bool allow;
 		wait_for_completion(&wake_wq);
 		spin_lock_irqsave(&msm_mpm_lock, flags);
+#if 1 // 2014-01-29 QCT CR596765 apply start
+		if (in_suspend) {
+			spin_unlock_irqrestore(&msm_mpm_lock, flags);
+			continue;
+		}
+#endif // 2014-01-29 QCT CR596765 apply end
 		allow = msm_mpm_irqs_detectable(true) &&
 				msm_mpm_gpio_irqs_detectable(true);
 		spin_unlock_irqrestore(&msm_mpm_lock, flags);

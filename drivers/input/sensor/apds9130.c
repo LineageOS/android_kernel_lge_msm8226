@@ -63,14 +63,14 @@
 
 #define APDS9130_INTERRUPT_MODE_ENABLE
 
-/*               
-  
-                                           
-  
-                                                   
-                                              
-                                                         
-  
+/* Change History
+ *
+ * 1.0.0	Funcamental Functions of APDS-9130
+ *
+ * 1.0.1	Remove ioctl interface, remain using sysfs
+ * 1.0.2	Add LG cross-talk calibration process
+ * 1.0.3	LGE Commonization (WX-BSP-TS@lge.com, 2013/8/27)
+ *
  */
 
 #define APDS9130_IOCTL_PS_ENABLE		1
@@ -265,7 +265,7 @@ struct apds9130_data {
 #if defined(APDS9130_PROXIMITY_CAL)
 	int cross_talk;
 	bool read_ps_cal_data;
-	int ps_cal_result;  //                                                                
+	int ps_cal_result;  //[LGSI_SP4_BSP][kirankumar.vm@lge.com] Proximity Testmode changes
 #endif
 
 	atomic_t i2c_status;
@@ -528,7 +528,7 @@ static ssize_t apds9130_show_run_calibration(struct device *dev,
 {
 	struct apds9130_data *data = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", data->ps_cal_result); //                                                                
+	return sprintf(buf, "%d\n", data->ps_cal_result); //[LGSI_SP4_BSP][kirankumar.vm@lge.com] Proximity Testmode changes
 }
 
 static ssize_t apds9130_store_run_calibration(struct device *dev,
@@ -969,12 +969,12 @@ static int apds9130_enable_ps_sensor(struct i2c_client *client, int val)
 
 
 			apds9130_set_pilt(client, 0);		// init threshold for proximity
-			apds9130_set_piht(client, data->ps_threshold); //                                                              
+			apds9130_set_piht(client, data->ps_threshold); //[LGSI_SP4_BSP][kirankumar.vm@lge.com] add calibrated threshold
 			
-			//                                                                                                                   
+			//[LGSI_SP4_BSP_BEGIN][kirankumar.vm@lge.com] Report the Far Detection evertytime when u enable the sensor 07-11-2012
 			input_report_abs(data->input_dev_ps, ABS_DISTANCE, PROX_INPUT_FAR);/* NEAR-to-FAR detection */
 			input_sync(data->input_dev_ps);
-			//                                                                                                      
+			//[LGSI_SP4_BSP_END][kirankumar.vm@lge.com] Report the Far Detection evertytime when u enable the sensor
 			
 			err = apds9130_set_enable(client, 0x2D);	 /* enable PS interrupt */
 			if(err < 0)
@@ -1168,7 +1168,7 @@ static ssize_t apds9130_store_ppcount(struct device *dev,
 	return count;
 }
 static DEVICE_ATTR(ppcount, S_IWUSR | S_IRUGO, apds9130_show_ppcount, apds9130_store_ppcount);
-//                                                                                   
+//[LGSI_SP4_BSP_END][kirankumar.vm@lge.com] 31-10-2012 Added sys Fs entry for PPcount
 #if defined(APDS9130_PROXIMITY_CAL)
 static ssize_t apds9130_show_control(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -1202,7 +1202,7 @@ static ssize_t apds9130_store_control(struct device *dev, struct device_attribut
 static DEVICE_ATTR(control,  S_IWUSR | S_IRUGO , apds9130_show_control, apds9130_store_control);
 #endif
 
-//                                                                                                     
+//[LGSI_SP4_BSP_BEGIN][kirankumar.vm@lge.com] Added Sys Fs access to show proximity status for Testmode
 static ssize_t apds9130_show_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct apds9130_data *data = dev_get_drvdata(dev);
@@ -1221,7 +1221,7 @@ static ssize_t apds9130_show_show(struct device *dev, struct device_attribute *a
 }
 
 static DEVICE_ATTR(value, S_IWUSR | S_IRUGO , apds9130_show_show, NULL);
-//                                         
+//[LGSI_SP4_BSP_END][kirankumar.vm@lge.com]
 
 static ssize_t apds9130_show_pdrive(struct device *dev,
 				struct device_attribute *attr, char *buf)
@@ -1403,9 +1403,9 @@ static struct attribute *apds9130_attributes[] = {
 	&dev_attr_run_calibration.attr,
 	&dev_attr_prox_cal_data.attr,
 #endif
-	&dev_attr_value.attr, //                                                                                               
+	&dev_attr_value.attr, //[LGSI_SP4_BSP][kirankumar.vm@lge.com] Added Sys Fs access to show proximity status for Testmode
 	&dev_attr_ppcount.attr,
-	&dev_attr_pdrive.attr,/*                                                   */
+	&dev_attr_pdrive.attr,/*[LGE_BSP][yunmo.yang@lge.com]add pDrive sysfs Entry*/
 	&dev_attr_pilt.attr,
 	&dev_attr_piht.attr,
 	//add
@@ -1473,14 +1473,14 @@ static int apds9130_init_client(struct i2c_client *client)
 	if (err < 0) return err;
 
 	// sensor is in disabled mode but all the configurations are preset
-/*                                                                                                                                  
-                                   
-                                     
-             
-                                                     
-             
-  
-      
+/* Temp block the below code as no need to set cross talk threshold during proximity OFF state [LGSI_SP4_BSP][kirankumar.vm@lge.com]
+#if defined(APDS9130_PROXIMITY_CAL)
+	err = apds9130_set_enable(client,0);
+	if(err < 0){
+		printk(KERN_INFO "%s, enable set Fail\n",__func__);
+		return err;
+	}
+#endif
 */
 	return 0;
 }

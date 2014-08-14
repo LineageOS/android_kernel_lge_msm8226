@@ -17,4 +17,7 @@
 	model = "Qualcomm MSM 8226v2 w7dsopencis";
 	compatible = "qcom,msm8226-w7dsopencis", "qcom,msm8226", "qcom,mtp";
 	qcom,board-id = <101 0>;
+	aliases {
+		sdhc4 = &sdhc_2_rev_a; /* SDC2 SD card slot Rev.A */
+	};
 };

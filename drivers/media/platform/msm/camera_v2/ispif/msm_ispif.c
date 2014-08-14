@@ -98,13 +98,13 @@ static int msm_ispif_reset_hw(struct ispif_device *ispif)
 	long timeout = 0;
 	struct clk *reset_clk[ARRAY_SIZE(ispif_8974_reset_clk_info)];
 
-/*                                                                                                  */
+/*LGE CHANGE_S, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */
 #if defined(CONFIG_HI351)
 	if(ispif->hw_num_isps > 1){
 #else
 	{
 #endif
-/*                                                                                                  */
+/*LGE CHANGE_E, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */
 	rc = msm_cam_clk_enable(&ispif->pdev->dev,
 		ispif_8974_reset_clk_info, reset_clk,
 		ARRAY_SIZE(ispif_8974_reset_clk_info), 1);
@@ -149,13 +149,13 @@ static int msm_ispif_reset_hw(struct ispif_device *ispif)
 			return -ETIMEDOUT;
 		}
 	}
-/*                                                                                                  */	
+/*LGE CHANGE_S, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */	
 #if defined(CONFIG_HI351)
 	if(ispif->hw_num_isps > 1){
 #else
 	{
 #endif
-/*                                                                                                  */
+/*LGE CHANGE_E, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */
 	rc = msm_cam_clk_enable(&ispif->pdev->dev,
 		ispif_8974_reset_clk_info, reset_clk,
 		ARRAY_SIZE(ispif_8974_reset_clk_info), 0);
@@ -215,13 +215,13 @@ static int msm_ispif_reset(struct ispif_device *ispif)
 			ispif->base + ISPIF_VFE_m_INTF_CMD_0(i));
 		msm_camera_io_w(ISPIF_STOP_INTF_IMMEDIATELY,
 			ispif->base + ISPIF_VFE_m_INTF_CMD_1(i));
-/*                                                                                     */
+/*LGE_CHANGE_S, By QCT SR#01360225, this is added by youngwook.song@lge.com 2013.11.16 */
 		pr_debug("%s: base %x", __func__, (unsigned int)ispif->base);
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CID_MASK(i, 0));
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CID_MASK(i, 1));
-#if 1 //                                                                                                    
+#if 1 //defined CONFIG_HI351 /* LGE_CHANGE, jaehan.jeong, 2013.11.29, Applied both on msm8x10 and msm8x26 */
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_CID_MASK(i, 0));
 		msm_camera_io_w(0, ispif->base +
@@ -236,7 +236,7 @@ static int msm_ispif_reset(struct ispif_device *ispif)
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CID_MASK(i, 2));
 #endif
-/*                                                                                     */
+/*LGE_CHANGE_E, By QCT SR#01360225, this is added by youngwook.song@lge.com 2013.11.16 */
 
 		msm_camera_io_w(0, ispif->base +
 			ISPIF_VFE_m_PIX_INTF_n_CROP(i, 0));
@@ -965,7 +965,7 @@ static int msm_ispif_init(struct ispif_device *ispif,
 		pr_err("%s: ahb_clk enable failed", __func__);
 		goto error_ahb;
 	}
-/*                                                                                                  */	
+/*LGE CHANGE_S, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */	
 #if defined(CONFIG_HI351)
 		msm_ispif_reset_hw(ispif);
 #else
@@ -975,7 +975,7 @@ static int msm_ispif_init(struct ispif_device *ispif,
 		msm_ispif_reset_hw(ispif);
 	}
 #endif
-/*                                                                                                  */	
+/*LGE CHANGE_E, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */	
 
 	rc = msm_ispif_reset(ispif);
 	if (rc == 0) {

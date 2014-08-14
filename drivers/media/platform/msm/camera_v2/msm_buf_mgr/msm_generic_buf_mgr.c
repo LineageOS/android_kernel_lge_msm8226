@@ -109,7 +109,7 @@ static void msm_buf_mngr_sd_shutdown(struct msm_buf_mngr_device *buf_mngr_dev)
 	if (!list_empty(&buf_mngr_dev->buf_qhead)) {
 		list_for_each_entry_safe(bufs,
 			save, &buf_mngr_dev->buf_qhead, entry) {
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 #if 0
 			pr_err("%s: Delete invalid bufs =%x\n", __func__,
 				(unsigned int)bufs);
@@ -118,7 +118,7 @@ static void msm_buf_mngr_sd_shutdown(struct msm_buf_mngr_device *buf_mngr_dev)
 				__func__, (unsigned int)bufs, bufs->session_id,
 				bufs->stream_id, bufs->vb2_buf->v4l2_buf.index);
 #endif
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 			list_del_init(&bufs->entry);
 			kfree(bufs);
 		}
@@ -126,7 +126,7 @@ static void msm_buf_mngr_sd_shutdown(struct msm_buf_mngr_device *buf_mngr_dev)
 	spin_unlock_irqrestore(&buf_mngr_dev->buf_q_spinlock, flags);
 }
 
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 static int msm_generic_buf_mngr_open(struct v4l2_subdev *sd,
 	struct v4l2_subdev_fh *fh)
 {
@@ -156,7 +156,7 @@ static int msm_generic_buf_mngr_close(struct v4l2_subdev *sd,
 		msm_buf_mngr_sd_shutdown(buf_mngr_dev);
 	return rc;
 }
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 
 static long msm_buf_mngr_subdev_ioctl(struct v4l2_subdev *sd,
 	unsigned int cmd, void *arg)
@@ -181,14 +181,14 @@ static long msm_buf_mngr_subdev_ioctl(struct v4l2_subdev *sd,
 	case VIDIOC_MSM_BUF_MNGR_PUT_BUF:
 		rc = msm_buf_mngr_put_buf(buf_mngr_dev, argp);
 		break;
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 	case VIDIOC_MSM_BUF_MNGR_INIT:
 		rc = msm_generic_buf_mngr_open(sd, NULL);
 		break;
 	case VIDIOC_MSM_BUF_MNGR_DEINIT:
 		rc = msm_generic_buf_mngr_close(sd, NULL);
 		break;
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 	case MSM_SD_SHUTDOWN:
 		msm_buf_mngr_sd_shutdown(buf_mngr_dev);
 		break;
@@ -202,13 +202,13 @@ static struct v4l2_subdev_core_ops msm_buf_mngr_subdev_core_ops = {
 	.ioctl = msm_buf_mngr_subdev_ioctl,
 };
 
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 static const struct v4l2_subdev_internal_ops
 	msm_generic_buf_mngr_subdev_internal_ops = {
 	.open  = msm_generic_buf_mngr_open,
 	.close = msm_generic_buf_mngr_close,
 };
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 
 static const struct v4l2_subdev_ops msm_buf_mngr_subdev_ops = {
 	.core = &msm_buf_mngr_subdev_core_ops,
@@ -240,7 +240,7 @@ static int __init msm_buf_mngr_init(void)
 	msm_buf_mngr_dev->subdev.sd.entity.group_id =
 		MSM_CAMERA_SUBDEV_BUF_MNGR;
 	msm_buf_mngr_dev->subdev.sd.internal_ops =
-		&msm_generic_buf_mngr_subdev_internal_ops;  /*                                                                                         */
+		&msm_generic_buf_mngr_subdev_internal_ops;  /* LGE_CHANGE, jaehan.jeong, 2013.12.29, QCT PATCH, Cleanup msm generic buf queue handling */
 	msm_buf_mngr_dev->subdev.close_seq = MSM_SD_CLOSE_4TH_CATEGORY;
 	rc = msm_sd_register(&msm_buf_mngr_dev->subdev);
 	if (rc != 0) {

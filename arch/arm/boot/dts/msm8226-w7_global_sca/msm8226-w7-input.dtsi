@@ -42,9 +42,13 @@
 			revision = "rev_e...";
 			status = "ok";
 
-			atmel,fw_name = "atmel/E2A47P2_1_06.fw";
-			atmel,fw_name = "atmel/E2A47P2_2_04.fw";
+			atmel,t15_key_array = <0 0 1 0>;
+			atmel,fw_name = "atmel/E2A47P2_2_07.fw";
+                        atmel,fw2_name = "atmel/I2A47P2_2_07.fw";
 			atmel,panel_check = <1>;
+                        atmel,maker_id = <1>;
+                        atmel,maker_id_gpio = <116>;
+                        atmel,maker_id2_gpio = <16>;
 			atmel,extra_fw_name = "atmel/E2A47P1_2_04.fw";
 			atmel,ghost_detection_enable = <1>;
 			atmel,butt_check_enable = <1>;

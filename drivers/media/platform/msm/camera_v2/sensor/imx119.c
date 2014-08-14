@@ -17,7 +17,7 @@ DEFINE_MSM_MUTEX(imx119_mut);
 
 static struct msm_sensor_ctrl_t imx119_s_ctrl;
 
-/*                                                                                                            */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.7.30, To separate power settings depending on HW revisions, [STARTS HERE] */
 #if defined(CONFIG_MACH_MSM8226_G2MDS_OPEN_CIS) || defined(CONFIG_MACH_MSM8226_G2MDS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_G2M_OPEN) || defined(CONFIG_MACH_MSM8926_G2M_VDF) || defined(CONFIG_MACH_MSM8926_G2M_GLOBAL) || defined(CONFIG_MACH_MSM8926_G2M_KR) || defined(CONFIG_MACH_MSM8226_G2MSS_GLOBAL_COM)
 static struct msm_sensor_power_setting imx119_power_setting_rev_0[] = {
 	 /* Set GPIO_RESET to low to disable power on reset*/
@@ -165,6 +165,103 @@ static struct msm_sensor_power_setting imx119_power_setting_rev_c[] = {
 	},
 
 };
+#elif defined(CONFIG_MACH_MSM8926_B1L_ATT) || defined(CONFIG_MACH_MSM8926_B1L_VZW)
+static struct msm_sensor_power_setting imx119_power_setting_b1l[] = {
+	 /* Set GPIO_RESET to low to disable power on reset*/
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VDIG,
+		.config_val = 0,
+		.delay = 0,
+	},
+	{								//VANA, GPIO 62
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{								//VIO, GPIO 113
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VIO,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 30,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+
+};
+#elif defined(CONFIG_MACH_MSM8X10_W5_TRF_US)
+static struct msm_sensor_power_setting imx119_power_setting_w5[] = {
+	 /* Set GPIO_RESET to low to disable power on reset*/
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 0,
+	},
+#if 0
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VDIG,
+		.config_val = 0,
+		.delay = 0,
+	},
+#endif
+	{								//VANA, GPIO 67
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VIO,
+		.config_val = 0,
+		.delay = 30,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+
+};
+
 #else
 static struct msm_sensor_power_setting imx119_power_setting_rev_0[] = {
 
@@ -261,7 +358,7 @@ static struct msm_sensor_power_setting imx119_power_setting_rev_a[] = {
 };
 #endif
 
-/*                                                                                                           */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.7.30, To separate power settings depending on HW revisions,  [ENDS HERE] */
 
 static struct v4l2_subdev_info imx119_subdev_info[] = {
 	{
@@ -321,7 +418,7 @@ static int32_t imx119_platform_probe(struct platform_device *pdev)
 	return rc;
 }
 
-#if defined(CONFIG_MACH_MSM8226_G2MDS_OPEN_CIS) || defined(CONFIG_MACH_MSM8226_G2MDS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_G2M_OPEN) || defined(CONFIG_MACH_MSM8926_G2M_VDF) || defined(CONFIG_MACH_MSM8926_G2M_GLOBAL) || defined(CONFIG_MACH_MSM8926_G2M_KR)
+#if defined(CONFIG_MACH_MSM8226_G2MDS_OPEN_CIS) || defined(CONFIG_MACH_MSM8226_G2MDS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_G2M_OPEN) || defined(CONFIG_MACH_MSM8926_G2M_VDF) || defined(CONFIG_MACH_MSM8926_G2M_GLOBAL) || defined(CONFIG_MACH_MSM8926_G2M_KR) || defined(CONFIG_MACH_MSM8226_G2MSS_GLOBAL_COM)
 static void imx119_power_setting(void)
 {
 	hw_rev_type rev_type = 0;
@@ -351,6 +448,20 @@ static void imx119_power_setting(void)
 			break;
 	}
 
+}
+#elif defined(CONFIG_MACH_MSM8926_B1L_ATT) || defined(CONFIG_MACH_MSM8926_B1L_VZW)
+static void imx119_power_setting(void)
+{
+	pr_err("%s: Sensor power is set as imx119_power_setting_b1l[]\n", __func__);
+	imx119_s_ctrl.power_setting_array.power_setting = imx119_power_setting_b1l;
+	imx119_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx119_power_setting_b1l);
+}
+#elif defined(CONFIG_MACH_MSM8X10_W5_TRF_US)
+static void imx119_power_setting(void)
+{
+	pr_err("%s: Sensor power is set as imx119_power_setting_b1l[]\n", __func__);
+	imx119_s_ctrl.power_setting_array.power_setting = imx119_power_setting_w5;
+	imx119_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx119_power_setting_w5);
 }
 #else
 static void imx119_power_setting(void)
@@ -405,12 +516,12 @@ static void __exit imx119_exit_module(void)
 
 static struct msm_sensor_ctrl_t imx119_s_ctrl = {
 	.sensor_i2c_client = &imx119_sensor_i2c_client,
-/*                                                                                                            */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.7.30, To separate power settings depending on HW revisions, [STARTS HERE] */
 /*
 	.power_setting_array.power_setting = imx119_power_setting,
 	.power_setting_array.size = ARRAY_SIZE(imx119_power_setting),
  */
-/*                                                                                                           */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.7.30, To separate power settings depending on HW revisions,  [ENDS HERE] */
 	.msm_sensor_mutex = &imx119_mut,
 	.sensor_v4l2_subdev_info = imx119_subdev_info,
 	.sensor_v4l2_subdev_info_size = ARRAY_SIZE(imx119_subdev_info),

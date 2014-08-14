@@ -150,7 +150,7 @@ static void msm_vfe32_init_hardware_reg(struct vfe_device *vfe_dev)
 	msm_camera_io_w(0x00000009, vfe_dev->vfe_base + 0x3C);
 	msm_camera_io_w(0x01000025, vfe_dev->vfe_base + 0x1C);
 	msm_camera_io_w_mb(0x1CFFFFFF, vfe_dev->vfe_base + 0x20);
-/*                                                                                                  */
+/*LGE CHANGE_S, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */
 #if defined(CONFIG_HI351)
 	msm_camera_io_w_mb(0xFFFFFFFF, vfe_dev->vfe_base + 0x24);       //Aravind
 	msm_camera_io_w_mb(0x1FFFFFFF, vfe_dev->vfe_base + 0x28);
@@ -165,7 +165,7 @@ static void msm_vfe32_init_hardware_reg(struct vfe_device *vfe_dev)
 	msm_camera_io_w(0xFFFFFFFF, vfe_dev->vfe_base + 0x24);
 	msm_camera_io_w_mb(0x1FFFFFFF, vfe_dev->vfe_base + 0x28);
 #endif
-/*                                                                                                  */
+/*LGE CHANGE_E, 2013-12-13, this is for shutter lag issue, STOP_IMMEDIATELY, youngwook.song@lge.com */
 }
 
 static void msm_vfe32_process_reset_irq(struct vfe_device *vfe_dev,

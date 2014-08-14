@@ -30,6 +30,10 @@
 #include <linux/of_gpio.h>
 #include <linux/spinlock.h>
 
+#ifdef CONFIG_LGE_PM_PWR_KEY_FOR_CHG_LOGO
+#include <mach/board_lge.h>
+#endif
+
 struct gpio_button_data {
 	const struct gpio_keys_button *button;
 	struct input_dev *input;
@@ -324,6 +328,10 @@ static struct attribute_group gpio_keys_attr_group = {
 	.attrs = gpio_keys_attrs,
 };
 
+#ifdef CONFIG_LGE_PM_PWR_KEY_FOR_CHG_LOGO
+void qpnp_pwr_key_action_set_for_chg_logo(struct input_dev *dev, unsigned int code, int value);
+#endif
+
 static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 {
 	const struct gpio_keys_button *button = bdata->button;
@@ -338,6 +346,16 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 		input_event(input, type, button->code, !!state);
 	}
 	input_sync(input);
+
+#ifdef CONFIG_LGE_PM_PWR_KEY_FOR_CHG_LOGO
+	if(lge_get_boot_mode() == LGE_BOOT_MODE_CHARGERLOGO) {
+		pr_info("=========== [CHG LOGO MODE] =========== Keycode : %d value : %d\n",button->code,button->value);
+		if (button->code == KEY_HOME) {
+			qpnp_pwr_key_action_set_for_chg_logo(input, button->code,
+					button->value);
+		}
+	}
+#endif
 }
 
 static void gpio_keys_gpio_work_func(struct work_struct *work)

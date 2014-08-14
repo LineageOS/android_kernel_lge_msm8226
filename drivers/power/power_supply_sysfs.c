@@ -35,8 +35,8 @@
  * (as a macro let's say).
  */
 
-/*                                                                        
-                          */
+/* BEGIN : janghyun.baek@lge.com 2012-12-26 Temporarily change mode to 777
+ * debug power sysfs node */
 #ifdef CONFIG_LGE_PM
 #define POWER_SUPPLY_ATTR(_name)					\
 {									\
@@ -52,7 +52,7 @@
 	.store = power_supply_store_property,				\
 }
 #endif
-/*                                        */
+/* END : janghyun.baek@lge.com 2012-12-26 */
 
 #ifdef CONFIG_LGE_PM_FACTORY_PSEUDO_BATTERY
 #define PSEUDO_BATT_ATTR(_name)						\

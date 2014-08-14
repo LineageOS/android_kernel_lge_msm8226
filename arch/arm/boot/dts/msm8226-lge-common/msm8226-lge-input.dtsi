@@ -356,6 +356,7 @@
 			atmel,knock_on_type = <1>;
 			atmel,auto_fw_update = <1>;
 			atmel,fw_name = "atmel/xxx.fw";
+			atmel,maker_id = <0>;
 			atmel,panel_check = <0>;
 			atmel,t15_extra_key_state = <0 0>;
 			atmel,extra_fw_name = "atmel/xxx.fw";

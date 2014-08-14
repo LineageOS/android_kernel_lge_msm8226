@@ -1887,7 +1887,7 @@ static int bma2x2_get_slope_sign(struct i2c_client *client, unsigned char
 
 	return comres;
 }
-#endif /*                      */
+#endif /* CONFIG_SENSOR_LGE_DT */
 
 static int bma2x2_get_orient_status(struct i2c_client *client, unsigned char
 		*intstatus)

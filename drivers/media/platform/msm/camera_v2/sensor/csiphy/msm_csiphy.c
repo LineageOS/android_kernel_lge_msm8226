@@ -127,8 +127,8 @@ static int msm_csiphy_lane_config(struct csiphy_device *csiphy_dev,
 		lane_mask >>= 1;
 	}
 
-/*                                                                                                            */
-/*                                                                                                       */
+/*LGE_CHANGE_S, qct_patch for fixing abnormal signal in tclk_trail section, 2013-03-14, kwangsik83.kim@lge.com*/
+/*LGE_CHANGE_S, seperately.. use csiphy register depend on csiphy_ver, 2013-10-15, kwangsik83.kim@lge.com*/
 #if defined (CONFIG_HI351) || defined (CONFIG_HI543)
 	pr_err("%s padding the offset\n", __func__);
 	if(csiphy_dev->pdev->id == 0){//main camera
@@ -149,8 +149,8 @@ static int msm_csiphy_lane_config(struct csiphy_device *csiphy_dev,
 #else
 	irq2 = 0;
 #endif
-/*                                                                                                       */
-/*                                                                                                            */
+/*LGE_CHANGE_E, seperately.. use csiphy register depend on csiphy_ver, 2013-10-15, kwangsik83.kim@lge.com*/
+/*LGE_CHANGE_E, qct_patch for fixing abnormal signal in tclk_trail section, 2013-03-14, kwangsik83.kim@lge.com*/
 
 	return rc;
 }
@@ -201,13 +201,13 @@ static struct msm_cam_clk_info csiphy_8960_clk_info[] = {
 	{"csiphy_timer_src_clk", 177780000},
 	{"csiphy_timer_clk", -1},
 };
-/*                                                                                     */ /*                                                         */
+/*LGE_CHANGE_S, By QCT SR#01360225, this is added by youngwook.song@lge.com 2013.11.16 */ /* LGE_CHANGE, jaehan.jeong, 2013.11.29, Applied on msm8x10*/
 static struct msm_cam_clk_info csiphy_8610_clk_info[] = {
 	{"csiphy_timer_src_clk", 200000000},
 	{"csiphy_timer_clk", -1},
 	{"csi_ahb_clk", -1},
 };
-/*                                                                                     */
+/*LGE_CHANGE_E, By QCT SR#01360225, this is added by youngwook.song@lge.com 2013.11.16 */
 
 static struct msm_cam_clk_info csiphy_8974_clk_info[] = {
 	{"camss_top_ahb_clk", -1},

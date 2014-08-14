@@ -658,7 +658,7 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 		rc = -ENOMEM;
 		return rc;
 	}
-      pr_err("%s: E cci_dev(0x%p) ref_count(%d)\n", __func__, sd, cci_dev->ref_count); /*                                                        */
+      pr_err("%s: E cci_dev(0x%p) ref_count(%d)\n", __func__, sd, cci_dev->ref_count); /* LGE_CHANGE, jaehan.jeong, 2013.12.2, Log for debugging */
 	if (cci_dev->ref_count++) {
 		CDBG("%s ref_count %d\n", __func__, cci_dev->ref_count);
 		master = c_ctrl->cci_info->cci_i2c_master;
@@ -699,7 +699,7 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 		cci_dev->cci_clk, ARRAY_SIZE(cci_clk_info), 1);
 	if (rc < 0) {
 		cci_dev->ref_count--;
-		pr_err("%s: clk enable failed\n", __func__); /*                                                        */
+		pr_err("%s: clk enable failed\n", __func__); /* LGE_CHANGE, jaehan.jeong, 2013.12.2, Log for debugging */
 		goto clk_enable_failed;
 	}
 
@@ -726,7 +726,7 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 		cci_dev->base + CCI_IRQ_CLEAR_0_ADDR);
 	msm_camera_io_w(0x1, cci_dev->base + CCI_IRQ_GLOBAL_CLEAR_CMD_ADDR);
 	cci_dev->cci_state = CCI_STATE_ENABLED;
-      pr_err("%s X: exited \n", __func__);  /*                                                        */
+      pr_err("%s X: exited \n", __func__);  /* LGE_CHANGE, jaehan.jeong, 2013.12.2, Log for debugging */
 	return 0;
 
 reset_complete_failed:
@@ -746,7 +746,7 @@ static int32_t msm_cci_release(struct v4l2_subdev *sd)
 	struct cci_device *cci_dev;
 	cci_dev = v4l2_get_subdevdata(sd);
 
-      pr_err("%s: E cci_dev(0x%p) ref_count(%d)\n", __func__, sd, cci_dev->ref_count); /*                                                        */
+      pr_err("%s: E cci_dev(0x%p) ref_count(%d)\n", __func__, sd, cci_dev->ref_count); /* LGE_CHANGE, jaehan.jeong, 2013.12.2, Log for debugging */
 
 	if (!cci_dev->ref_count || cci_dev->cci_state != CCI_STATE_ENABLED) {
 		pr_err("%s invalid ref count %d / cci state %d\n",
@@ -768,7 +768,7 @@ static int32_t msm_cci_release(struct v4l2_subdev *sd)
 		cci_dev->cci_gpio_tbl_size, 0);
 
 	cci_dev->cci_state = CCI_STATE_DISABLED;
-      pr_err("%s X: exited \n", __func__);  /*                                                        */
+      pr_err("%s X: exited \n", __func__);  /* LGE_CHANGE, jaehan.jeong, 2013.12.2, Log for debugging */
 	return 0;
 }
 
@@ -776,7 +776,7 @@ static int32_t msm_cci_config(struct v4l2_subdev *sd,
 	struct msm_camera_cci_ctrl *cci_ctrl)
 {
 	int32_t rc = 0;
-       int32_t trialCnt = 3;  /*                                                                                                     */
+       int32_t trialCnt = 3;  /*QCT_PATCH, add the retrial code only in msm_cci_config() function , 2013-12-09, yousung.kang@lge.com */
 
 	CDBG("%s line %d cmd %d\n", __func__, __LINE__, cci_ctrl->cmd);
 	switch (cci_ctrl->cmd) {
@@ -790,7 +790,7 @@ static int32_t msm_cci_config(struct v4l2_subdev *sd,
 		rc = msm_cci_i2c_read_bytes(sd, cci_ctrl);
 		break;
 	case MSM_CCI_I2C_WRITE:
-/*                                                                                                       */
+/*QCT_PATCH E, add the retrial code only in msm_cci_config() function , 2013-12-09, yousung.kang@lge.com */
 #if 1 // QCT Test
              do{
                   rc = msm_cci_i2c_write(sd, cci_ctrl);
@@ -801,7 +801,7 @@ static int32_t msm_cci_config(struct v4l2_subdev *sd,
 #else
              rc = msm_cci_i2c_write(sd, cci_ctrl);
 #endif
-/*                                                                                                       */
+/*QCT_PATCH E, add the retrial code only in msm_cci_config() function , 2013-12-09, yousung.kang@lge.com */
 		break;
 	case MSM_CCI_GPIO_WRITE:
 		break;

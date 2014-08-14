@@ -32,14 +32,14 @@
 #else
 #define CDBG(fmt, args...) do { } while (0)
 #endif
-/*                                                           */
+/* LGE_CHANGE_S, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 unsigned char strobe_ctrl;
 unsigned char  flash_ctrl;
 
-/*                                                                          */
+/* LGE_CHANGE_S, yt.jeon@lge.com, To fix an issue of flash widget 2013-10-30*/
 extern void rt8542_led_enable(void);
 extern void rt8542_led_disable(void);
-/*                                                                          */
+/* LGE_CHANGE_E, yt.jeon@lge.com, To fix an issue of flash widget 2013-10-30*/
 static int flash_read_reg(struct msm_camera_i2c_client *client, unsigned char reg, unsigned char *data)
 {
 	int err;
@@ -76,7 +76,7 @@ static int flash_write_reg(struct msm_camera_i2c_client *client, unsigned char r
 	}
 	return 0;
 }
-/*                                                           */
+/* LGE_CHANGE_E, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 
 int32_t msm_led_i2c_trigger_get_subdev_id(struct msm_led_flash_ctrl_t *fctrl,
 	void *arg)
@@ -111,26 +111,26 @@ int32_t msm_led_i2c_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 		break;
 
 	case MSM_CAMERA_LED_RELEASE:
-		rt8542_led_disable();/*                                                                        */
+		rt8542_led_disable();/* LGE_CHANGE, yt.jeon@lge.com, To fix an issue of flash widget 2013-10-30*/
 		if (fctrl->func_tbl->flash_led_release)
 			rc = fctrl->func_tbl->
 				flash_led_release(fctrl);
 		break;
 
 	case MSM_CAMERA_LED_OFF:
-		rt8542_led_disable();/*                                                                        */
+		rt8542_led_disable();/* LGE_CHANGE, yt.jeon@lge.com, To fix an issue of flash widget 2013-10-30*/
 		if (fctrl->func_tbl->flash_led_off)
 			rc = fctrl->func_tbl->flash_led_off(fctrl);
 		break;
 
 	case MSM_CAMERA_LED_LOW:
-		rt8542_led_enable();/*                                                                        */
+		rt8542_led_enable();/* LGE_CHANGE, yt.jeon@lge.com, To fix an issue of flash widget 2013-10-30*/
 		if (fctrl->func_tbl->flash_led_low)
 			rc = fctrl->func_tbl->flash_led_low(fctrl);
 		break;
 
 	case MSM_CAMERA_LED_HIGH:
-		rt8542_led_enable();/*                                                                        */
+		rt8542_led_enable();/* LGE_CHANGE, yt.jeon@lge.com, To fix an issue of flash widget 2013-10-30*/
 		if (fctrl->func_tbl->flash_led_high)
 			rc = fctrl->func_tbl->flash_led_high(fctrl);
 		break;
@@ -145,7 +145,7 @@ int32_t msm_led_i2c_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 int msm_flash_led_init(struct msm_led_flash_ctrl_t *fctrl)
 {
 	int rc = 0;
-/*                                                                               */
+/* LGE_CHANGE_S, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 	CDBG("%s:%d called\n", __func__, __LINE__);
 
 #ifdef USE_GPIO
@@ -172,9 +172,9 @@ int msm_flash_led_init(struct msm_led_flash_ctrl_t *fctrl)
 		flashdata->gpio_conf->gpio_num_info->gpio_num[0],
 		GPIO_OUT_HIGH);
 #endif
-/*                                                                               */
+/* LGE_CHANGE_E, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 
-#if 0 /*                                                         */
+#if 0 /* LGE_CHANGE, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	if (fctrl->flash_i2c_client && fctrl->reg_setting) {
 		rc = fctrl->flash_i2c_client->i2c_func_tbl->i2c_write_table(
 			fctrl->flash_i2c_client,
@@ -189,7 +189,7 @@ int msm_flash_led_init(struct msm_led_flash_ctrl_t *fctrl)
 int msm_flash_led_release(struct msm_led_flash_ctrl_t *fctrl)
 {
 	int rc = 0;
-/*                                                                               */
+/* LGE_CHANGE_S, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 	CDBG("%s:%d called\n", __func__, __LINE__);
 
 #ifdef USE_GPIO
@@ -204,11 +204,11 @@ int msm_flash_led_release(struct msm_led_flash_ctrl_t *fctrl)
 	gpio_set_value_cansleep(
 		flashdata->gpio_conf->gpio_num_info->gpio_num[0],
 		GPIO_OUT_LOW);
-/*                                                           */
+/* LGE_CHANGE_S, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	//gpio_set_value_cansleep(
 	//	flashdata->gpio_conf->gpio_num_info->gpio_num[1],
 	//	GPIO_OUT_LOW);
-/*                                                           */
+/* LGE_CHANGE_E, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	rc = msm_camera_request_gpio_table(
 		flashdata->gpio_conf->cam_gpio_req_tbl,
 		flashdata->gpio_conf->cam_gpio_req_tbl_size, 0);
@@ -230,7 +230,7 @@ int msm_flash_led_release(struct msm_led_flash_ctrl_t *fctrl)
 #endif
 	}
 #endif
-/*                                                                               */
+/* LGE_CHANGE_E, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 
 	return 0;
 }
@@ -238,7 +238,7 @@ int msm_flash_led_release(struct msm_led_flash_ctrl_t *fctrl)
 int msm_flash_led_off(struct msm_led_flash_ctrl_t *fctrl)
 {
 	int rc = 0;
-/*                                                                               */
+/* LGE_CHANGE_S, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 	CDBG("%s:%d called\n", __func__, __LINE__);
 #ifdef USE_GPIO
 	struct msm_camera_sensor_board_info *flashdata = NULL;
@@ -250,9 +250,9 @@ int msm_flash_led_off(struct msm_led_flash_ctrl_t *fctrl)
 		return -EINVAL;
 	}
 #endif
-/*                                                                               */
+/* LGE_CHANGE_E, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 
-#if 0/*                                                         */
+#if 0/* LGE_CHANGE, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	if (fctrl->flash_i2c_client && fctrl->reg_setting) {
 		rc = fctrl->flash_i2c_client->i2c_func_tbl->i2c_write_table(
 			fctrl->flash_i2c_client,
@@ -261,18 +261,18 @@ int msm_flash_led_off(struct msm_led_flash_ctrl_t *fctrl)
 			pr_err("%s:%d failed\n", __func__, __LINE__);
 	}
 #endif
-/*                                                           */
+/* LGE_CHANGE_S, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 #ifdef USE_GPIO
 	gpio_set_value_cansleep(
 		flashdata->gpio_conf->gpio_num_info->gpio_num[0],
 		GPIO_OUT_LOW);
 #else
-/*                                                              */
+/* LGE_CHANGE_S, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
     if(fctrl->flash_i2c_client == NULL) {
         pr_err("%s:%d fctrl->flash_i2c_client NULL\n", __func__, __LINE__);
 		return -EINVAL;
     }
-/*                                                              */
+/* LGE_CHANGE_E, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
 	if (fctrl->flash_i2c_client) {
 			rc =flash_write_reg(fctrl->flash_i2c_client, 0x0A, 0x1D); //clear bit1,5,6
 			if (rc < 0)
@@ -289,7 +289,7 @@ int msm_flash_led_off(struct msm_led_flash_ctrl_t *fctrl)
 	//	flashdata->gpio_conf->gpio_num_info->gpio_num[1],
 	//	GPIO_OUT_LOW);
 #endif
-/*                                                           */
+/* LGE_CHANGE_E, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 
 	return rc;
 }
@@ -297,10 +297,10 @@ int msm_flash_led_off(struct msm_led_flash_ctrl_t *fctrl)
 int msm_flash_led_low(struct msm_led_flash_ctrl_t *fctrl)
 {
 	int rc = 0;
-/*                                                                               */
+/* LGE_CHANGE_S, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 	CDBG("%s:%d called\n", __func__, __LINE__);
 
-/*                                                              */
+/* LGE_CHANGE_S, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
     if(fctrl == NULL) {
         pr_err("%s:%d fctrl\n", __func__, __LINE__);
 		return -EINVAL;
@@ -310,14 +310,14 @@ int msm_flash_led_low(struct msm_led_flash_ctrl_t *fctrl)
         pr_err("%s:%d fctrl->flash_i2c_client NULL\n", __func__, __LINE__);
 		return -EINVAL;
     }
-/*                                                              */
+/* LGE_CHANGE_E, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
 
 #ifdef USE_GPIO
 	struct msm_camera_sensor_board_info *flashdata = NULL;
 #endif
-/*                                                                               */
+/* LGE_CHANGE_E, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 
-/*                                                           */
+/* LGE_CHANGE_S, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 #if 0
 	//gpio_set_value_cansleep(
 	//	flashdata->gpio_conf->gpio_num_info->gpio_num[1],
@@ -381,7 +381,7 @@ int msm_flash_led_low(struct msm_led_flash_ctrl_t *fctrl)
 	}
 	flash_ctrl &= 0xFB; /* 1111 1011 */
 	flash_ctrl |= 0x62; /* 0100 0010 */
-	//                                                                                          
+	//jongho3.lee@lge.com[2013-06-05] : Since default is FLASH(0x04) mode after rt8542 power on,
 	// we must set the third bit 0 to set TORCH mode.
 	if (fctrl->flash_i2c_client) {
 		rc =flash_write_reg(fctrl->flash_i2c_client, 0x0A, flash_ctrl);
@@ -389,20 +389,20 @@ int msm_flash_led_low(struct msm_led_flash_ctrl_t *fctrl)
 			pr_err("%s:%d failed\n", __func__, __LINE__);
 	}
 #endif
-/*                                                           */
+/* LGE_CHANGE_E, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	return rc;
 }
 
 int msm_flash_led_high(struct msm_led_flash_ctrl_t *fctrl)
 {
 	int rc = 0;
-/*                                                                               */
+/* LGE_CHANGE_S, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 	CDBG("%s:%d called\n", __func__, __LINE__);
 #ifdef USE_GPIO
 	struct msm_camera_sensor_board_info *flashdata = NULL;
 #endif
-/*                                                                               */
-   /*                                                              */
+/* LGE_CHANGE_E, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
+   /* LGE_CHANGE_S, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
     if(fctrl == NULL) {
         pr_err("%s:%d fctrl\n", __func__, __LINE__);
 		return -EINVAL;
@@ -412,8 +412,8 @@ int msm_flash_led_high(struct msm_led_flash_ctrl_t *fctrl)
         pr_err("%s:%d fctrl->flash_i2c_client NULL\n", __func__, __LINE__);
 		return -EINVAL;
     }
-/*                                                              */
-/*                                                           */
+/* LGE_CHANGE_E, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
+/* LGE_CHANGE_S, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 #if 0
 	//gpio_set_value_cansleep(
 	//	flashdata->gpio_conf->gpio_num_info->gpio_num[1],
@@ -441,7 +441,7 @@ int msm_flash_led_high(struct msm_led_flash_ctrl_t *fctrl)
 	}
 #endif
 
-/*                                                                               */
+/* LGE_CHANGE_S, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
 #ifdef USE_GPIO
 	flashdata = fctrl->flashdata;
 	gpio_set_value_cansleep(
@@ -489,8 +489,8 @@ int msm_flash_led_high(struct msm_led_flash_ctrl_t *fctrl)
 			pr_err("%s:%d failed\n", __func__, __LINE__);
 	}
 #endif
-/*                                                                               */
-/*                                                           */
+/* LGE_CHANGE_E, yt.jeon@lge.com, refine flash driver and enable torch 2013-10-22*/
+/* LGE_CHANGE_E, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	return rc;
 }
 
@@ -524,7 +524,7 @@ static int32_t msm_flash_init_gpio_pin_tbl(struct device_node *of_node,
 		gpio_array[val];
 	CDBG("%s qcom,gpio-flash-en %d\n", __func__,
 		gconf->gpio_num_info->gpio_num[0]);
-#if 0/*                                                         */
+#if 0/* LGE_CHANGE, yt.jeon@lge.com, Flash driver B/U 2013-10-04*/
 	rc = of_property_read_u32(of_node, "qcom,gpio-flash-now", &val);
 	if (rc < 0) {
 		pr_err("%s:%d read qcom,gpio-flash-now failed rc %d\n",
@@ -790,7 +790,7 @@ int msm_flash_i2c_probe(struct i2c_client *client,
 	}
 
 	fctrl = (struct msm_led_flash_ctrl_t *)(id->driver_data);
-	/*                                                              */
+	/* LGE_CHANGE_S, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
     if(fctrl == NULL) {
         pr_err("%s:%d fctrl\n", __func__, __LINE__);
 		goto probe_failure;
@@ -800,7 +800,7 @@ int msm_flash_i2c_probe(struct i2c_client *client,
         pr_err("%s:%d fctrl->flash_i2c_client NULL\n", __func__, __LINE__);
 		goto probe_failure;
     }
-    /*                                                              */
+    /* LGE_CHANGE_E, WBT issue fix, 2013-11-25, hyunuk.park@lge.com */
 	if (fctrl->flash_i2c_client)
 		fctrl->flash_i2c_client->client = client;
 	/* Set device type as I2C */

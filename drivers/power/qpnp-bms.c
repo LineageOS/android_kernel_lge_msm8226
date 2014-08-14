@@ -1050,11 +1050,23 @@ static int find_ocv_for_pc(struct qpnp_bms_chip *chip, int batt_temp, int pc)
 
 #define OCV_RAW_UNINITIALIZED	0xFFFF
 #define MIN_OCV_UV		2000000
+#ifdef CONFIG_LGE_PM_BMS_CC_ACCURACY_PATCH
+#define CC_ACCURACY_LOW_SOC_THRESHOLD      94
+#define VBATDET_DELTA_UV	100000
+#endif
 static int read_soc_params_raw(struct qpnp_bms_chip *chip,
 				struct raw_soc_params *raw,
 				int batt_temp)
 {
 	int warm_reset, rc;
+#ifdef CONFIG_LGE_PM_BMS_FACTORY_TEST
+    int boot_mode = 0;
+    int is_factory_cable = 0;
+#endif
+#ifdef CONFIG_LGE_PM_BMS_CC_ACCURACY_PATCH
+    int vbat_uv = 0;
+    int ibat_ua = 0;
+#endif
 
 	mutex_lock(&chip->bms_output_lock);
 
@@ -1081,14 +1093,31 @@ static int read_soc_params_raw(struct qpnp_bms_chip *chip,
 		convert_and_store_ocv(chip, raw, batt_temp);
 		pr_debug("PON_OCV_UV = %d, cc = %llx\n",
 				chip->last_ocv_uv, raw->cc);
+        
+#ifdef CONFIG_LGE_PM_BMS_FACTORY_TEST
+        boot_mode = lge_get_boot_mode();
+        printk("[qpnp-bms PON_OCV] PON_OVC_UV = %d, cc = %llx, boot_mode = %d\n", 
+            chip->last_ocv_uv, raw->cc, boot_mode);
+        if( (boot_mode == LGE_BOOT_MODE_QEM_56K) || 
+             (boot_mode == LGE_BOOT_MODE_QEM_130K) ||
+              (boot_mode == LGE_BOOT_MODE_QEM_910K) ){
+            is_factory_cable = 1;
+        }
+#endif
 		warm_reset = qpnp_pon_is_warm_reset();
 		if (raw->last_good_ocv_uv < MIN_OCV_UV
-				|| warm_reset > 0) {
+				|| warm_reset > 0
+#ifdef CONFIG_LGE_PM_BMS_FACTORY_TEST
+                    || is_factory_cable == 1
+#endif
+                                            ) {
 			pr_debug("OCV is stale or bad, estimating new OCV.\n");
 			chip->last_ocv_uv = estimate_ocv(chip);
 			raw->last_good_ocv_uv = chip->last_ocv_uv;
 			reset_cc(chip, CLEAR_CC | CLEAR_SHDW_CC);
 			pr_debug("New PON_OCV_UV = %d, cc = %llx\n",
+					chip->last_ocv_uv, raw->cc);
+            pr_info("New PON_OCV_UV = %d, cc = %llx\n",
 					chip->last_ocv_uv, raw->cc);
 		}
 	} else if (chip->new_battery) {
@@ -1121,6 +1150,32 @@ static int read_soc_params_raw(struct qpnp_bms_chip *chip,
 		raw->last_good_ocv_uv = chip->last_ocv_uv;
 	}
 
+#ifdef CONFIG_LGE_PM_BMS_CC_ACCURACY_PATCH
+    rc = get_simultaneous_batt_v_and_i(chip, &ibat_ua, &vbat_uv);
+	if (rc < 0) {
+		pr_err("simultaneous vbat ibat failed err = %d\n", rc);
+		return 0;
+	}
+
+    pr_debug("[qpnp-bms CC Accuracy] vbat_uv = %d, is_battery_full = %d, factor = %d\n",
+                        vbat_uv, is_battery_full(chip), CC_ACCURACY_LOW_SOC_THRESHOLD);
+    if(is_battery_full(chip) && 
+        (chip->calculated_soc <= CC_ACCURACY_LOW_SOC_THRESHOLD + 2 ) &&
+        (chip->calculated_soc >= CC_ACCURACY_LOW_SOC_THRESHOLD) &&
+            (vbat_uv >= chip->max_voltage_uv - VBATDET_DELTA_UV)){
+
+		chip->last_ocv_uv = estimate_ocv(chip);
+		raw->last_good_ocv_uv = chip->last_ocv_uv;
+		raw->cc = 0;
+		raw->shdw_cc = 0;
+		reset_cc(chip, CLEAR_CC | CLEAR_SHDW_CC);
+		chip->last_ocv_temp = batt_temp;
+		chip->software_cc_uah = 0;
+		chip->software_shdw_cc_uah = 0;
+		chip->last_cc_uah = INT_MIN;
+        printk("[qpnp-bms CC Accuracy] update new estimated ocv : chip->last_ocv_uv = %d\n", chip->last_ocv_uv);
+    }
+#endif
 	/* stop faking a high OCV if we get a new OCV */
 	if (chip->ocv_reading_at_100 != raw->last_good_ocv_raw)
 		chip->ocv_reading_at_100 = OCV_RAW_UNINITIALIZED;
@@ -3914,13 +3969,37 @@ static int set_battery_data(struct qpnp_bms_chip *chip)
 		case BATT_ID_DS2704_C : // FALL THROUGH
 		case BATT_ID_ISL6296_N : // FALL THROUGH
 		case BATT_ID_ISL6296_L : // FALL THROUGH
+#ifdef CONFIG_LGE_PM_BATTERY_HITACI_2100mAh
+            batt_data = &LGE_Hitaci_2040mAh_data;
+			pr_err("[BATTERY PROFILE] Using default profile - Hitaci_2100mAh for id(%d)\n",battery_id);
+#else
             batt_data = &LGE_Tocad_2040mAh_data;
 			pr_err("[BATTERY PROFILE] Using default profile - Tocad_2100mAh for id(%d)\n",battery_id);
+#endif
             break;
 		case BATT_ID_ISL6296_C : // FALL THROUGH
 		default : 
             batt_data = &LGE_LGC_2040mAH_data;
 			pr_err("[BATTERY PROFILE] No battery ID matching\nUsing default profile - LGChem_2100mAh for id(%d)\n",battery_id);
+			break;
+	}
+#elif defined(CONFIG_LGE_PM_BATTERY_CAPACITY_3200mAh)
+	switch ( battery_id ){
+		case BATT_ID_DS2704_N : // FALL THROUGH
+		case BATT_ID_DS2704_L : // FALL THROUGH
+            batt_data = &LGE_BL_47TH_3200mAh_LG_Chem_data;
+			pr_err("[BATTERY PROFILE] Using default profile - LGChem_3200mAh for id(%d)\n",battery_id);
+            break;
+		case BATT_ID_DS2704_C : // FALL THROUGH
+		case BATT_ID_ISL6296_N : // FALL THROUGH
+		case BATT_ID_ISL6296_L : // FALL THROUGH
+            batt_data = &LGE_BL_47TH_3200mAh_Tocad_data;
+			pr_err("[BATTERY PROFILE] Using default profile - Tocad_3200mAh for id(%d)\n",battery_id);
+            break;
+		case BATT_ID_ISL6296_C : // FALL THROUGH
+		default : 
+            batt_data = &LGE_BL_47TH_3200mAh_LG_Chem_data;
+			pr_err("[BATTERY PROFILE] No battery ID matching\nUsing default profile - LGChem_3200mAh for id(%d)\n",battery_id);
 			break;
 	}
 #else

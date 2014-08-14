@@ -17,26 +17,26 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/*               
-  
-                                                                                     
-                                                                             
-                                                  
-  
-                                                                     
-  
-                                                                     
-  
-                                 
-  
-                                                     
-                                
-  
-                                                     
-                                             
-  
-                                                   
-                                 
+/* Change History
+ *
+ * 1.0.1	Functions apds9190_show_rev(), apds9190_show_id() and apds9190_show_status()
+ *			have missing CMD_BYTE in the i2c_smbus_read_byte_data(). APDS-9190 needs
+ *			CMD_BYTE for i2c write/read byte transaction.
+ *
+ * 1.0.2	Include PS switching threshold level when interrupt occurred
+ *
+ * 1.0.3	Implemented ISR and delay_work, correct PS threshold storing
+ *
+ * 1.0.4	Added Input Report Event
+ *
+ * 1.0.5	2012/09/27, eee3114.lee@lge.com(Sanghun.lee)
+ * 		- calibration implemenation
+ *
+ * 1.0.6	2012/12/05, eee3114.lee@lge.com(Sanghun.lee)
+ * 		- bug fix : calibratoin after set enable
+ *
+ * 1.0.7	2013/07/11, WX-BSP-TS@lge.com(Sanghun.lee)
+ * 		- device tree implementation
  */
 
 #include <linux/module.h>

@@ -75,7 +75,7 @@ const char *hw_platform[] = {
 };
 
 #ifdef CONFIG_MACH_LGE
-/*                 */
+/* LGE platform id */
 enum {
 		HW_PLATFORM_LGE_START  = 100,
 		HW_PLATFORM_LGPS14     = 100,

@@ -22,6 +22,7 @@
 #include <linux/input/mt.h>
 #include <linux/sysdev.h>
 #include <linux/firmware.h>
+#include <mach/board_lge.h>
 
 #define LGE_TOUCH_NAME			"lge_touch"
 #define MXT_DEVICE_NAME		"touch_dev"
@@ -52,6 +53,9 @@
 
 /* Configuration file */
 #define MXT_CFG_MAGIC		"OBP_RAW V1"
+#define MXT_FIRMWARE_V204_CRC	0xBE0AE0
+#define MXT_DEFAULT_SCALING_FACTOR	16
+#define MXT_FW204_SCALING_FACTOR	8
 
 /* Registers */
 #define MXT_OBJECT_NUM_MAX	200
@@ -253,6 +257,8 @@
 #define SELF_DIAGNOSTIC_STATUS_COMPLETE	0
 #define SELF_DIAGNOSTIC_STATUS_RUNNING	1
 
+#define DIVERSIFY_FW_NUM	4
+
 /* MXT_GEN_POWER_T7 field */
 struct t7_config {
 	u8 idle;
@@ -278,6 +284,7 @@ enum{
 	TIME_EX_T72_NOISE_INT_TIME,
 	TIME_EX_CURR_INT_TIME,
 	TIME_EX_GHOST_INT_TIME,
+	TIME_EX_KNOCK_INT_TIME,
 	TIME_EX_PROFILE_MAX,
 };
 
@@ -362,8 +369,12 @@ struct mxt_platform_data {
 	unsigned long gpio_int;
 	unsigned int panel_check;
 	unsigned char panel_on;
-	const char *fw_name;
+	const char *fw_name[DIVERSIFY_FW_NUM];
 	const char *extra_fw_name;
+	u8 panel_id;
+	u8 maker_id;
+	u8 maker_id_gpio;
+	u8 maker_id2_gpio;
 	unsigned char auto_fw_update;
 	char knock_on_type;
 	unsigned int lcd_x;
@@ -712,6 +723,7 @@ struct mxt_data {
 	bool t72_noise_state;
 	u8 cal_cnt;
 	struct hw_reset_data reset;
+	enum lge_boot_mode_type boot_mode;
 };
 
 struct tci_abs {
@@ -733,5 +745,6 @@ struct mxt_object *mxt_get_object(struct mxt_data *data, u8 type);
 int mxt_read_object(struct mxt_data *data, u8 type, u8 offset, u8 *val);
 int mxt_update_firmware(struct mxt_data *data, const char *fwname);
 int mxt_get_reference_chk(struct mxt_data *data);
+int mxt_scaling_factor_chk(struct mxt_data *data);
 
 #endif /* __LINUX_ATMEL_MXT_TS_H__ */

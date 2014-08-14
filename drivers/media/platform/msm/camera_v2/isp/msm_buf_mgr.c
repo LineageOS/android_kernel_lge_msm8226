@@ -309,6 +309,11 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 	struct msm_isp_buffer *temp_buf_info;
 	struct msm_isp_bufq *bufq = NULL;
 	struct vb2_buffer *vb2_buf = NULL;
+/* LGE_CHANGE_S, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582, [STARTS HERE] */
+	struct buffer_cmd *buf_pending = NULL;
+	struct msm_isp_buffer_mapped_info *mped_info_tmp1;
+	struct msm_isp_buffer_mapped_info *mped_info_tmp2;
+/* LGE_CHANGE_E, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582,  [ENDS HERE] */
 	bufq = msm_isp_get_bufq(buf_mgr, bufq_handle);
 	if (!bufq) {
 		pr_err("%s: Invalid bufq\n", __func__);
@@ -348,9 +353,30 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 		list_for_each_entry(temp_buf_info, &bufq->head, list) {
 			if (temp_buf_info->state ==
 					MSM_ISP_BUFFER_STATE_QUEUED) {
+/* LGE_CHANGE_S, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582, [STARTS HERE] */
+#if 0 //QCT original
 				/* found one buf */
 				list_del_init(&temp_buf_info->list);
 				*buf_info = temp_buf_info;
+#else
+
+				list_for_each_entry(buf_pending, &buf_mgr->buffer_q, list) {
+					if (!buf_pending)
+						break;
+					mped_info_tmp1 = buf_pending->mapped_info;
+					mped_info_tmp2 = &temp_buf_info->mapped_info[0];
+
+					if (mped_info_tmp1 == mped_info_tmp2
+						&& (mped_info_tmp1->len == mped_info_tmp2->len)
+						&& (mped_info_tmp1->paddr == mped_info_tmp2->paddr)) {
+						/* found one buf */
+						list_del_init(&temp_buf_info->list);
+						*buf_info = temp_buf_info;
+						break;
+					}
+				}
+#endif
+/* LGE_CHANGE_E, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582,  [ENDS HERE] */
 				break;
 			}
 		}
@@ -359,9 +385,29 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 			bufq->session_id, bufq->stream_id);
 		if (vb2_buf) {
 			if (vb2_buf->v4l2_buf.index < bufq->num_bufs) {
+/* LGE_CHANGE_S, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582, [STARTS HERE] */
+#if 0 //QCT Original
 				*buf_info =
 					&bufq->bufs[vb2_buf->v4l2_buf.index];
 				(*buf_info)->vb2_buf = vb2_buf;
+#else
+				list_for_each_entry(buf_pending, &buf_mgr->buffer_q, list) {
+					if (!buf_pending)
+						break;
+					mped_info_tmp1 = buf_pending->mapped_info;
+					mped_info_tmp2 =
+						&bufq->bufs[vb2_buf->v4l2_buf.index].mapped_info[0];
+
+					if (mped_info_tmp1 == mped_info_tmp2
+						&& (mped_info_tmp1->len == mped_info_tmp2->len)
+						&& (mped_info_tmp1->paddr == mped_info_tmp2->paddr)) {
+						*buf_info = &bufq->bufs[vb2_buf->v4l2_buf.index];
+						(*buf_info)->vb2_buf = vb2_buf;
+						break;
+					}
+				}
+#endif
+/* LGE_CHANGE_E, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582,  [ENDS HERE] */
 			} else {
 				pr_err("%s: Incorrect buf index %d\n",
 					__func__, vb2_buf->v4l2_buf.index);
