@@ -5187,14 +5187,6 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 	if (node == NULL)
 		return -ENODEV;
 
-       /* Check if device D415/D405 */
-       if (device_is_d415) {
-               node = of_find_node_by_path("/soc/i2c@f9927000/atmel_s336_d415@4a");
-               printk("Use D405/415 touch params\n");
-       } else {
-               printk("Use D410 touch params\n");
-       }
-
 	pdata->gpio_reset= of_get_named_gpio_flags(node, "atmel,reset-gpio", 0, NULL);
 	if (pdata->gpio_reset)
 		TOUCH_INFO_MSG("DT : gpio_reset = %lu\n", pdata->gpio_reset);
@@ -5390,36 +5382,23 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 			}
 		}
 	}
-
-	prop = of_find_property(node, "atmel,t15_key_state", NULL);
-	if (prop) {
-		temp_val = prop->length / sizeof(temp_val);
-		pdata->t15_num_keys = temp_val;
-		TOUCH_INFO_MSG("DT : num_buttons = %d\n", pdata->t15_num_keys);
-
-		if (temp_val <= MXT_MAX_KEY) {
-			rc = of_property_read_u32_array(node, "atmel,t15_key_state", temp_array, temp_val);
-			if (rc) {
-				TOUCH_INFO_MSG("DT : Unable to read t15_key_state\n");
-			}
-
-			for(i=0; i<temp_val; i++) {
-				pdata->t15_keystate[i] = temp_array[i];
-				TOUCH_INFO_MSG("DT : t15_keystate[%d] = [%3d] \n", i, pdata->t15_keystate[i]);
-			}
-		}
+	if (device_is_d415) {
+		prop = of_find_property(node, "atmel,t15_key_array_d415", NULL);
+	} else {
+		prop = of_find_property(node, "atmel,t15_key_array", NULL);
 	}
-
-	prop = of_find_property(node, "atmel,t15_key_array", NULL);
 	if (prop) {
 		temp_val = prop->length / sizeof(temp_val);
 		if (temp_val <= MXT_MAX_KEY*2) {
-			rc = of_property_read_u32_array(node, "atmel,t15_key_array", temp_array, temp_val);
+			if (device_is_d415) {
+				rc = of_property_read_u32_array(node, "atmel,t15_key_array_d415", temp_array, temp_val);
+			} else {
+				rc = of_property_read_u32_array(node, "atmel,t15_key_array", temp_array, temp_val);
+			}
 			if (rc) {
 				TOUCH_INFO_MSG("DT : Unable to read t15_key_array\n");
 			}
-
-			for (i = 0; i < temp_val; i+=2) {
+				for (i = 0; i < temp_val; i+=2) {
 				pdata->t15_key_array_x[(i / 2)] = temp_array[i];
 				pdata->t15_key_array_y[(i / 2)] = temp_array[i + 1];
 				TOUCH_INFO_MSG("DT : t15_keystate_array[%d] = [%d,%d] \n", (i / 2), pdata->t15_key_array_x[(i / 2)], pdata->t15_key_array_y[(i / 2)]);
@@ -5427,61 +5406,82 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 		}
 	}
 
-	if (pdata->panel_check) {
-		prop = of_find_property(node, "atmel,t15_extra_key_state", NULL);
+	if (!device_is_d415) {
+		prop = of_find_property(node, "atmel,t15_key_state", NULL);
 		if (prop) {
 			temp_val = prop->length / sizeof(temp_val);
+			pdata->t15_num_keys = temp_val;
+			TOUCH_INFO_MSG("DT : num_buttons = %d\n", pdata->t15_num_keys);
+
 			if (temp_val <= MXT_MAX_KEY) {
-				rc = of_property_read_u32_array(node, "atmel,t15_extra_key_state", temp_array, temp_val);
+				rc = of_property_read_u32_array(node, "atmel,t15_key_state", temp_array, temp_val);
 				if (rc) {
-					TOUCH_INFO_MSG("DT : Unable to read t15_extra_key_state\n");
-					pdata->t15_extra_keystate[0] = 0;
-				} else {
-					for(i=0; i<temp_val; i++) {
-						pdata->t15_extra_keystate[i] = temp_array[i];
-						TOUCH_INFO_MSG("DT : t15_extra_keystate[%d] = [%3d] \n", i, pdata->t15_extra_keystate[i]);
-					}
+					TOUCH_INFO_MSG("DT : Unable to read t15_key_state\n");
+				}
+
+				for(i=0; i<temp_val; i++) {
+					pdata->t15_keystate[i] = temp_array[i];
+					TOUCH_INFO_MSG("DT : t15_keystate[%d] = [%3d] \n", i, pdata->t15_keystate[i]);
 				}
 			}
-		} else {
-			pdata->t15_extra_keystate[0] = 0;
-		}
-	}
-
-	prop = of_find_property(node, "atmel,t15_extra_key_array", NULL);
-	if (prop) {
-		temp_val = prop->length / sizeof(temp_val);
-		if (temp_val <= MXT_MAX_KEY*2) {
-			rc = of_property_read_u32_array(node, "atmel,t15_extra_key_array", temp_array, temp_val);
-			if (rc) {
-				TOUCH_INFO_MSG("DT : Unable to read t15_extra_key_array\n");
-			}
-
-			for (i = 0; i < temp_val; i+=2) {
-				pdata->t15_extra_key_array_x[(i / 2)] = temp_array[i];
-				pdata->t15_extra_key_array_y[(i / 2)] = temp_array[i + 1];
-				TOUCH_INFO_MSG("DT : t15_extra_key_array[%d] = [%d,%d] \n", (i / 2), pdata->t15_extra_key_array_x[(i / 2)], pdata->t15_extra_key_array_y[(i / 2)]);
-			}
-		}
-	}
-
-	prop = of_find_property(node, "atmel,t15_key_map", NULL);
-	if (prop) {
-		temp_val = prop->length / sizeof(temp_val);
-		if (pdata->t15_num_keys != temp_val) {
-			TOUCH_INFO_MSG("DT : error t15_key_map == %d\n", temp_val);
 		}
 
-		if (temp_val <= MXT_MAX_KEY) {
-			rc = of_property_read_u32_array(node, "atmel,t15_key_map", temp_array, temp_val);
-			if (rc) {
-				TOUCH_INFO_MSG("DT : Unable to read key codes\n");
-				return rc;
+		if (pdata->panel_check) {
+			prop = of_find_property(node, "atmel,t15_extra_key_state", NULL);
+			if (prop) {
+				temp_val = prop->length / sizeof(temp_val);
+				if (temp_val <= MXT_MAX_KEY) {
+					rc = of_property_read_u32_array(node, "atmel,t15_extra_key_state", temp_array, temp_val);
+					if (rc) {
+						TOUCH_INFO_MSG("DT : Unable to read t15_extra_key_state\n");
+						pdata->t15_extra_keystate[0] = 0;
+					} else {
+						for(i=0; i<temp_val; i++) {
+							pdata->t15_extra_keystate[i] = temp_array[i];
+							TOUCH_INFO_MSG("DT : t15_extra_keystate[%d] = [%3d] \n", i, pdata->t15_extra_keystate[i]);
+						}
+					}
+				}
+			} else {
+				pdata->t15_extra_keystate[0] = 0;
+			}
+		}
+
+		prop = of_find_property(node, "atmel,t15_extra_key_array", NULL);
+		if (prop) {
+			temp_val = prop->length / sizeof(temp_val);
+			if (temp_val <= MXT_MAX_KEY*2) {
+				rc = of_property_read_u32_array(node, "atmel,t15_extra_key_array", temp_array, temp_val);
+				if (rc) {
+					TOUCH_INFO_MSG("DT : Unable to read t15_extra_key_array\n");
+				}
+
+				for (i = 0; i < temp_val; i+=2) {
+					pdata->t15_extra_key_array_x[(i / 2)] = temp_array[i];
+					pdata->t15_extra_key_array_y[(i / 2)] = temp_array[i + 1];
+					TOUCH_INFO_MSG("DT : t15_extra_key_array[%d] = [%d,%d] \n", (i / 2), pdata->t15_extra_key_array_x[(i / 2)], pdata->t15_extra_key_array_y[(i / 2)]);
+				}
+			}
+		}
+
+		prop = of_find_property(node, "atmel,t15_key_map", NULL);
+		if (prop) {
+			temp_val = prop->length / sizeof(temp_val);
+			if (pdata->t15_num_keys != temp_val) {
+				TOUCH_INFO_MSG("DT : error t15_key_map == %d\n", temp_val);
 			}
 
-			for(i=0; i<temp_val; i++) {
-				pdata->t15_keymap[i] = temp_array[i];
-				TOUCH_INFO_MSG("DT : button[%d] = [%3d:%s] \n", i, pdata->t15_keystate[i], get_touch_button_string(pdata->t15_keymap[i]));
+			if (temp_val <= MXT_MAX_KEY) {
+				rc = of_property_read_u32_array(node, "atmel,t15_key_map", temp_array, temp_val);
+				if (rc) {
+					TOUCH_INFO_MSG("DT : Unable to read key codes\n");
+					return rc;
+				}
+
+				for(i=0; i<temp_val; i++) {
+					pdata->t15_keymap[i] = temp_array[i];
+					TOUCH_INFO_MSG("DT : button[%d] = [%3d:%s] \n", i, pdata->t15_keystate[i], get_touch_button_string(pdata->t15_keymap[i]));
+				}
 			}
 		}
 	}
