@@ -158,6 +158,8 @@ static unsigned int up_threshold_any_cpu_load = 70;
 static unsigned int sync_freq = CPU_SYNC_FREQ;
 static unsigned int up_threshold_any_cpu_freq = 1094400;
 
+#define DOWN_LOW_LOAD_THRESHOLD 5
+
 static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		unsigned int event);
 
@@ -311,11 +313,11 @@ static unsigned int freq_to_min_sample_time(unsigned int freq)
 	return ret;
 }
 
-static unsigned int calc_freq(struct cpufreq_interactive_cpuinfo *pcpu, 
+static unsigned int calc_freq(struct cpufreq_interactive_cpuinfo *pcpu,
 	unsigned int load)
 {
-	unsigned int max = pcpu->policy->cpuinfo.max_freq;
-	unsigned int min = pcpu->policy->cpuinfo.min_freq;
+	unsigned int max = pcpu->policy->max;
+	unsigned int min = pcpu->policy->min;
 
 	return min + load * (max - min) / 100;
 }
@@ -386,10 +388,6 @@ static void cpufreq_interactive_timer(unsigned long data)
 	boosted = now < (last_input_time + boostpulse_duration_val);
 	boosted_freq = max(hispeed_freq, pcpu->policy->min);
 
-	/* Don't provide strange data */
-	if (cpu_load >= 100)
-		cpu_load = 100;
-
 	cpufreq_notify_utilization(pcpu->policy, cpu_load);
 
 	if (cpu_load >= go_hispeed_load) {
@@ -401,8 +399,9 @@ static void cpufreq_interactive_timer(unsigned long data)
 			if (new_freq < boosted_freq)
 				new_freq = boosted_freq;
 		}
-	}
-	else{
+	} else if (cpu_load <= DOWN_LOW_LOAD_THRESHOLD) {
+			new_freq = pcpu->policy->cpuinfo.min_freq;
+	} else {
 		new_freq = calc_freq(pcpu, cpu_load);
 
 		if (new_freq > boosted_freq &&
