@@ -94,6 +94,7 @@ static int mxt_command_backup(struct mxt_data *data, u8 value);
 char *knockon_event[2] = { "TOUCH_GESTURE_WAKEUP=WAKEUP", NULL };
 char *lpwg_event[2] = { "TOUCH_GESTURE_WAKEUP=PASSWORD", NULL };
 
+#if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
 static void send_uevent(char* string[2])
 {
 	kobject_uevent_env(&lge_touch_sys_device.kobj, KOBJ_CHANGE, string);
@@ -102,7 +103,7 @@ static void send_uevent(char* string[2])
 		t_ex_debug[TIME_EX_KNOCK_INT_TIME].tv_sec, t_ex_debug[TIME_EX_KNOCK_INT_TIME].tv_usec);
 }
 
-#if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
+
 struct tci_abs g_tci_press[MAX_POINT_SIZE_FOR_LPWG];
 struct tci_abs g_tci_report[MAX_POINT_SIZE_FOR_LPWG];
 
