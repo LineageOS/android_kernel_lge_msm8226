@@ -31,11 +31,11 @@
 #endif
 
 
-#define DEFAULT_FIRST_LEVEL	70
-#define DEFAULT_SECOND_LEVEL	50
+#define DEFAULT_FIRST_LEVEL	80
+#define DEFAULT_SECOND_LEVEL	60
 #define HIGH_LOAD_COUNTER	25
-#define SAMPLING_RATE		10
-#define DEFAULT_MIN_ONLINE	4
+#define SAMPLING_RATE		2
+#define DEFAULT_MIN_ONLINE	2
 #define SMART_LOAD_CALC
 
 struct hotplug_data {
@@ -151,7 +151,7 @@ static void __ref set_cpu_up(int cpu)
  * Calculates the load for a given cpu
  */ 
 
-static void calculate_load_for_cpu(int cpu) 
+static inline void calculate_load_for_cpu(int cpu) 
 {
 	struct cpufreq_policy policy;
 	int avg_load, cpu_load;
@@ -163,8 +163,20 @@ static void calculate_load_for_cpu(int cpu)
 #endif
 	avg_load = get_load_for_all_cpu();
 
+	/* CPU is stressed */
+	if (hot_data->low_latency) {
+		if (cpu_load >= 100 && avg_load >= 100) {
+			if (hot_data->debug)
+				pr_info("[Hot-Plug]: CPU%u is stressed, "
+					"considering boosting CPU%u \n", 
+					cpu, (cpu + 2));
+			set_cpu_up(cpu + 2);
+			return;
+		}
+	}
+
 	cpufreq_get_policy(&policy, cpu);
-	
+
 	/*  
 	 * We are above our threshold, so update our counter for cpu.
 	 * Consider this only, if we are on our max frequency
@@ -175,22 +187,6 @@ static void calculate_load_for_cpu(int cpu)
 		&& cpufreq_quick_get(cpu) == policy.max) {
 
 		hot_data->counter[cpu] += 2;
-
-		/* CPU is stressed */
-		if (hot_data->low_latency) {
-			if (cpu_load >= 100 &&
-				avg_load >= 100 && hot_data->counter[cpu] >= 4) {
-				
-				if (hot_data->debug)
-					pr_info("[Hot-Plug]: CPU%u is stressed, "
-						"considering boosting CPU%u \n", 
-						cpu, (cpu + 2));
-
-				set_cpu_up(cpu + 2);
-				return;
-			}
-		}
-
 	} else {
 		if (hot_data->counter[cpu] > 0)
 			hot_data->counter[cpu]--;
@@ -200,9 +196,9 @@ static void calculate_load_for_cpu(int cpu)
 /*
  * Finds the lowest operation core to offline
  */
-static void put_cpu_down(int cpu) 
+static inline void put_cpu_down(int cpu) 
 {
-	int current_cpu = cpu; 
+	int target_cpu = cpu; 
 	int cpu_load = 0;
 	int lowest_load = 100;
 	int j;
@@ -231,15 +227,15 @@ static void put_cpu_down(int cpu)
 #endif
 		if (cpu_load < lowest_load) {
 			lowest_load = cpu_load;
-			current_cpu = j;	
+			target_cpu = j;	
 		}
 	}
 
 	if (hot_data->debug)						
-		pr_info("[Hot-Plug]: CPU%u ready for offlining\n", current_cpu);
+		pr_info("[Hot-Plug]: CPU%u ready for offlining\n", target_cpu);
 
-	cpu_down(current_cpu);
-	hot_data->cpu_load_stats[current_cpu] = 0;
+	cpu_down(target_cpu);
+	hot_data->cpu_load_stats[target_cpu] = 0;
 	hot_data->timestamp = jiffies;
 	hot_data->online_cpus = num_online_cpus();
 }
@@ -264,8 +260,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 
 		if (hot_data->counter[i] >= 10) {
 			set_cpu_up(j);
-		}
-		else {
+		} else {
 			if (hot_data->counter[i] >= 0) {
 				put_cpu_down(j);	
 			}
@@ -277,7 +272,7 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 }
 
 #ifdef CONFIG_POWERSUSPEND
-static void suspend_func(struct work_struct *work)
+static inline void suspend_func(struct work_struct *work)
 {	 
 	int cpu;
 
@@ -296,7 +291,7 @@ static void suspend_func(struct work_struct *work)
 		pr_info("[Hot-Plug]: Early Suspend stopping Hotplug work. CPUs online: %d\n", hot_data->online_cpus);
 }
 
-static void resume_func(struct work_struct *work)
+static inline void resume_func(struct work_struct *work)
 {
 	/* Online only the second core */
 	set_cpu_up(1);
