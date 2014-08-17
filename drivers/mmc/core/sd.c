@@ -19,7 +19,6 @@
 #include <linux/mmc/mmc.h>
 #include <linux/mmc/sd.h>
 #include <linux/pm_runtime.h>
-#include <mach/board_lge.h>
 
 #include "core.h"
 #include "bus.h"
@@ -51,12 +50,6 @@ static const unsigned int tacc_mant[] = {
 	0,	10,	12,	13,	15,	20,	25,	30,
 	35,	40,	45,	50,	55,	60,	70,	80,
 };
-
-#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-unsigned int clock_max;
-char clock_flag=0;
-unsigned int clock_show = 0;
-#endif  
 
 #define UNSTUFF_BITS(resp,start,size)					\
 	({								\
@@ -563,20 +556,7 @@ static int sd_set_bus_speed_mode(struct mmc_card *card, u8 *status)
 			mmc_hostname(card->host));
 	else {
 		mmc_set_timing(card->host, timing);
- #ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-		 if(clock_flag)
-		 {
-		 	mmc_set_clock(card->host, clock_max);
-			clock_show = clock_max;
-		 }
-		 else
-		 {
 		mmc_set_clock(card->host, card->sw_caps.uhs_max_dtr);
-			clock_show = card->sw_caps.uhs_max_dtr;
-		 }
-#else
-		mmc_set_clock(card->host, card->sw_caps.uhs_max_dtr);
-#endif
 	}
 
 	return 0;
@@ -1118,20 +1098,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 		/*
 		 * Set bus speed.
 		 */
-#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-		 if(clock_flag)
-		 {
-		 	mmc_set_clock(host, clock_max);
-			clock_show = clock_max;
-		 }
-		 else
-		 {
 		mmc_set_clock(host, mmc_sd_get_max_clock(card));
-			clock_show = mmc_sd_get_max_clock(card);
-		 }
-#else
-	mmc_set_clock(host, mmc_sd_get_max_clock(card));
-#endif
 
 		/*
 		 * Switch to wider bus (if supported).
@@ -1183,27 +1150,9 @@ static int mmc_sd_alive(struct mmc_host *host)
 /*
  * Card detection callback from host.
  */
-
-
-#ifdef CONFIG_MACH_LGE	
-extern int mmc_cd_get_status(struct mmc_host *host);
-extern bool mmc_gpio_irq_flag ;	
-#endif 
-
-
-#ifdef CONFIG_MACH_LGE	
-static int mmc_sd_detect(struct mmc_host *host)
-#else
 static void mmc_sd_detect(struct mmc_host *host)
-#endif 
-
 {
 	int err = 0;
-	int status=0;
-#ifdef CONFIG_MACH_LGE		
-	int return_value=0;
-#endif 
-
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
         int retries = 5;
 #endif
@@ -1220,12 +1169,6 @@ static void mmc_sd_detect(struct mmc_host *host)
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
 	while(retries) {
 		err = mmc_send_status(host->card, NULL);
-
-		if(err){
-			printk(KERN_WARNING "%s(%s): [Retry count: %d] err=%d\n",
-		     	__func__, mmc_hostname(host), retries, err);
-		}
-
 		if (err) {
 			retries--;
 			udelay(5);
@@ -1234,54 +1177,13 @@ static void mmc_sd_detect(struct mmc_host *host)
 		break;
 	}
 	if (!retries) {
-#if defined(CONFIG_MACH_MSM8X10_W3DS_OPEN_SCA) || defined(CONFIG_LGE_REINIT_SDCARD_FOR_DETECT_FAIL)
-	// Try re-init the card when card detection is failed.
-        pr_warning("%s(%s): Unable to re-detect card (%d)\n", __func__, mmc_hostname(host), err); 
-        mmc_power_off(host); 
-        usleep_range(5000, 5500); 
-        mmc_power_up(host); 
-        mmc_select_voltage(host, host->ocr); 
-        err = mmc_sd_init_card(host, host->ocr, host->card); 
-
-        if (err) { 
-            printk(KERN_ERR "%s: Re-init card in mmc_sd_detect() rc = %d (retries = %d)\n", 
-                    mmc_hostname(host), err, retries); 
-            err = _mmc_detect_card_removed(host); 
-        } 
-        else {
-            pr_info("%s(%s): Re-init card success in mmc_sd_detect()\n", __func__, 
-                    mmc_hostname(host)); 
-        }
-#else
 		printk(KERN_ERR "%s(%s): Unable to re-detect card (%d)\n",
 		       __func__, mmc_hostname(host), err);
 		err = _mmc_detect_card_removed(host);
-#endif 
 	}
 #else
 	err = _mmc_detect_card_removed(host);
 #endif
-#ifdef CONFIG_MACH_LGE	
-	//gpio int check && gpio  eject re-check ...	// 
-	 if(mmc_gpio_irq_flag )
-	 {
-		
-		status = mmc_cd_get_status(host);
-		pr_info("%s: mmc_gpio_status !!!!! %d\n" ,__func__,status ); 
-		
-			if(!status)  // active High / Low always Low when sdcard ejected ..
-			 {
-			 mmc_card_set_removed(host->card);;
-			 printk(KERN_ERR "%s(%s): re removed card 191919 active HIGH model (%d)\n",
-						 __func__, mmc_hostname(host), status);
-			 err = 1;
-			 return_value=1;
-			 }
-		
-	 }
-	 mmc_gpio_irq_flag=0;
-#endif 
-
 	mmc_release_host(host);
 
 	/*
@@ -1299,9 +1201,6 @@ static void mmc_sd_detect(struct mmc_host *host)
 		mmc_power_off(host);
 		mmc_release_host(host);
 	}
-#ifdef CONFIG_MACH_LGE
-	return return_value;
-#endif 
 }
 
 /*
@@ -1338,7 +1237,6 @@ static int mmc_sd_resume(struct mmc_host *host)
 	int err;
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
 	int retries;
-	unsigned long delay = 5000, settle = 0;
 #endif
 
 	BUG_ON(!host);
@@ -1351,19 +1249,13 @@ static int mmc_sd_resume(struct mmc_host *host)
 		err = mmc_sd_init_card(host, host->ocr, host->card);
 
 		if (err) {
-			printk(KERN_ERR "%s: Re-init card rc = %d "
-				"(retries = %d, delay = %lu)\n",
-				mmc_hostname(host), err, retries, delay);
+			printk(KERN_ERR "%s: Re-init card rc = %d (retries = %d)\n",
+			       mmc_hostname(host), err, retries);
 			retries--;
 			mmc_power_off(host);
-			usleep_range(delay, delay + 500);
+			usleep_range(5000, 5500);
 			mmc_power_up(host);
 			mmc_select_voltage(host, host->ocr);
-			if (settle)
-				usleep_range(settle, settle + 500);
-			/* Increase settle times on each attempt */
-			delay += 10000;
-			settle += 10000;
 			continue;
 		}
 		break;

@@ -45,11 +45,6 @@
 #include <asm/uaccess.h>
 
 #include "queue.h"
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-#include <linux/mmc/mem_log.h>
-#endif
-
-
 
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
@@ -147,10 +142,6 @@ enum {
 	MMC_PACKED_N_ZERO,
 	MMC_PACKED_N_SINGLE,
 };
-
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-packed_cmd_t lge_packed_cmd_info;
-#endif
 
 module_param(perdev_minors, int, 0444);
 MODULE_PARM_DESC(perdev_minors, "Minors numbers to allocate per device");
@@ -1051,91 +1042,6 @@ static int get_card_status(struct mmc_card *card, u32 *status, int retries)
 	return err;
 }
 
-#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-
-static int lge_asctodec(char *buff, int num)
-{
-    int i, j;
-    int val, tmp;
-    val=0;
-    for(i=0; i<num; i++)
-    {
-        tmp = 1;
-        for(j=0; j< (num-(i+1)); j++){
-            tmp = tmp*10;
-        }   
-        val += tmp*(buff[i]-48); 
-    }
-    pr_info("[JWKIM_TEST] dec :%d\n", val);
-    return val;
-}
-
-static void record_crc_error(char *filename)
-{
-    struct file *filp;
-    char bufs[10], asc_num[10];
-    int ret;
-    int count;
-    int num_crc;
-    int tmp;
-    int i;
-
-    mm_segment_t old_fs = get_fs();
-    set_fs(KERNEL_DS);
-
-    filp = filp_open(filename, O_RDWR, S_IRUSR|S_IWUSR);
-    if(IS_ERR(filp)){
-        pr_err("[JWKIM_TEST] open error\n");
-        return;
-    }
-    count = 0;
-
-    do{
-        ret = vfs_read(filp, &bufs[count], 1, &filp->f_pos);
-        count++;
-    }while(ret!=0);
-    count--;
-    bufs[count]=0;
-    num_crc = lge_asctodec(bufs, count);
-    num_crc = num_crc+1;
-    count = 1;
-    tmp = num_crc;
-    do{
-        tmp = tmp/10;
-        if(!(tmp<1))
-            count++;
-        else
-            break;
-    }while(1);  
-
-
-    for(i=0; i<count; i++){
-        tmp = num_crc%10;
-        asc_num[count-(i+1)] = tmp + '0';
-        num_crc = num_crc/10;
-    }
-    asc_num[count]=0;
-    pr_info("[JWKIM_TEST] ascii val : %s\n", asc_num);
-    
-    filp->f_pos=0;
-
-    vfs_write(filp, asc_num, count, &filp->f_pos);
-    filp_close(filp, NULL);
-    set_fs(old_fs);
-    return;
-}
-
-
-static void record_crc_cmd_error(struct work_struct *work)
-{
-	pr_info("[JWKIM_TEST] CMD CRC Occured!!!\n");
-    record_crc_error("/persist/command_crc_error.txt");
-}
-
-static DECLARE_WORK(lge_crc_cmd_workqueue, record_crc_cmd_error);
-#endif
-
-
 #define ERR_NOMEDIUM	3
 #define ERR_RETRY	2
 #define ERR_ABORT	1
@@ -1150,9 +1056,6 @@ static int mmc_blk_cmd_error(struct request *req, const char *name, int error,
 		pr_err("%s: %s sending %s command, card status %#x\n",
 			req->rq_disk->disk_name, "response CRC error",
 			name, status);
-#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-        queue_work(system_nrt_wq, &lge_crc_cmd_workqueue);
-#endif
 		return ERR_RETRY;
 
 	case -ETIMEDOUT:
@@ -2175,11 +2078,6 @@ static u8 mmc_blk_prep_packed_list(struct mmc_queue *mq, struct request *req)
 	if (max_packed_rw == 0)
 		goto no_packed;
 
-/* LGE_UPDATE_S by p1-fs@lge.com Toshiba recommend packed number no over 8 */
-	else if(max_packed_rw > 8)
-		max_packed_rw = 8;
-/* LGE_UPDATE_E by p1-fs@lge.com */
-
 	if (mmc_req_rel_wr(cur) &&
 			(md->flags & MMC_BLK_REL_WR) &&
 			!en_rel_wr)
@@ -2330,17 +2228,9 @@ static void mmc_blk_packed_hdr_wrq_prep(struct mmc_queue_req *mqrq,
 	mqrq->packed_fail_idx = MMC_PACKED_N_IDX;
 
 	memset(packed_cmd_hdr, 0, sizeof(mqrq->packed_cmd_hdr));
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-	memset(lge_packed_cmd_info.packed_cmd_hdr, 0, sizeof(lge_packed_cmd_info.packed_cmd_hdr));
-#endif
 	packed_cmd_hdr[0] = (mqrq->packed_num << 16) |
 		(PACKED_CMD_WR << 8) | PACKED_CMD_VER;
 
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-	lge_packed_cmd_info.num_packed = mqrq->packed_num;
-	pr_info("num_packed :%d \n", lge_packed_cmd_info.num_packed);
-	lge_packed_cmd_info.packed_cmd_hdr[0] = packed_cmd_hdr[0];
-#endif 
 	/*
 	 * Argument for each entry of packed group
 	 */
@@ -2356,23 +2246,13 @@ static void mmc_blk_packed_hdr_wrq_prep(struct mmc_queue_req *mqrq,
 			(do_rel_wr ? MMC_CMD23_ARG_REL_WR : 0) |
 			(do_data_tag ? MMC_CMD23_ARG_TAG_REQ : 0) |
 			blk_rq_sectors(prq);
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-		lge_packed_cmd_info.packed_cmd_hdr[(i*2)] = packed_cmd_hdr[(i*2)];
-#endif
 		/* Argument of CMD18 or CMD25 */
 		packed_cmd_hdr[((i * 2)) + 1] =
 			mmc_card_blockaddr(card) ?
 			blk_rq_pos(prq) : blk_rq_pos(prq) << 9;
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-		lge_packed_cmd_info.packed_cmd_hdr[((i*2)+1)] = packed_cmd_hdr[((i*2)+1)];
-#endif
 		mqrq->packed_blocks += blk_rq_sectors(prq);
 		i++;
 	}
-
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-	lge_packed_cmd_info.packed_blocks = mqrq->packed_blocks +1;
-#endif
 
 	memset(brq, 0, sizeof(struct mmc_blk_request));
 	brq->mrq.cmd = &brq->cmd;
@@ -2611,19 +2491,17 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 			break;
 		case MMC_BLK_CMD_ERR:
 			ret = mmc_blk_cmd_err(md, card, brq, req, ret);
-			goto cmd_recover;
+			if (!mmc_blk_reset(md, card->host, type))
+				break;
+			goto cmd_abort;
 		case MMC_BLK_RETRY:
-			/*
-			 * Let infirmity increase blindly so that all retries
-			 * are attempted before we catch it on fall-though.
-			 */
-			if (mmc_card_recoverable(card))
-				card->infirmity++;
 			if (retry++ < 5)
 				break;
 			/* Fall through */
 		case MMC_BLK_ABORT:
-			goto cmd_recover;
+			if (!mmc_blk_reset(md, card->host, type))
+				break;
+			goto cmd_abort;
 		case MMC_BLK_DATA_ERR: {
 			int err;
 
@@ -2644,17 +2522,6 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 				break;
 			}
 			/*
-			 * If we get into this mode of operation and
-			 * the trouble continues, we will not get out
-			 * along the normal error path until all of the
-			 * single transfers are done.
-			 */
-			if (mmc_card_recoverable(card)) {
-				if (card->infirmity >= MMC_MAX_CARD_INFIRMITY)
-					goto cmd_recover;
-				card->infirmity++;
-			}
-			/*
 			 * After an error, we redo I/O one sector at a
 			 * time, so we only reach here after trying to
 			 * read a single sector.
@@ -2673,43 +2540,6 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 			goto cmd_abort;
 		}
 
-		goto cmd_done;
-cmd_recover:
-		/*
-		 * Keep track of recoverable cards that are not stable and
-		 * attempt to recover them if necessary.
-		 */
-		if (mmc_card_recoverable(card)) {
-			card->infirmity++;
-			if (card->infirmity >= MMC_MAX_CARD_INFIRMITY) {
-				card->host->failures++;
-				pr_err("%s: card has experienced %d semi-"
-					"consecutive errors and %u failures\n",
-					req->rq_disk->disk_name,
-					card->infirmity,
-					card->host->failures);
-
-				if (!(card->host->caps & MMC_CAP_NONREMOVABLE) &&
-				    card->host->failures >= MMC_MAX_FAILURES) {
-					mmc_card_set_removed(card);
-					mmc_detect_change(card->host, 0);
-					goto cmd_abort;
-				}
-
-				pr_info("%s: trying to recover\n",
-					req->rq_disk->disk_name);
-				mmc_blk_reset(md, card->host, type);
-				card->infirmity = 0;
-			}
-
-			if (card->infirmity > 0)
-				pr_info("%s: card infirmity score: %d\n",
-					req->rq_disk->disk_name,
-					card->infirmity);
-		} else
-			goto cmd_abort;
-
-cmd_done:
 		if (ret) {
 			if (mq_rq->packed_cmd == MMC_PACKED_NONE) {
 				/*
@@ -2728,14 +2558,7 @@ cmd_done:
 						&mq_rq->mmc_active, NULL);
 			}
 		}
-
 	} while (ret);
-
-	/*
-	 * Improve the card's health score on success.
-	 */
-	if (card->infirmity > 0)
-		card->infirmity--;
 
 	return 1;
 

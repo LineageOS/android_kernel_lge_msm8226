@@ -20,16 +20,6 @@ config DIAG_OVER_USB
 	 This feature helps segregate code required for DIAG traffic to go over USB.
 endmenu
 
-menu "SLATE Support"
-
-config LGE_SLATE
-	bool "Enable SLATE Key Logging message routing"
-		depends on DIAG_OVER_USB
-	default n
-	help
-	 This feature helps decide whether slate key logging start message would be routed to apps or not.
-endmenu
-
 menu "SDIO support for DIAG"
 
 config DIAG_SDIO_PIPE
@@ -48,63 +38,4 @@ config DIAGFWD_BRIDGE_CODE
 	bool "Enable QSC/9K DIAG traffic over SMUX/HSIC"
 	help
 	 SMUX/HSIC Transport Layer for DIAG Router
-endmenu
-
-menu "LGE DM APP Support"
-
-config LGE_DM_APP
-	bool "LGE DM APP Support"
-	default n
-	depends on MACH_LGE
-	help
-	 LGE DM APP Support
-endmenu
-
-menu "LGE DM DEV Support"
-
-config LGE_DM_DEV
-    bool "LGE DM DEV Support"
-    default n
-    depends on MACH_LGE
-    help
-     LGE DM DEV Support
-endmenu
-
-menu "LGE RSSI debug Support"
-
-config LGE_RSSI_DEBUG
-   bool "LGE RSSI_DEBUG Support"
-   default n
-   depends on MACH_LGE
-   help
-    LGE RSSI DEBUG Support
-endmenu
-
-menu "LGE Diag Enable for TRF/SPR"
-
-config LGE_DIAG_ENABLE
-    bool "LGE Diag Enable for TRF/SPR"
-    default n
-	help
-     LGE Diag Enable for TRF/SPR
-endmenu
-
-menu "LGE Diag Enable for SPR"
-
-config LGE_DIAG_ENABLE_SPR
-    bool "LGE Diag Enable for SPR"
-    default n
-	help
-     LGE Diag Enable for SPR
-
-endmenu
-
-menu "LGE ACG Carrier Code"
-
-config LGE_ACG_CARRIER_CODE
-    bool "LGE ACG Carrier Code"
-    default n
-    depends on MACH_LGE
-    help
-     LGE ACG Carrier Code
 endmenu

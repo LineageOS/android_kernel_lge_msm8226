@@ -9,10 +9,4 @@ mmc_core-y			:= core.o bus.o host.o \
 				   sdio_cis.o sdio_io.o sdio_irq.o \
 				   quirks.o cd-gpio.o
 
-# LGE_CHANGE_S 
-# Comment : FMBT porting
-# 2013-11-22, p1-fs@lge.com
-mmc_core-$(CONFIG_FMBT_TRACE_EMMC) += mem_log.o
-# LGE_CHANGE_E
-
 mmc_core-$(CONFIG_DEBUG_FS)	+= debugfs.o

@@ -144,13 +144,8 @@ int diag_process_smd_cntl_read_data(struct diag_smd_info *smd_info, void *buf,
 	while (count_bytes + HDR_SIZ <= total_recd) {
 		type = *(uint32_t *)(buf);
 		data_len = *(uint32_t *)(buf + 4);
-#ifdef CONFIG_LGE_USB_ENABLE
-		if (type < DIAG_CTRL_MSG_REG ||
-				 type > DIAG_CTRL_MSG_LGE_DIAG_ENABLE) {
-#else
 		if (type < DIAG_CTRL_MSG_REG ||
 				 type > DIAG_CTRL_MSG_LAST) {
-#endif
 			pr_alert("diag: In %s, Invalid Msg type %d proc %d",
 				 __func__, type, smd_info->peripheral);
 			break;
@@ -162,16 +157,7 @@ int diag_process_smd_cntl_read_data(struct diag_smd_info *smd_info, void *buf,
 			break;
 		}
 		count_bytes = count_bytes+HDR_SIZ+data_len;
-#ifdef CONFIG_LGE_DIAG_ENABLE
-		if(type == DIAG_CTRL_MSG_LGE_DIAG_ENABLE) {
-			extern int set_diag_enable_status(int); 
-			msg = buf+HDR_SIZ; 
-			set_diag_enable_status(msg->cmd_code); 
-			break;
-		} else if (type == DIAG_CTRL_MSG_REG && total_recd >= count_bytes) {
-#else
 		if (type == DIAG_CTRL_MSG_REG && total_recd >= count_bytes) {
-#endif
 			msg = buf+HDR_SIZ;
 			range = buf+HDR_SIZ+
 					sizeof(struct diag_ctrl_msg);

@@ -127,7 +127,6 @@ struct sigaction {
 	__sigrestore_t sa_restorer;
 	sigset_t sa_mask;		/* mask last for extensibility */
 };
-#define __ARCH_HAS_SA_RESTORER /* Here: CVE-2013-0914 */
 
 struct k_sigaction {
 	struct sigaction sa;

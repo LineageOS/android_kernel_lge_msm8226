@@ -35,7 +35,6 @@
 #include <linux/mmc/host.h>
 #include <linux/mmc/mmc.h>
 #include <linux/mmc/sd.h>
-#include <mach/board_lge.h>
 
 #include "core.h"
 #include "bus.h"
@@ -64,18 +63,6 @@ static void mmc_clk_scaling(struct mmc_host *host, bool from_wq);
 #define MMC_FLUSH_REQ_TIMEOUT_MS 90000 /* msec */
 #define MMC_CACHE_DISBALE_TIMEOUT_MS 180000 /* msec */
 
-/*
- * LGE_CHANGE_S
- * Comment : FMBT porting
- * 2013-11-22, p1-fs@lge.com
- */
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-#include <linux/mmc/mem_log.h>
-#define eftech_printf(fmt, args...) printk(fmt, ## args)
-unsigned long long glTimeGap2 = 0;
-unsigned long long glTimeGap1 = 0;
-#endif
-
 static struct workqueue_struct *workqueue;
 
 /*
@@ -96,9 +83,6 @@ module_param(use_spi_crc, bool, 0);
 bool mmc_assume_removable;
 #else
 bool mmc_assume_removable = 1;
-#endif
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-extern packed_cmd_t lge_packed_cmd_info;
 #endif
 EXPORT_SYMBOL(mmc_assume_removable);
 module_param_named(removable, mmc_assume_removable, bool, 0644);
@@ -205,17 +189,6 @@ static inline void mmc_update_clk_scaling(struct mmc_host *host)
 void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 {
 	struct mmc_command *cmd = mrq->cmd;
-/*
- * LGE_CHANGE_S
- * FMBT porting
- * 2013-11-22, p1-fs@lge.com
- */
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-	unsigned long long currentTime = 0;
-	int i;
-#endif
-/* LGE_CHANGE_E */
-
 	int err = cmd->error;
 #ifdef CONFIG_MMC_PERF_PROFILING
 	ktime_t diff;
@@ -267,43 +240,7 @@ void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 			pr_debug("%s:     %d bytes transferred: %d\n",
 				mmc_hostname(host),
 				mrq->data->bytes_xfered, mrq->data->error);
-/*
- * LGE_CHANGE_S
- * Comment : FMBT porting
- * 2013-11-22, p1-fs@lge.com
- */
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-			if(!strncmp(mmc_hostname(host), "mmc0",4))
-			{
-				currentTime = sched_clock();
-				memlog_emmc_add(mrq, currentTime, currentTime - glTimeGap2);
-
-				if((lge_packed_cmd_info.packed_cmd_hdr[3] == mrq->cmd->arg) && (mrq->cmd->opcode == 25)
-						&& (mrq->data->blocks == lge_packed_cmd_info.packed_blocks) )
-				{
-					memlog_packed_add(lge_packed_cmd_info.packed_cmd_hdr[0],0);
-					for(i=2; i<(lge_packed_cmd_info.num_packed*2+1); i=i+2)
-					{
-						memlog_packed_add(lge_packed_cmd_info.packed_cmd_hdr[i],1);
-						memlog_packed_add(lge_packed_cmd_info.packed_cmd_hdr[i+1],2);
-					}
-				}
-			}
 		}
-		else {
-			if(!strncmp(mmc_hostname(host), "mmc0",4))
-			{
-				if(mrq->cmd->opcode != MMC_SEND_STATUS)
-				{
-					currentTime = sched_clock();
-					memlog_emmc_add(mrq, currentTime, currentTime - glTimeGap1);
-				}
-			}
-#endif
-/* LGE_CHANGE_E */
-		}
-
-/* LGE_CHANGE_E */
 
 		if (mrq->stop) {
 			pr_debug("%s:     (CMD%u): %d: %08x %08x %08x %08x\n",
@@ -384,21 +321,6 @@ mmc_start_request(struct mmc_host *host, struct mmc_request *mrq)
 		if (host->perf_enable)
 			host->perf.start = ktime_get();
 #endif
-/* 
- * LGE_CHANGE_S
- * Comment : FMBT porting
- * 2013-11-22, p1-fs@lge.com
- */
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-		glTimeGap2 = sched_clock();
-
-	}
-	else
-	{
-		glTimeGap1 = sched_clock();
-#endif
-/* LGE_CHANGE_E */
-	
 	}
 	mmc_host_clk_hold(host);
 	led_trigger_event(host->led, LED_FULL);
@@ -1343,17 +1265,7 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 			 */
 			limit_us = 3000000;
 		else
-			#ifdef CONFIG_MACH_LGE
-			/* LGE_CHANGE
-			 * Although we already applied enough time,
-			 * timeout-error occurs until now with several-ultimate-crappy-memory.
-			 * So, we give more time than before.
-			 * 2013-03-09, G2-FS@lge.com
-			 */
-			limit_us = 300000;
-			#else
 			limit_us = 100000;
-			#endif
 
 		/*
 		 * SDHC cards always use these fixed values.
@@ -1983,15 +1895,7 @@ void mmc_power_up(struct mmc_host *host)
 	 * This delay should be sufficient to allow the power supply
 	 * to reach the minimum voltage.
 	 */
-	#ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	* Augmenting delay-time for some crappy card.
-	* 2013-03-09, G2-FS@lge.com
-	*/
-	mmc_delay(20);
-	#else
 	mmc_delay(10);
-	#endif
 
 	host->ios.clock = host->f_init;
 
@@ -2002,15 +1906,7 @@ void mmc_power_up(struct mmc_host *host)
 	 * This delay must be at least 74 clock sizes, or 1 ms, or the
 	 * time required to reach a stable voltage.
 	 */
-#ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	* Augmenting delay-time for some crappy card.
-	* 2013-03-09, G2-FS@lge.com
-	*/
-	mmc_delay(20);
-#else
 	mmc_delay(10);
-#endif
 
 	mmc_host_clk_release(host);
 }
@@ -2170,10 +2066,6 @@ void mmc_detach_bus(struct mmc_host *host)
 	mmc_bus_put(host);
 }
 
-#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-	extern char clock_flag;
-	char voltage_flag = 0; 
-#endif
 /**
  *	mmc_detect_change - process change of state on a MMC socket
  *	@host: host which changed state.
@@ -2193,17 +2085,7 @@ void mmc_detect_change(struct mmc_host *host, unsigned long delay)
 	spin_unlock_irqrestore(&host->lock, flags);
 #endif
 	host->detect_change = 1;
-#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
-	if(host->index == 1)
-	{
-		if(host->card)
-		{	
-			clock_flag = 0;
-			voltage_flag = 0;
-		}
-		
-	}
-#endif	
+
 	mmc_schedule_delayed_work(&host->detect, delay);
 }
 
@@ -3272,18 +3154,8 @@ void mmc_rescan(struct work_struct *work)
 	 */
 	if (host->bus_ops && host->bus_ops->detect && !host->bus_dead
 	    && !(host->caps & MMC_CAP_NONREMOVABLE))
-	{
-		
-	#ifdef CONFIG_MACH_LGE	
-		if(host->bus_ops->detect(host))
-		{
-			mmc_bus_put(host);
-			goto out;
-		}
-	#else
-	host->bus_ops->detect(host);
-	#endif 
-	}
+		host->bus_ops->detect(host);
+
 	host->detect_change = 0;
 	/* If the card was removed the bus will be marked
 	 * as dead - extend the wakelock so userspace
@@ -3304,13 +3176,6 @@ void mmc_rescan(struct work_struct *work)
 	 */
 	mmc_bus_put(host);
 	mmc_bus_get(host);
-
-	/* Don't redetect if the card has failed too many times */
-	if (host->failures >= MMC_MAX_FAILURES) {
-		pr_err("%s: ignoring bad card\n", mmc_hostname(host));
-		mmc_bus_put(host);
-		goto out;
-	}
 
 	/* if there still is a card present, stop here */
 	if (host->bus_ops != NULL) {
@@ -3884,15 +3749,6 @@ static int __init mmc_init(void)
 	ret = sdio_register_bus();
 	if (ret)
 		goto unregister_host_class;
-/*
- * LGE_CHANGE_S
- * Comment : FMBT porting
- * 2013-11-22, p1-fs@lge.com
- */
-#if defined(CONFIG_FMBT_TRACE_EMMC)
-	init_memLog();
-#endif
-/* LGE_CHANGE_E */
 
 	return 0;
 

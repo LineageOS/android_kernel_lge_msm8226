@@ -266,24 +266,4 @@ config BT_WILINK
 
 	  Say Y here to compile support for Texas Instrument's WiLink7 driver
 	  into the kernel or say M to compile it as module.
-
-# LGE_CHANGE_S, [BT][teddy.ju@lge.com], 2013-05-13
-config LGE_BLUETOOTH
-	bool "LGE Bluetooth driver"
-	depends on BT
-	default n
-	help
-	  LGE Bluetooth driver.
-	  This driver provides support for LGE BT.
-# LGE_CHANGE_E, [BT][teddy.ju@lge.com], 2013-05-13
-
-
-config LGE_BLUESLEEP
-	bool "LGE Bluetooth sleep driver"
-	depends on LGE_BLUETOOTH
-	default n
-	help
-	  LGE Bluetooth sleep driver.
-	  This driver provides support for LGE BT Sleep.
-
 endmenu

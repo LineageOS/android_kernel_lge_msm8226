@@ -20,7 +20,6 @@
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
@@ -232,11 +231,7 @@ struct cpr_regulator {
 #define CPR_DEBUG_MASK_IRQ	BIT(0)
 #define CPR_DEBUG_MASK_API	BIT(1)
 
-#if defined(CONFIG_MACH_MSM8X10_W3C_TRF_US)
-static int cpr_debug_enable = 0;
-#else
 static int cpr_debug_enable = CPR_DEBUG_MASK_IRQ;
-#endif
 static int cpr_enable;
 static struct cpr_regulator *the_cpr;
 
@@ -1164,15 +1159,9 @@ static int __devinit cpr_pvs_init(struct platform_device *pdev,
 		process = APC_PVS_SLOW;
 	}
 
-#if 1 // 2013.12.04, To check pvs type value.
-	pr_err("[row:%d] = 0x%llX, n_bits=%d, bin=%d (%d)",
-		pvs_fuse[0], efuse_bits, pvs_fuse[2],
-		cpr_vreg->pvs_bin, process);
-#else
 	pr_info("[row:%d] = 0x%llX, n_bits=%d, bin=%d (%d)",
 		pvs_fuse[0], efuse_bits, pvs_fuse[2],
 		cpr_vreg->pvs_bin, process);
-#endif
 	pr_info("pvs initial turbo voltage_= from %u to %u\n",
 		init_v, cpr_vreg->pvs_corner_v[process][CPR_FUSE_CORNER_TURBO]);
 

@@ -33,16 +33,6 @@
 
 #include "internal.h"
 
-/*             
-  
-                                        
-                                             
-  
-                                  
- */
-#include "sreadahead_prof.h"
-/*             */
-
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	struct file *filp)
 {
@@ -997,16 +987,6 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 			} else {
 				fsnotify_open(f);
 				fd_install(fd, f);
-                /*             
-                  
-                                                        
-                                                             
-                  
-                                                  
-                 */
-                sreadahead_prof( f, 0, 0);
-                /*              */
-
 			}
 		}
 		putname(tmp);
