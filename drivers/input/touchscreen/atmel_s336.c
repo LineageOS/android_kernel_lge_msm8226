@@ -1769,7 +1769,7 @@ static void mxt_proc_t9_message(struct mxt_data *data, u8 *message)
 				return ;
 			}
 
-			TOUCH_INFO_MSG("%d finger pressed <%d> : x[%3d] y[%3d] z[%3d] area[%3d]\n", ++touched_finger_count, id, x, y, amplitude, area);
+			//TOUCH_INFO_MSG("%d finger pressed <%d> : x[%3d] y[%3d] z[%3d] area[%3d]\n", ++touched_finger_count, id, x, y, amplitude, area);
 		}
 
 		if (data->reset.state == IDLE_STATE) {
@@ -1805,7 +1805,7 @@ static void mxt_proc_t9_message(struct mxt_data *data, u8 *message)
 
 		input_mt_slot(input_dev, id);
 		input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, 0);
-		TOUCH_INFO_MSG("touch_release    <%d> : x[%3d] y[%3d]\n", id, x, y);
+//		TOUCH_INFO_MSG("touch_release    <%d> : x[%3d] y[%3d]\n", id, x, y);
 		data->fingers[id].state = MXT_STATE_RELEASE;
 		data->ts_data.curr_data[id].status= MXT_STATE_RELEASE;
 		data->ts_data.curr_data[id].pressure = 0;
@@ -1935,11 +1935,11 @@ static void mxt_proc_t57_messages(struct mxt_data *data, u8 *message)
 	area =				(message[2] << 8 | message[1]);
 	touch_area =			(message[4] << 8 | message[3]);
 	anti_touch_area =		(message[6] << 8 | message[5]);
-
+/*
 	if (data->t57_debug_enabled || data->ref_chk) {
 		TOUCH_INFO_MSG("T57 :%3d %3d %3d\n", area, touch_area, anti_touch_area);
 	}
-
+*/
 	if (data->cal_cnt > 5 && anti_touch_area >= 1 && \
 		1 <= data->patch.src_item[MXT_PATCH_ITEM_USER6] && data->patch.src_item[MXT_PATCH_ITEM_USER6] < half_err_cnt) {
 		data->t72_noise_state = true;
