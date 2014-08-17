@@ -19,7 +19,11 @@ struct mmc_bus_ops {
 	int (*awake)(struct mmc_host *);
 	int (*sleep)(struct mmc_host *);
 	void (*remove)(struct mmc_host *);
+#ifdef CONFIG_MACH_LGE	
+   int (*detect)(struct mmc_host *);
+#else
 	void (*detect)(struct mmc_host *);
+#endif 	
 	int (*suspend)(struct mmc_host *);
 	int (*resume)(struct mmc_host *);
 	int (*power_save)(struct mmc_host *);

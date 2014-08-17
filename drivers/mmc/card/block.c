@@ -45,6 +45,11 @@
 #include <asm/uaccess.h>
 
 #include "queue.h"
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+#include <linux/mmc/mem_log.h>
+#endif
+
+
 
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
@@ -142,6 +147,10 @@ enum {
 	MMC_PACKED_N_ZERO,
 	MMC_PACKED_N_SINGLE,
 };
+
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+packed_cmd_t lge_packed_cmd_info;
+#endif
 
 module_param(perdev_minors, int, 0444);
 MODULE_PARM_DESC(perdev_minors, "Minors numbers to allocate per device");
@@ -1042,6 +1051,91 @@ static int get_card_status(struct mmc_card *card, u32 *status, int retries)
 	return err;
 }
 
+#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
+
+static int lge_asctodec(char *buff, int num)
+{
+    int i, j;
+    int val, tmp;
+    val=0;
+    for(i=0; i<num; i++)
+    {
+        tmp = 1;
+        for(j=0; j< (num-(i+1)); j++){
+            tmp = tmp*10;
+        }   
+        val += tmp*(buff[i]-48); 
+    }
+    pr_info("[JWKIM_TEST] dec :%d\n", val);
+    return val;
+}
+
+static void record_crc_error(char *filename)
+{
+    struct file *filp;
+    char bufs[10], asc_num[10];
+    int ret;
+    int count;
+    int num_crc;
+    int tmp;
+    int i;
+
+    mm_segment_t old_fs = get_fs();
+    set_fs(KERNEL_DS);
+
+    filp = filp_open(filename, O_RDWR, S_IRUSR|S_IWUSR);
+    if(IS_ERR(filp)){
+        pr_err("[JWKIM_TEST] open error\n");
+        return;
+    }
+    count = 0;
+
+    do{
+        ret = vfs_read(filp, &bufs[count], 1, &filp->f_pos);
+        count++;
+    }while(ret!=0);
+    count--;
+    bufs[count]=0;
+    num_crc = lge_asctodec(bufs, count);
+    num_crc = num_crc+1;
+    count = 1;
+    tmp = num_crc;
+    do{
+        tmp = tmp/10;
+        if(!(tmp<1))
+            count++;
+        else
+            break;
+    }while(1);  
+
+
+    for(i=0; i<count; i++){
+        tmp = num_crc%10;
+        asc_num[count-(i+1)] = tmp + '0';
+        num_crc = num_crc/10;
+    }
+    asc_num[count]=0;
+    pr_info("[JWKIM_TEST] ascii val : %s\n", asc_num);
+    
+    filp->f_pos=0;
+
+    vfs_write(filp, asc_num, count, &filp->f_pos);
+    filp_close(filp, NULL);
+    set_fs(old_fs);
+    return;
+}
+
+
+static void record_crc_cmd_error(struct work_struct *work)
+{
+	pr_info("[JWKIM_TEST] CMD CRC Occured!!!\n");
+    record_crc_error("/persist/command_crc_error.txt");
+}
+
+static DECLARE_WORK(lge_crc_cmd_workqueue, record_crc_cmd_error);
+#endif
+
+
 #define ERR_NOMEDIUM	3
 #define ERR_RETRY	2
 #define ERR_ABORT	1
@@ -1056,6 +1150,9 @@ static int mmc_blk_cmd_error(struct request *req, const char *name, int error,
 		pr_err("%s: %s sending %s command, card status %#x\n",
 			req->rq_disk->disk_name, "response CRC error",
 			name, status);
+#ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
+        queue_work(system_nrt_wq, &lge_crc_cmd_workqueue);
+#endif
 		return ERR_RETRY;
 
 	case -ETIMEDOUT:
@@ -2078,6 +2175,11 @@ static u8 mmc_blk_prep_packed_list(struct mmc_queue *mq, struct request *req)
 	if (max_packed_rw == 0)
 		goto no_packed;
 
+/* LGE_UPDATE_S by p1-fs@lge.com Toshiba recommend packed number no over 8 */
+	else if(max_packed_rw > 8)
+		max_packed_rw = 8;
+/* LGE_UPDATE_E by p1-fs@lge.com */
+
 	if (mmc_req_rel_wr(cur) &&
 			(md->flags & MMC_BLK_REL_WR) &&
 			!en_rel_wr)
@@ -2228,9 +2330,17 @@ static void mmc_blk_packed_hdr_wrq_prep(struct mmc_queue_req *mqrq,
 	mqrq->packed_fail_idx = MMC_PACKED_N_IDX;
 
 	memset(packed_cmd_hdr, 0, sizeof(mqrq->packed_cmd_hdr));
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+	memset(lge_packed_cmd_info.packed_cmd_hdr, 0, sizeof(lge_packed_cmd_info.packed_cmd_hdr));
+#endif
 	packed_cmd_hdr[0] = (mqrq->packed_num << 16) |
 		(PACKED_CMD_WR << 8) | PACKED_CMD_VER;
 
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+	lge_packed_cmd_info.num_packed = mqrq->packed_num;
+	pr_info("num_packed :%d \n", lge_packed_cmd_info.num_packed);
+	lge_packed_cmd_info.packed_cmd_hdr[0] = packed_cmd_hdr[0];
+#endif 
 	/*
 	 * Argument for each entry of packed group
 	 */
@@ -2246,13 +2356,23 @@ static void mmc_blk_packed_hdr_wrq_prep(struct mmc_queue_req *mqrq,
 			(do_rel_wr ? MMC_CMD23_ARG_REL_WR : 0) |
 			(do_data_tag ? MMC_CMD23_ARG_TAG_REQ : 0) |
 			blk_rq_sectors(prq);
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+		lge_packed_cmd_info.packed_cmd_hdr[(i*2)] = packed_cmd_hdr[(i*2)];
+#endif
 		/* Argument of CMD18 or CMD25 */
 		packed_cmd_hdr[((i * 2)) + 1] =
 			mmc_card_blockaddr(card) ?
 			blk_rq_pos(prq) : blk_rq_pos(prq) << 9;
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+		lge_packed_cmd_info.packed_cmd_hdr[((i*2)+1)] = packed_cmd_hdr[((i*2)+1)];
+#endif
 		mqrq->packed_blocks += blk_rq_sectors(prq);
 		i++;
 	}
+
+#if defined(CONFIG_FMBT_TRACE_EMMC)
+	lge_packed_cmd_info.packed_blocks = mqrq->packed_blocks +1;
+#endif
 
 	memset(brq, 0, sizeof(struct mmc_blk_request));
 	brq->mrq.cmd = &brq->cmd;
@@ -3073,8 +3193,6 @@ static const struct mmc_fixup blk_fixups[] =
 		  MMC_QUIRK_SEC_ERASE_TRIM_BROKEN),
 	MMC_FIXUP("VZL00M", CID_MANFID_SAMSUNG, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_SEC_ERASE_TRIM_BROKEN),
-	MMC_FIXUP(CID_NAME_ANY, CID_MANFID_HYNIX, CID_OEMID_ANY, add_quirk_mmc,
-		  MMC_QUIRK_BROKEN_DATA_TIMEOUT),
 
 	END_FIXUP
 };
@@ -3160,9 +3278,6 @@ static void mmc_blk_shutdown(struct mmc_card *card)
 	/* send power off notification */
 	if (mmc_card_mmc(card)) {
 		mmc_rpm_hold(card->host, &card->dev);
-		mmc_claim_host(card->host);
-		mmc_stop_bkops(card);
-		mmc_release_host(card->host);
 		mmc_send_long_pon(card);
 		mmc_rpm_release(card->host, &card->dev);
 	}
