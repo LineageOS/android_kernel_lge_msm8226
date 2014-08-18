@@ -338,10 +338,6 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 	switch (ctrl_pdata->bklt_ctrl) {
 	case BL_WLED:
 #if defined(CONFIG_BACKLIGHT_LM3630)
-	#if defined(CONFIG_MACH_MSM8926_B1L_VZW) || defined(CONFIG_MACH_MSM8926_B1L_ATT)
-			if(bl_level > 10)
-				bl_level = bl_level/10;
-	#endif
 		lm3630_lcd_backlight_set_level(bl_level);
 #elif defined(CONFIG_BACKLIGHT_LM3530)
 		lm3530_lcd_backlight_set_level(bl_level);
@@ -403,7 +399,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 
 #if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-	if(HW_REV_0 == hw_rev)
     {
     	pr_info("%s HW_REV_0 \n", __func__);
 		if(!is_dsv_cont_splash_screening_f && lge_display_power_setting.cmd_cnt) {
@@ -414,11 +409,9 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 #endif
 
 #if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-	if(HW_REV_0 == hw_rev)
     {
 		if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio))
 			gpio_set_value((ctrl->disp_en_gpio), 1);
-
 		if(is_dsv_cont_splash_screening_f)
 			msleep(130);
 		else
@@ -431,7 +424,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 #endif
 
 #if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-		if(HW_REV_0 != hw_rev)
     	{
     		pr_info("%s HW_REV_0 \n", __func__);
 			if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio))
@@ -488,7 +480,6 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 	mipi  = &pdata->panel_info.mipi;
 
 #if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-	if(HW_REV_0 == hw_rev)
     {
 		if (ctrl->off_cmds.cmd_cnt)
 			mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
@@ -508,7 +499,6 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 #endif
 
 #if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-	if(HW_REV_0 != hw_rev)
     {
 		if (ctrl->off_cmds.cmd_cnt)
 			mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
@@ -531,7 +521,6 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 #endif
 
 #if !defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-	if(HW_REV_0 != hw_rev)
     {
 		if (ctrl->off_cmds.cmd_cnt)
 			mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
@@ -1149,7 +1138,6 @@ static int mdss_panel_parse_dt(struct device_node *np,
 	#endif
 
 #ifdef CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
-	if(HW_REV_0 == hw_rev)
     {
 		pr_debug("%s:%d   lge_display_on_cmds \n", __func__, __LINE__);
 		mdss_dsi_parse_dcs_cmds(np, &lge_display_on_cmds,
@@ -1164,7 +1152,6 @@ static int mdss_panel_parse_dt(struct device_node *np,
 #endif
 
 #if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-	if(HW_REV_0 != hw_rev)
     {
 		mdss_dsi_parse_dcs_cmds(np, &lge_display_on_cmds,
 			"lge,display-on-cmds", "qcom,mdss-dsi-on-command-state");

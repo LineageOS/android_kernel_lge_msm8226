@@ -74,9 +74,8 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 
 	if (enable) {
 #ifdef CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
-		if(HW_REV_0 == hw_rev)
     	{
-			if (!has_dsv_f && pdata->panel_info.panel_power_on == 0)//          
+			if (!has_dsv_f && pdata->panel_info.panel_power_on == 0)//LGE Change
 			{
 				if(gpio_get_value(ctrl_pdata->rst_gpio)) {
 					mdss_dsi_panel_reset(pdata, 0);
@@ -94,7 +93,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 			goto error;
 		}
 #if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL)
-		if (!has_dsv_f && pdata->panel_info.panel_power_on == 0)//          
+		if (!has_dsv_f && pdata->panel_info.panel_power_on == 0)//LGE Change
 			mdss_dsi_panel_reset(pdata, 1);
 #else
 		if(pdata->panel_info.panel_power_on ==0) //qct original
@@ -102,7 +101,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 #endif
 	} else {
 #if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-		if (!has_dsv_f) //          
+		if (!has_dsv_f) //LGE Change
 			mdss_dsi_panel_reset(pdata, 0);
 #else
 		mdss_dsi_panel_reset(pdata, 0); //qct original
@@ -491,7 +490,9 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 
 	#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
 	{
+#if defined(CONFIG_MACH_MSM8926_B1L_VZW) || defined(CONFIG_MACH_MSM8926_B1L_ATT)
 		if(HW_REV_0 != lge_get_board_revno())
+#endif		
 		{
 			pr_info("[LCD] %s: delay(40) \n",__func__);
 			mdelay(50);
