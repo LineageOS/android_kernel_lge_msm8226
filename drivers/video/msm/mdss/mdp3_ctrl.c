@@ -348,7 +348,7 @@ static int mdp3_ctrl_res_req_bus(struct msm_fb_data_type *mfd, int status)
 		int ib = 0;
 		ab = panel_info->xres * panel_info->yres * 4;
 		ab *= panel_info->mipi.frame_rate;
-		ib = (ab * 5) / 2;
+		ib = (ab * 3) / 2;
 		rc = mdp3_bus_scale_set_quota(MDP3_CLIENT_DMA_P, ab, ib);
 	} else {
 		rc = mdp3_bus_scale_set_quota(MDP3_CLIENT_DMA_P, 0, 0);
@@ -557,7 +557,7 @@ static int mdp3_ctrl_on(struct msm_fb_data_type *mfd)
 	struct mdp3_session_data *mdp3_session;
 	struct mdss_panel_data *panel;
 
-	pr_info("mdp3_ctrl_on++\n");
+	pr_debug("mdp3_ctrl_on\n");
 	mdp3_session = (struct mdp3_session_data *)mfd->mdp.private1;
 	if (!mdp3_session || !mdp3_session->panel || !mdp3_session->dma ||
 		!mdp3_session->intf) {
@@ -629,22 +629,7 @@ static int mdp3_ctrl_on(struct msm_fb_data_type *mfd)
 
 	mdp3_session->clk_on = 1;
 
-
 	mdp3_session->first_commit = true;
-/*  We Need it?
-	pr_debug("mdp3_ctrl_on dma start\n");
-	if (mfd->fbi->screen_base) {
-		rc = mdp3_session->dma->start(mdp3_session->dma,
-						mdp3_session->intf);
-		if (rc) {
-			pr_err("fail to start the MDP display interface\n");
-			goto on_error;
-		}
-	} else {
-		mdp3_session->first_commit = true;
-	}
-	pr_info("mdp3_ctrl_on--\n");
-*/
 
 on_error:
 	if (!rc)
@@ -659,7 +644,7 @@ static int mdp3_ctrl_off(struct msm_fb_data_type *mfd)
 	struct mdp3_session_data *mdp3_session;
 	struct mdss_panel_data *panel;
 
-	pr_info("mdp3_ctrl_off++\n");
+	pr_debug("mdp3_ctrl_off\n");
 	mdp3_session = (struct mdp3_session_data *)mfd->mdp.private1;
 	if (!mdp3_session || !mdp3_session->panel || !mdp3_session->dma ||
 		!mdp3_session->intf) {
@@ -688,12 +673,6 @@ static int mdp3_ctrl_off(struct msm_fb_data_type *mfd)
 		rc = panel->event_handler(panel, MDSS_EVENT_PANEL_OFF, NULL);
 	if (rc)
 		pr_err("fail to turn off the panel\n");
-
-#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT)
-    if(panel && panel->set_backlight){
-        panel->set_backlight(panel,0);
-    }
-#endif
 
 	mdp3_irq_deregister();
 
@@ -1085,10 +1064,9 @@ static int mdp3_ctrl_display_commit_kickoff(struct msm_fb_data_type *mfd,
 		mdp3_session->first_commit = false;
 	}
 
-        mdp3_session->vsync_before_commit = 0;
-	if (reset_done && (panel && panel->set_backlight)){
+	mdp3_session->vsync_before_commit = 0;
+	if (reset_done && (panel && panel->set_backlight))
 		panel->set_backlight(panel, panel->panel_info.bl_max);
-	}
 
 	mutex_unlock(&mdp3_session->lock);
 
@@ -1107,7 +1085,6 @@ static void mdp3_ctrl_pan_display(struct msm_fb_data_type *mfd,
 	u32 offset;
 	int bpp;
 	struct mdss_panel_info *panel_info = mfd->panel_info;
-
 	int rc;
 
 	pr_debug("mdp3_ctrl_pan_display\n");
@@ -1175,11 +1152,6 @@ static void mdp3_ctrl_pan_display(struct msm_fb_data_type *mfd,
 		msleep(1000 / panel_info->mipi.frame_rate);
 		mdp3_session->first_commit = false;
 	}
-#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT) || defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W6)
-	if (reset_done && (panel && panel->set_backlight)){
-		panel->set_backlight(panel, panel->panel_info.bl_max);
-    }
-#endif
 
 	mdp3_session->vsync_before_commit = 0;
 

@@ -44,23 +44,6 @@ static struct dsi_panel_cmds lge_sleep_in_cmds;
 extern int is_dsv_cont_splash_screening_f;
 extern int has_dsv_f;
 #endif
-
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-static struct dsi_panel_cmds lge_display_on_cmds;
-static struct dsi_panel_cmds lge_display_off_cmds;
-extern int is_dsv_cont_splash_screening_f;
-extern int has_dsv_f;
-#endif
-
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-static struct dsi_panel_cmds lge_display_power_setting;
-#endif
-
-#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-static struct dsi_panel_cmds lge_sleep_out_cmds;
-static struct dsi_panel_cmds lge_sleep_in_cmds;
-#endif
-
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	ctrl->pwm_bl = pwm_request(ctrl->pwm_lpg_chan, "lcd-bklt");
@@ -218,9 +201,6 @@ void mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 #if !defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) && !defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) && !defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) && !defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
 		if (gpio_is_valid(ctrl_pdata->disp_en_gpio))
 			gpio_set_value((ctrl_pdata->disp_en_gpio), 1);
-#endif
-#if defined(CONFIG_LGE_MIPI_NT35521_VIDEO_720P_PANEL)
-		usleep(50000);
 #endif
 
 		for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
@@ -397,17 +377,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		mdss_dsi_panel_cmds_send(ctrl, &ctrl->on_cmds);
 #endif
 
-
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-    {
-    	pr_info("%s HW_REV_0 \n", __func__);
-		if(!is_dsv_cont_splash_screening_f && lge_display_power_setting.cmd_cnt) {
-			mdelay(20);
-			mdss_dsi_panel_cmds_send(ctrl, &lge_display_power_setting);
-		}
-	}
-#endif
-
 #if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
     {
 		if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio))
@@ -423,39 +392,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	}
 #endif
 
-#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-    	{
-    		pr_info("%s HW_REV_0 \n", __func__);
-			if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio))
-			{
-				pr_info("[LCD] %s[%d]: set disp_en_gpio... ", __func__, __LINE__);
-				gpio_set_value((ctrl->disp_en_gpio), 1);
-			}
-		
-			if(is_dsv_cont_splash_screening_f)
-			{
-				pr_info("[LCD] %s[%d]: is_dsv_cont_splash_screening_f == TRUE... delay 130 ", __func__, __LINE__);
-				msleep(130);
-			}
-			else
-			{
-				pr_info("[LCD] %s[%d]: is_dsv_cont_splash_screening_f == TRUE... delay 5 ", __func__, __LINE__);
-				msleep(5);
-			}
-				
-			if (lge_sleep_out_cmds.cmd_cnt) {
-				pr_info("sending lge_sleep_out_cmds code\n");
-				mdss_dsi_panel_cmds_send(ctrl, &lge_sleep_out_cmds);
-			}
-			mdelay(200);
-			if (lge_display_on_cmds.cmd_cnt) {
-				pr_info("sending lge_display_on_cmds code\n");
-				mdss_dsi_panel_cmds_send(ctrl, &lge_display_on_cmds);
-			}
-		}
-#endif
-
-	pr_info("%s:-\n", __func__);
+	pr_debug("%s:-\n", __func__);
 	return 0;
 }
 
@@ -479,53 +416,6 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 
 	mipi  = &pdata->panel_info.mipi;
 
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-    {
-		if (ctrl->off_cmds.cmd_cnt)
-			mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
-
-		mdelay(20);
-		if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio)){
-			gpio_set_value((ctrl->disp_en_gpio), 0);
-			if (has_dsv_f)
-				mdss_dsi_panel_reset(pdata, 0);
-		}
-		mdelay(20);
-		if(lge_display_off_cmds.cmd_cnt) {
-			mdss_dsi_panel_cmds_send(ctrl, &lge_display_off_cmds);
-		}
-		mdelay(20);
-	}
-#endif
-
-#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-    {
-		if (ctrl->off_cmds.cmd_cnt)
-			mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
-
-		mdelay(40);
-		if(lge_display_off_cmds.cmd_cnt) {
-			mdss_dsi_panel_cmds_send(ctrl, &lge_display_off_cmds);
-		}
-		mdelay(40);
-		if(lge_sleep_in_cmds.cmd_cnt) {
-			mdss_dsi_panel_cmds_send(ctrl, &lge_display_off_cmds);
-		}
-		mdelay(20);
-		if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio)){
-			gpio_set_value((ctrl->disp_en_gpio), 0);
-			if (has_dsv_f)
-				mdss_dsi_panel_reset(pdata, 0);
-		}
-	}
-#endif
-
-#if !defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL)
-    {
-		if (ctrl->off_cmds.cmd_cnt)
-			mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
-	}
-#endif
 
 #if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL)
 	if (!is_dsv_cont_splash_screening_f && gpio_is_valid(ctrl->disp_en_gpio)){
@@ -534,7 +424,6 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 			mdss_dsi_panel_reset(pdata, 0);
 	}
 #endif
-
 
 	pr_info("%s:-\n", __func__);
 	return 0;
@@ -1136,36 +1025,6 @@ static int mdss_panel_parse_dt(struct device_node *np,
 	mdss_dsi_parse_dcs_cmds(np, &lge_sleep_in_cmds,
 		"lge,sleep-in-cmds", "qcom,mdss-dsi-off-command-state");
 	#endif
-
-#ifdef CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
-    {
-		pr_debug("%s:%d   lge_display_on_cmds \n", __func__, __LINE__);
-		mdss_dsi_parse_dcs_cmds(np, &lge_display_on_cmds,
-			"lge,display-on-cmds", "qcom,mdss-dsi-on-command-state");
-
-	mdss_dsi_parse_dcs_cmds(np, &lge_display_power_setting,
-		"lge,display-power-setting", "qcom,mdss-dsi-on-command-state");
-
-		mdss_dsi_parse_dcs_cmds(np, &lge_display_off_cmds,
-			"lge,display-off-cmds", "qcom,mdss-dsi-off-command-state");
-	}
-#endif
-
-#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-    {
-		mdss_dsi_parse_dcs_cmds(np, &lge_display_on_cmds,
-			"lge,display-on-cmds", "qcom,mdss-dsi-on-command-state");
-
-		mdss_dsi_parse_dcs_cmds(np, &lge_sleep_out_cmds,
-			"lge,sleep-out-cmds", "qcom,mdss-dsi-on-command-state");
-
-		mdss_dsi_parse_dcs_cmds(np, &lge_display_off_cmds,
-			"lge,display-off-cmds", "qcom,mdss-dsi-off-command-state");
-
-		mdss_dsi_parse_dcs_cmds(np, &lge_sleep_in_cmds,
-			"lge,sleep-in-cmds", "qcom,mdss-dsi-off-command-state");
-	}
-#endif
 
 	return 0;
 

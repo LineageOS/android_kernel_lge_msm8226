@@ -60,7 +60,6 @@
 #define MDP3_REG_CAPTURED_DSI_PCLK_MASK 1
 
 #define MDP_CORE_HW_VERSION	0x03040310
-#define MDP_CORE_CLK_RATE   100000000
 struct mdp3_hw_resource *mdp3_res;
 
 #define MDP_BUS_VECTOR_ENTRY_DMA(ab_val, ib_val)		\
@@ -1854,7 +1853,6 @@ static int mdp3_continuous_splash_on(struct mdss_panel_data *pdata)
 
 	pr_debug("mdp3__continuous_splash_on\n");
 
-	mdp3_clk_set_rate(MDP3_CLK_CORE, MDP_CORE_CLK_RATE, MDP3_CLIENT_DMA_P);
 	mdp3_clk_set_rate(MDP3_CLK_VSYNC, MDP_VSYNC_CLK_RATE,
 			MDP3_CLIENT_DMA_P);
 
@@ -1876,7 +1874,7 @@ static int mdp3_continuous_splash_on(struct mdss_panel_data *pdata)
 
 	ab = panel_info->xres * panel_info->yres * 4;
 	ab *= panel_info->mipi.frame_rate;
-	ib = (ab * 5) / 2;
+	ib = (ab * 3) / 2;
 	rc = mdp3_bus_scale_set_quota(MDP3_CLIENT_DMA_P, ab, ib);
 	if (rc) {
 		pr_err("fail to request bus bandwidth\n");

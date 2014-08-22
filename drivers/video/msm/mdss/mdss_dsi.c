@@ -70,20 +70,9 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
-	pr_info("%s: enable=%d\n", __func__, enable);
+	pr_debug("%s: enable=%d\n", __func__, enable);
 
 	if (enable) {
-#ifdef CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
-    	{
-			if (!has_dsv_f && pdata->panel_info.panel_power_on == 0)//LGE Change
-			{
-				if(gpio_get_value(ctrl_pdata->rst_gpio)) {
-					mdss_dsi_panel_reset(pdata, 0);
-					mdelay(10);
-				}
-			}
-		}
-#endif
 		ret = msm_dss_enable_vreg(
 			ctrl_pdata->power_data.vreg_config,
 			ctrl_pdata->power_data.num_vreg, 1);
@@ -388,7 +377,7 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
-	pr_info("%s+: ctrl=%p ndx=%d\n",
+	pr_debug("%s+: ctrl=%p ndx=%d\n",
 				__func__, ctrl_pdata, ctrl_pdata->ndx);
 
 	pinfo = &pdata->panel_info;
@@ -488,17 +477,6 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x5C, data);
 	}
 
-	#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-	{
-#if defined(CONFIG_MACH_MSM8926_B1L_VZW) || defined(CONFIG_MACH_MSM8926_B1L_ATT)
-		if(HW_REV_0 != lge_get_board_revno())
-#endif		
-		{
-			pr_info("[LCD] %s: delay(40) \n",__func__);
-			mdelay(50);
-		}
-	}
-	#endif
 	mdss_dsi_sw_reset(pdata);
 	mdss_dsi_host_init(mipi, pdata);
 
@@ -528,9 +506,6 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 	  tmp &= ~(1<<28);
 	  MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
 	  wmb();
-#if defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
-	  mdelay(20);
-#endif
 	  mdss_dsi_panel_reset(pdata, 1);
 	  pr_info(" panel reset after mipi stop state. lane_ctrl value = %x\n", tmp);
 	}
@@ -539,7 +514,7 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 	if (pdata->panel_info.type == MIPI_CMD_PANEL)
 		mdss_dsi_clk_ctrl(ctrl_pdata, 0);
 
-	pr_info("%s-:\n", __func__);
+	pr_debug("%s-:\n", __func__);
 	return 0;
 }
 
@@ -793,7 +768,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	}
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
-	pr_info("%s+:event=%d\n", __func__, event);
+	pr_debug("%s+:event=%d\n", __func__, event);
 
 	switch (event) {
 	case MDSS_EVENT_UNBLANK:
@@ -856,7 +831,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		pr_debug("%s: unhandled event=%d\n", __func__, event);
 		break;
 	}
-	pr_info("%s-:event=%d, rc=%d\n", __func__, event, rc);
+	pr_debug("%s-:event=%d, rc=%d\n", __func__, event, rc);
 	return rc;
 }
 
@@ -889,7 +864,6 @@ static struct device_node *mdss_dsi_pref_prim_panel(
  *
  * returns pointer to panel node on success, NULL on error.
  */
-
 static struct device_node *mdss_dsi_find_panel_of_node(
 		struct platform_device *pdev, char *panel_cfg)
 {
