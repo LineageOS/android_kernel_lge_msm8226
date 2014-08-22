@@ -34,7 +34,7 @@
 #define DEFAULT_FIRST_LEVEL	80
 #define DEFAULT_SECOND_LEVEL	60
 #define HIGH_LOAD_COUNTER	25
-#define SAMPLING_RATE		2
+#define SAMPLING_RATE		4
 #define DEFAULT_MIN_ONLINE	2
 #define SMART_LOAD_CALC
 
@@ -53,6 +53,9 @@ struct hotplug_data {
 
 	/* Short load spikes will be forcing cpus to come online */
 	bool low_latency;
+
+	/* The frequency threshold at or above onlining starts */
+	unsigned int up_frequency;
 
 	/* Debug flag */
 	bool debug;
@@ -153,7 +156,6 @@ static void __ref set_cpu_up(int cpu)
 
 static inline void calculate_load_for_cpu(int cpu) 
 {
-	struct cpufreq_policy policy;
 	int avg_load, cpu_load;
 
 #ifndef SMART_LOAD_CALC
@@ -175,8 +177,6 @@ static inline void calculate_load_for_cpu(int cpu)
 		}
 	}
 
-	cpufreq_get_policy(&policy, cpu);
-
 	/*  
 	 * We are above our threshold, so update our counter for cpu.
 	 * Consider this only, if we are on our max frequency
@@ -184,7 +184,7 @@ static inline void calculate_load_for_cpu(int cpu)
 	if (cpu_load >= hot_data->single_cpu_threshold &&
 		avg_load >= hot_data->all_cpus_threshold
 		&& hot_data->counter[cpu] < HIGH_LOAD_COUNTER
-		&& cpufreq_quick_get(cpu) == policy.max) {
+		&& cpufreq_quick_get(cpu) >= hot_data->up_frequency) {
 
 		hot_data->counter[cpu] += 2;
 	} else {
@@ -453,12 +453,34 @@ static ssize_t store_debug(struct kobject *kobj,
 static struct global_attr debug_attr = __ATTR(debug, 0664,
 					show_debug, store_debug);
 
+static ssize_t show_up_frequency(struct kobject *kobj,
+					struct attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", hot_data->up_frequency);
+}
+
+static ssize_t store_up_frequency(struct kobject *kobj,
+					 struct attribute *attr,
+					 const char *buf, size_t count)
+{
+	unsigned int val;
+
+	sscanf(buf, "%u", &val);
+
+	hot_data->up_frequency = val;
+	return count;
+}
+
+static struct global_attr up_frequency_attr = __ATTR(up_frequency, 0664,
+					show_up_frequency, store_up_frequency);
+
 static struct attribute *falcon_hotplug_attributes[] = 
 {
 	&hotplug_sampling_rate_attr.attr,
 	&single_core_threshold_attr.attr,
 	&min_online_time_attr.attr,
 	&all_cpus_threshold_attr.attr,
+	&up_frequency_attr.attr,
 	&low_latency_attr.attr,
 	&debug_attr.attr,
 	NULL
@@ -473,11 +495,14 @@ static struct kobject *hotplug_control_kobj;
 
 int __init falcon_hotplug_init(void)
 {
-	int ret;
+	struct cpufreq_policy policy;
+	int ret, cpu = 0;
 
 	hot_data = kzalloc(sizeof(*hot_data), GFP_KERNEL);
 	if (!hot_data)
 		return -ENOMEM;
+
+	cpufreq_get_policy(&policy, cpu);
 
 	hot_data->hotplug_sampling = SAMPLING_RATE;
 	hot_data->min_online_time = DEFAULT_MIN_ONLINE;
@@ -485,6 +510,7 @@ int __init falcon_hotplug_init(void)
 	hot_data->all_cpus_threshold = DEFAULT_SECOND_LEVEL;
 	hot_data->low_latency = false;
 	hot_data->debug = false;
+	hot_data->up_frequency = policy.max;
 
 	if (hot_data->debug)
 		pr_info("[Hot-Plug]: Falcon Hotplug driver started.\n");
