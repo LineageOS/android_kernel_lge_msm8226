@@ -79,8 +79,10 @@ static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 #endif
 static struct workqueue_struct *wq;
 static struct delayed_work decide_hotplug;
+#ifdef CONFIG_POWERSUSPEND
 static struct work_struct resume;
 static struct work_struct suspend;
+#endif
 
 #ifndef SMART_LOAD_CALC
 static inline int get_cpu_load(unsigned int cpu)
@@ -308,192 +310,85 @@ static inline void resume_func(struct work_struct *work)
 	queue_delayed_work_on(0, wq, &decide_hotplug, msecs_to_jiffies(hot_data->hotplug_sampling * HZ));
 }
 
-static void falcon_hotplug_suspend(struct power_suspend *h)
+static void aero_hotplug_suspend(struct power_suspend *h)
 {
 	queue_work(system_power_efficient_wq, &suspend);
 }
 
 
-static void falcon_hotplug_resume(struct power_suspend *h)
+static void aero_hotplug_resume(struct power_suspend *h)
 {
 	queue_work(system_power_efficient_wq, &resume);
 }
 
-static struct power_suspend falcon_hotplug_power_suspend = {
-	.suspend = falcon_hotplug_suspend,
-	.resume	 = falcon_hotplug_resume,
+static struct power_suspend aero_hotplug_power_suspend = {
+	.suspend = aero_hotplug_suspend,
+	.resume	 = aero_hotplug_resume,
 };
 #endif
 
-/* Start sysfs entries */
-static ssize_t show_first_threshold(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->single_cpu_threshold);
+/*** Start sysfs entries ***/
+#define show_tunable(file_name, object)					\
+static ssize_t show_##file_name						\
+(struct kobject *kobj, struct attribute *attr, char *buf)		\
+{									\
+    return sprintf(buf, "%u\n", hot_data->object);			\
 }
 
-static ssize_t store_first_threshold(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
+show_tunable(single_cpu_threshold, single_cpu_threshold);
+show_tunable(hotplug_sampling, hotplug_sampling);
+show_tunable(min_online_time, min_online_time);
+show_tunable(all_cpus_threshold, all_cpus_threshold);
+show_tunable(low_latency, low_latency);
+show_tunable(debug, debug);
+show_tunable(up_frequency, up_frequency);
+
+#define store_tunable(file_name, object)					\
+static ssize_t store_##file_name						\
+(struct kobject *kobj, struct attribute *attr, const char *buf, size_t count)	\
+{										\
+    unsigned int val;								\
+    sscanf(buf, "%u", &val);							\
+    hot_data->object = val;							\
+    return count;								\
+}  
+
+store_tunable(single_cpu_threshold, single_cpu_threshold);
+store_tunable(hotplug_sampling, hotplug_sampling);
+store_tunable(min_online_time, min_online_time);
+store_tunable(all_cpus_threshold, all_cpus_threshold);
+store_tunable(low_latency, low_latency);
+store_tunable(debug, debug);
+store_tunable(up_frequency, up_frequency);
+
+define_one_global_rw(single_cpu_threshold);
+define_one_global_rw(hotplug_sampling);
+define_one_global_rw(min_online_time);
+define_one_global_rw(all_cpus_threshold);
+define_one_global_rw(low_latency);
+define_one_global_rw(debug);
+define_one_global_rw(up_frequency);
+
+static struct attribute *aero_hotplug_attributes[] = 
 {
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->single_cpu_threshold = val;
-	return count;
-}
-
-static struct global_attr single_core_threshold_attr = __ATTR(single_core_threshold, 0664,
-					show_first_threshold, store_first_threshold);
-
-static ssize_t show_sampling_rate(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->hotplug_sampling);
-}
-
-static ssize_t store_sampling_rate(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->hotplug_sampling = val;
-	return count;
-}
-
-static struct global_attr hotplug_sampling_rate_attr = __ATTR(hotplug_sampling, 0664,
-					show_sampling_rate, store_sampling_rate);
-
-static ssize_t show_min_online_time(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->min_online_time);
-}
-
-static ssize_t store_min_online_time(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->min_online_time = val;
-	return count;
-}
-
-static struct global_attr min_online_time_attr = __ATTR(min_online_time, 0664,
-					show_min_online_time, store_min_online_time);
-
-
-static ssize_t show_all_cpus_threshold(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->all_cpus_threshold);
-}
-
-static ssize_t store_all_cpus_threshold(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->all_cpus_threshold = val;
-	return count;
-}
-
-static struct global_attr all_cpus_threshold_attr = __ATTR(all_cpus_threshold, 0664,
-					show_all_cpus_threshold, store_all_cpus_threshold);
-
-static ssize_t show_low_latency(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->low_latency);
-}
-
-static ssize_t store_low_latency(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->low_latency = val;
-	return count;
-}
-
-static struct global_attr low_latency_attr = __ATTR(low_latency, 0664,
-					show_low_latency, store_low_latency);
-
-static ssize_t show_debug(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->debug);
-}
-
-static ssize_t store_debug(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->debug = val;
-	return count;
-}
-
-static struct global_attr debug_attr = __ATTR(debug, 0664,
-					show_debug, store_debug);
-
-static ssize_t show_up_frequency(struct kobject *kobj,
-					struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", hot_data->up_frequency);
-}
-
-static ssize_t store_up_frequency(struct kobject *kobj,
-					 struct attribute *attr,
-					 const char *buf, size_t count)
-{
-	unsigned int val;
-
-	sscanf(buf, "%u", &val);
-
-	hot_data->up_frequency = val;
-	return count;
-}
-
-static struct global_attr up_frequency_attr = __ATTR(up_frequency, 0664,
-					show_up_frequency, store_up_frequency);
-
-static struct attribute *falcon_hotplug_attributes[] = 
-{
-	&hotplug_sampling_rate_attr.attr,
-	&single_core_threshold_attr.attr,
-	&min_online_time_attr.attr,
-	&all_cpus_threshold_attr.attr,
-	&up_frequency_attr.attr,
-	&low_latency_attr.attr,
-	&debug_attr.attr,
+	&hotplug_sampling.attr,
+	&single_cpu_threshold.attr,
+	&min_online_time.attr,
+	&all_cpus_threshold.attr,
+	&up_frequency.attr,
+	&low_latency.attr,
+	&debug.attr,
 	NULL
 };
 
 static struct attribute_group hotplug_attr_group = 
 {
-	.attrs  = falcon_hotplug_attributes,
+	.attrs  = aero_hotplug_attributes,
 };
 
 static struct kobject *hotplug_control_kobj;
 
-int __init falcon_hotplug_init(void)
+int __init aero_hotplug_init(void)
 {
 	struct cpufreq_policy policy;
 	int ret, cpu = 0;
@@ -513,7 +408,7 @@ int __init falcon_hotplug_init(void)
 	hot_data->up_frequency = policy.max;
 
 	if (hot_data->debug)
-		pr_info("[Hot-Plug]: Falcon Hotplug driver started.\n");
+		pr_info("[Hot-Plug]: Aero Hotplug driver started.\n");
 
 	hotplug_control_kobj = kobject_create_and_add("hotplug_control", kernel_kobj);
 	if (!hotplug_control_kobj) {
@@ -536,13 +431,13 @@ int __init falcon_hotplug_init(void)
 	hot_data->online_cpus = num_online_cpus();
 	hot_data->possible_cpus = num_possible_cpus();
 
-	wq = create_singlethread_workqueue("falcon_hotplug_workqueue");
+	wq = create_singlethread_workqueue("aero_hotplug_workqueue");
     
 	if (!wq)
 		return -ENOMEM;
 
 #ifdef CONFIG_POWERSUSPEND
-	register_power_suspend(&falcon_hotplug_power_suspend);
+	register_power_suspend(&aero_hotplug_power_suspend);
 	INIT_WORK(&resume, resume_func);
 	INIT_WORK(&suspend, suspend_func);
 #endif
@@ -556,4 +451,4 @@ MODULE_AUTHOR("Francisco Franco <franciscofranco.1990@gmail.com>, "
 MODULE_DESCRIPTION("Simple SMP hotplug driver");
 MODULE_LICENSE("GPLv2");
 
-late_initcall(falcon_hotplug_init);
+late_initcall(aero_hotplug_init);
