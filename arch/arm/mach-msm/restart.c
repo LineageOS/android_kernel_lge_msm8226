@@ -302,6 +302,8 @@ static void msm_restart_prepare(const char *cmd)
 		} else if (!strncmp(cmd, "--bnr_recovery", 14)) {
 			__raw_writel(0x77665555, restart_reason);
 #endif
+		} else if (!strncmp(cmd, "laf", 14)) {
+			restart_mode = RESTART_DLOAD;
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
 			code = simple_strtoul(cmd + 4, NULL, 16) & 0xff;
