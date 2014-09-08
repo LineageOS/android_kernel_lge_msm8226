@@ -290,6 +290,7 @@ static int32_t msm_actuator_move_focus(
    struct damping_params_t damping_param, *usr_damping_param ;
 /* LGE_CHANGE_E, fix kernel sometimes crash while AF, 2013.11.4, yousung.kang@lge.com  */
 #endif
+
 	if (copy_from_user(&ringing_params_kernel,
 		&(move_params->ringing_params[a_ctrl->curr_region_index]),
 		sizeof(struct damping_params_t))) {

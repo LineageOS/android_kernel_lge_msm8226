@@ -20,9 +20,11 @@ struct v4l2_subdev *msm_buf_mngr_get_subdev(void);
 #define VIDIOC_MSM_BUF_MNGR_BUF_DONE \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 35, struct msm_buf_mngr_info)
 
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29,  Cleanup msm generic buf queue handling, [STARTS HERE] */
 #define VIDIOC_MSM_BUF_MNGR_INIT \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 36, struct msm_buf_mngr_info)
 
 #define VIDIOC_MSM_BUF_MNGR_DEINIT \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 37, struct msm_buf_mngr_info)
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29,  Cleanup msm generic buf queue handling,  [ENDS HERE] */
 #endif

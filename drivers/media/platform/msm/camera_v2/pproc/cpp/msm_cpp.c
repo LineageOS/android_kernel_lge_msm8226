@@ -67,10 +67,10 @@ struct msm_cpp_timer_t cpp_timer;
 /* dump the frame command before writing to the hardware */
 #define  MSM_CPP_DUMP_FRM_CMD 0
 
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 	uint32_t buff_mgr_ops, struct msm_buf_mngr_info *buff_mgr_info);
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 
 #if CONFIG_MSM_CPP_DBG
 #define CPP_DBG(fmt, args...) pr_err(fmt, ##args)
@@ -97,7 +97,7 @@ static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 	qcmd;			 \
 })
 
-/*                                                                                             */
+/*QCT_PATCH S, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 #define msm_cpp_empty_list(queue, member) { \
        unsigned long flags; \
        struct msm_queue_cmd *qcmd = NULL; \
@@ -113,7 +113,7 @@ static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
                spin_unlock_irqrestore(&queue->lock, flags); \
        } \
 }
-/*                                                                                             */
+/*QCT_PATCH E, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 
 static void msm_queue_init(struct msm_device_queue *queue, const char *name)
 {
@@ -161,7 +161,7 @@ static int msm_cpp_enable_debugfs(struct cpp_device *cpp_dev);
 
 static void msm_cpp_write(u32 data, void __iomem *cpp_base)
 {
-/*                                                                   */
+/* LGE_CHANGE_S, QCT patch for CPP, 2013-11-19, hyungtae.lee@lge.com */
 	uint32_t tmp;
 	int num_tries=50;
 	do {
@@ -173,7 +173,7 @@ static void msm_cpp_write(u32 data, void __iomem *cpp_base)
 		pr_err("error: cant write, RX FIFO Full\n");
 		return;
 	}
-/*                                                                   */
+/* LGE_CHANGE_E, QCT patch for CPP, 2013-11-19, hyungtae.lee@lge.com */
 
 	writel_relaxed((data), cpp_base + MSM_CPP_MICRO_FIFO_RX_DATA);
 }
@@ -752,7 +752,7 @@ static int cpp_init_hardware(struct cpp_device *cpp_dev)
 		}
 		cpp_dev->buf_mgr_subdev = msm_buf_mngr_get_subdev();
 
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 		rc = msm_cpp_buffer_ops(cpp_dev,
 			VIDIOC_MSM_BUF_MNGR_INIT, NULL);
 		if (rc < 0) {
@@ -760,7 +760,7 @@ static int cpp_init_hardware(struct cpp_device *cpp_dev)
 			free_irq(cpp_dev->irq->start, cpp_dev);
 			goto req_irq_fail;
 		}
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 	}
 
 	cpp_dev->hw_info.cpp_hw_version =
@@ -804,7 +804,7 @@ bus_scale_register_failed:
 
 static void cpp_release_hardware(struct cpp_device *cpp_dev)
 {
-/*                                                                                               */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 #if 0
 	if (cpp_dev->state != CPP_STATE_BOOT) {
 #else
@@ -817,7 +817,7 @@ static void cpp_release_hardware(struct cpp_device *cpp_dev)
 			rc = -EINVAL;
 		}
 #endif
-/*                                                                                              */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 		free_irq(cpp_dev->irq->start, cpp_dev);
 		tasklet_kill(&cpp_dev->cpp_tasklet);
 		atomic_set(&cpp_dev->irq_cnt, 0);
@@ -866,8 +866,8 @@ static void cpp_load_fw(struct cpp_device *cpp_dev, char *fw_name_bin)
 			MSM_CPP_MICRO_IRQGEN_CLR);
 
 		/*Start firmware loading*/
-		msm_cpp_write(MSM_CPP_CMD_FW_LOAD, cpp_dev->base);
-		msm_cpp_write(MSM_CPP_END_ADDRESS, cpp_dev->base);
+		msm_cpp_write(MSM_CPP_CMD_FW_LOAD, cpp_dev->base);		
+		msm_cpp_write(fw->size, cpp_dev->base);  /* LGE_CHANGE, MSM_CPP_END_ADDRESS >fw->size, by QCT , 2014-02-19, hyunuk.park@lge.com */
 		msm_cpp_write(MSM_CPP_START_ADDRESS, cpp_dev->base);
 
 		if (ptr_bin) {
@@ -958,7 +958,7 @@ static int cpp_close_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 	uint32_t i;
 	struct cpp_device *cpp_dev = v4l2_get_subdevdata(sd);
 
-/*                                                                                             */
+/*QCT_PATCH S, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 	struct msm_device_queue *processing_q = NULL;
 	struct msm_device_queue *eventData_q = NULL;
 
@@ -966,14 +966,14 @@ static int cpp_close_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 			pr_err("failed: cpp_dev %p\n", cpp_dev);
 			return -EINVAL;
 	}
-/*                                                                                             */
+/*QCT_PATCH E, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 
 	mutex_lock(&cpp_dev->mutex);
 
-/*                                                                                             */
+/*QCT_PATCH S, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
     processing_q = &cpp_dev->processing_q;
     eventData_q = &cpp_dev->eventData_q;
-/*                                                                                             */
+/*QCT_PATCH E, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 
 	if (cpp_dev->cpp_open_cnt == 0) {
 		mutex_unlock(&cpp_dev->mutex);
@@ -1030,10 +1030,10 @@ static int cpp_close_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 		iommu_detach_device(cpp_dev->domain, cpp_dev->iommu_ctx);
 		cpp_release_hardware(cpp_dev);
 
-/*                                                                                             */
+/*QCT_PATCH S, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
         msm_cpp_empty_list(processing_q, list_frame);
         msm_cpp_empty_list(eventData_q, list_eventdata);
-/*                                                                                             */
+/*QCT_PATCH E, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 
 		cpp_dev->state = CPP_STATE_OFF;
 	}
@@ -1062,16 +1062,16 @@ static int msm_cpp_buffer_ops(struct cpp_device *cpp_dev,
 static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev)
 {
 	struct v4l2_event v4l2_evt;
-/*                                                                                             */
+/*QCT_PATCH S, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
       struct msm_queue_cmd *frame_qcmd = NULL;
       struct msm_queue_cmd *event_qcmd = NULL;
       struct msm_cpp_frame_info_t *processed_frame = NULL;
-/*                                                                                             */
+/*QCT_PATCH E, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
       struct msm_device_queue *queue = &cpp_dev->processing_q;
 	struct msm_buf_mngr_info buff_mgr_info;
 	int rc = 0;
 
-/*                                                                                             */
+/*QCT_PATCH S, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 #if 0
       if (queue->len > 0) {
 	    frame_qcmd = msm_dequeue(queue, list_frame);
@@ -1079,7 +1079,7 @@ static int msm_cpp_notify_frame_done(struct cpp_device *cpp_dev)
       frame_qcmd = msm_dequeue(queue, list_frame);
           if (frame_qcmd) {
 #endif
-/*                                                                                             */
+/*QCT_PATCH E, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 		processed_frame = frame_qcmd->command;
 		do_gettimeofday(&(processed_frame->out_time));
 		kfree(frame_qcmd);
@@ -1282,7 +1282,7 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 	uint32_t *cpp_frame_msg;
 	unsigned long in_phyaddr, out_phyaddr0, out_phyaddr1;
 	uint16_t num_stripes = 0;
-	struct msm_buf_mngr_info buff_mgr_info, dup_buff_mgr_info;    /*                                                                                           */
+	struct msm_buf_mngr_info buff_mgr_info, dup_buff_mgr_info;    /* LGE_CHANGE, jaehan.jeong, 2013.12.29, QCT PATCH, Release vb2 buffer in cpp driver on error*/
 	struct msm_cpp_frame_info_t *u_frame_info =
 		(struct msm_cpp_frame_info_t *)ioctl_ptr->ioctl_ptr;
 	int32_t status = 0;
@@ -1369,7 +1369,7 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 			new_frame->duplicate_identity);
 		memset(&new_frame->output_buffer_info[1], 0,
 			sizeof(struct msm_cpp_buffer_info_t));
-/*                                                                                                  */
+/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Release vb2 buffer in cpp driver on error, [STARTS HERE] */
 #if 0 //QCT original
 		memset(&buff_mgr_info, 0, sizeof(struct msm_buf_mngr_info));
 		buff_mgr_info.session_id =
@@ -1387,13 +1387,13 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 		rc = msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_GET_BUF,
 			&dup_buff_mgr_info);
 #endif
-/*                                                                                                 */
+/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Release vb2 buffer in cpp driver on error,  [ENDS HERE] */
 		if (rc < 0) {
 			rc = -EAGAIN;
 			pr_err("error getting buffer rc:%d\n", rc);
-			goto ERROR3; //                                                                                               
+			goto ERROR3; // ERROR2;  /* LGE_CHANGE, jaehan.jeong, 2013.12.29, Release vb2 buffer in cpp driver on error */
 		}
-		new_frame->output_buffer_info[1].index = dup_buff_mgr_info.index;  //                                                                                                            
+		new_frame->output_buffer_info[1].index = dup_buff_mgr_info.index;  //buff_mgr_info.index;   /* LGE_CHANGE, jaehan.jeong, 2013.12.29, Release vb2 buffer in cpp driver on error */
 		out_phyaddr1 = msm_cpp_fetch_buffer_info(cpp_dev,
 			&new_frame->output_buffer_info[1],
 			((new_frame->duplicate_identity >> 16) & 0xFFFF),
@@ -1402,7 +1402,7 @@ static int msm_cpp_cfg(struct cpp_device *cpp_dev,
 		if (!out_phyaddr1) {
 			pr_err("error gettting output physical address\n");
 			rc = -EINVAL;
-			msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_PUT_BUF,	&dup_buff_mgr_info);  /*                                                                                 */
+			msm_cpp_buffer_ops(cpp_dev, VIDIOC_MSM_BUF_MNGR_PUT_BUF,	&dup_buff_mgr_info);  /* LGE_CHANGE, jaehan.jeong, 2013.12.29, Release vb2 buffer in cpp driver on error */
 			goto ERROR3;
 		}
 		/* set duplicate enable bit */
@@ -1549,7 +1549,7 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 	case VIDIOC_MSM_CPP_CFG:
 		rc = msm_cpp_cfg(cpp_dev, ioctl_ptr);
 		if (rc < 0)
-			pr_err("%s: error in cpp_cfg\n", __func__); /*                                                        */
+			pr_err("%s: error in cpp_cfg\n", __func__); /* LGE_CHANGE, jaehan.jeong, 2013.12.2, Log for debugging */
 		break;
 	case VIDIOC_MSM_CPP_FLUSH_QUEUE:
 		rc = msm_cpp_flush_frames(cpp_dev);
@@ -1687,7 +1687,7 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 		mutex_unlock(&cpp_dev->mutex);
 		while (cpp_dev->cpp_open_cnt != 0)
 			cpp_close_node(sd, NULL);
-		mutex_lock(&cpp_dev->mutex); /*                                                                                           */
+		mutex_lock(&cpp_dev->mutex); /*QCT_PATCH, add code to be freed event_qcmd when SHUTDOWN, 2013-12-12, yousung.kang@lge.com */
 		rc = 0;
 		break;
 	}

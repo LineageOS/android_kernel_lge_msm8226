@@ -507,10 +507,6 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 			reg_cfg_cmd->u.mask_info.reg_offset);
 		break;
 	}
-	case GET_MAX_CLK_RATE: {
-		break;
-	}
-
 /* LGE_CHANGE_S, jaehan.jeong, 2013.11.8, Applied QCT patch CN#01252253 - page fault in case of 64BIT_DMI, [STARTS HERE] */
 #if 0 //QCT Original
 	case VFE_WRITE_DMI_16BIT:
