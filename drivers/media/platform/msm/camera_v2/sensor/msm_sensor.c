@@ -1858,6 +1858,25 @@ static struct msm_camera_i2c_fn_t msm_sensor_qup_func_tbl = {
 	.i2c_write_conf_tbl = msm_camera_qup_i2c_write_conf_tbl,
 };
 
+static int device_is_d415;
+
+static int __init device_model_name(char *s)
+{
+       if (s == NULL) {
+               device_is_d415 = 0;
+               return 1;
+       }
+
+       if (!strcmp(s,"LG-D415") || !strcmp(s,"LG-D405")) {
+               device_is_d415 = 1;
+       } else {
+               device_is_d415 = 0;
+       }
+
+       return 1;
+}
+__setup("model.name=", device_model_name);
+
 int32_t msm_sensor_platform_probe(struct platform_device *pdev, void *data)
 {
 	int32_t rc = 0;
@@ -1866,11 +1885,26 @@ int32_t msm_sensor_platform_probe(struct platform_device *pdev, void *data)
 	struct msm_camera_cci_client *cci_client = NULL;
 	uint32_t session_id;
 	unsigned long mount_pos;
-
+	const char *sensor_name;
 	s_ctrl->pdev = pdev;
 	s_ctrl->dev = &pdev->dev;
-	CDBG("%s called data %p\n", __func__, data);
-	CDBG("%s pdev name %s\n", __func__, pdev->id_entry->name);
+	//printk("%s called data %p\n", __func__, data);
+	///printk("%s pdev name %s\n", __func__, data->compatible);
+
+	rc = of_property_read_string(pdev->dev.of_node, "compatible", &sensor_name);
+	printk("%s pdev name %s: %s\n", __func__,pdev->dev.of_node->name, sensor_name);
+/*
+	if (!strcmp(sensor_name, "qcom,hi707"))
+	{
+		if (!device_is_d415) {
+			printk("%s D405: pdev name %s: %s\n", __func__,pdev->dev.of_node->name, sensor_name);
+			pdev->dev.of_node = of_find_node_by_path("/soc/qcom,cci@fda0c000/qcom,camera_rev_c@60");
+		} else {
+			printk("%s D410 pdev name %s: %s\n", __func__,pdev->dev.of_node->name, sensor_name);
+			pdev->dev.of_node = of_find_node_by_path("/soc/qcom,cci@fda0c000/qcom,camera_rev_d@60");
+		}
+	}
+*/
 	if (pdev->dev.of_node) {
 		rc = msm_sensor_get_dt_data(pdev->dev.of_node, s_ctrl);
 		if (rc < 0) {

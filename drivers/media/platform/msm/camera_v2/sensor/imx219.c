@@ -316,12 +316,34 @@ static int32_t imx219_platform_probe(struct platform_device *pdev)
 	return rc;
 }
 
+static int device_is_d415;
+
+static int __init device_model_name(char *s)
+{
+       if (s == NULL) {
+               device_is_d415 = 0;
+               return 1;
+       }
+
+       if (!strcmp(s,"LG-D415") || !strcmp(s,"LG-D405")) {
+               device_is_d415 = 1;
+       } else {
+               device_is_d415 = 0;
+       }
+
+       return 1;
+}
+__setup("model.name=", device_model_name);
+
 static int __init imx219_init_module(void)
 {
 	int32_t rc = 0;
 	hw_rev_type rev_type = 0;
 	pr_info("%s:%d\n", __func__, __LINE__);
-      rev_type = lge_get_board_revno();
+	if (device_is_d415) {
+		return 0;
+	}
+	rev_type = lge_get_board_revno();
 #if 1// defined(CONFIG_MACH_LGE)
 	switch(rev_type) {
 		case HW_REV_0:
