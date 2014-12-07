@@ -361,7 +361,7 @@ ssize_t factory_back_key_state_show(struct device *dev,
 
 	DMSG("[TSP] back tkey state: %d\n", key_state);
 
-	return snprintf(buf, sizeof(buf), "%d\n", key_state);
+	return snprintf(buf, sizeof(*buf), "%d\n", key_state);
 }
 
 /* /sys/class/factory/tkey/tkey_menu */
