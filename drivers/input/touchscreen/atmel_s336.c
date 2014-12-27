@@ -34,6 +34,8 @@
 #include <linux/time.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>
+#include <linux/input.h>
+#include <linux/input/mt.h>
 #include <linux/async.h>
 #include "atmel_s336.h"
 #include "atmel_s336_patch.h"
@@ -2127,6 +2129,8 @@ static void mxt_proc_t24_messages(struct mxt_data *data, u8 *message)
 	int x = 0;
 	int y = 0;
 
+        struct input_dev *input_dev = data->input_dev;
+
 	if (data->in_bootloader)
 		return;
 
@@ -2145,6 +2149,9 @@ static void mxt_proc_t24_messages(struct mxt_data *data, u8 *message)
 		wake_lock_timeout(&touch_wake_lock, msecs_to_jiffies(2000));
 		TOUCH_INFO_MSG("Knock On detected x[%3d] y[%3d] \n", x, y);
 		kobject_uevent_env(&lge_touch_sys_device.kobj, KOBJ_CHANGE, knockon_event);
+                input_report_key(input_dev, KEY_POWER, 1);
+                input_report_key(input_dev, KEY_POWER, 0);
+		input_sync(input_dev);
 	} else {
 		TOUCH_INFO_MSG("%s msg = %d \n", __func__, msg);
 	}
@@ -5569,6 +5576,9 @@ int mxt_initialize_t9_input_device(struct mxt_data *data)
 			input_set_capability(input_dev, EV_KEY, data->pdata->t15_keymap[i]);
 			input_dev->keybit[BIT_WORD(data->pdata->t15_keymap[i])] |= BIT_MASK(data->pdata->t15_keymap[i]);
 	}
+
+	set_bit(EV_KEY, input_dev->evbit);
+	set_bit(KEY_POWER, input_dev->keybit);
 
 	input_set_drvdata(input_dev, data);
 
