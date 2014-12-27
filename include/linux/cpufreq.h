@@ -208,6 +208,9 @@ extern int __cpufreq_driver_getavg(struct cpufreq_policy *policy,
 int cpufreq_register_governor(struct cpufreq_governor *governor);
 void cpufreq_unregister_governor(struct cpufreq_governor *governor);
 
+int lock_policy_rwsem_write(int cpu);
+void unlock_policy_rwsem_write(int cpu);
+
 /*********************************************************************
  *                      CPUFREQ DRIVER INTERFACE                     *
  *********************************************************************/
@@ -318,7 +321,6 @@ __ATTR(_name, 0644, show_##_name, store_##_name)
 /*********************************************************************
  *                        CPUFREQ 2.6. INTERFACE                     *
  *********************************************************************/
-u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
 int cpufreq_get_policy(struct cpufreq_policy *policy, unsigned int cpu);
 int cpufreq_update_policy(unsigned int cpu);
 
