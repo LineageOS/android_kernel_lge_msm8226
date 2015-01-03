@@ -506,7 +506,7 @@
 		qcom,sensor-position = <1>;
 		qcom,sensor-mode = <1>;
 		qcom,cci-master = <0>;
-		status = "disable";
+		status = "okay";
 		revision = "rev_d...";
 	};
 	imx119: qcom,camera_rev_d@6e {
@@ -541,7 +541,7 @@
 		qcom,sensor-position = <1>;
 		qcom,sensor-mode = <1>;
 		qcom,cci-master = <0>;
-		status = "disable";
+		status = "okay";
 		revision = "rev_d...";
 	};
 	eeprom0: qcom,eeprom@28 { //EEPROM READ
