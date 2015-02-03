@@ -148,17 +148,29 @@ int32_t msm_camera_cci_i2c_write_seq(struct msm_camera_i2c_client *client,
 	int32_t rc = -EFAULT;
 	uint8_t i = 0;
 	struct msm_camera_cci_ctrl cci_ctrl;
-	struct msm_camera_i2c_reg_array reg_conf_tbl[num_byte];
+	struct msm_camera_i2c_reg_array *reg_conf_tbl = NULL;
 
 	if ((client->addr_type != MSM_CAMERA_I2C_BYTE_ADDR
 		&& client->addr_type != MSM_CAMERA_I2C_WORD_ADDR)
 		|| num_byte == 0)
 		return rc;
 
+	if (num_byte > I2C_SEQ_REG_DATA_MAX) {
+		pr_err("%s: num_byte=%d clamped to max supported %d\n",
+			__func__, num_byte, I2C_SEQ_REG_DATA_MAX);
+		return rc;
+	}
+
 	S_I2C_DBG("%s reg addr = 0x%x num bytes: %d\n",
-			  __func__, addr, num_byte);
-	memset(reg_conf_tbl, 0,
-		num_byte * sizeof(struct msm_camera_i2c_reg_array));
+		__func__, addr, num_byte);
+
+	reg_conf_tbl = kzalloc(num_byte *
+		(sizeof(struct msm_camera_i2c_reg_array)), GFP_KERNEL);
+	if (!reg_conf_tbl) {
+		pr_err("%s:%d no memory\n", __func__, __LINE__);
+		return -ENOMEM;
+	}
+
 #if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
 	for (i = 0; i < num_byte; i++) {
 		reg_conf_tbl[i].reg_addr = addr+i;
@@ -172,7 +184,6 @@ int32_t msm_camera_cci_i2c_write_seq(struct msm_camera_i2c_client *client,
 		reg_conf_tbl[i].delay = 0;
 	}
 #endif
-	cci_ctrl.cmd = MSM_CCI_I2C_WRITE_SEQ;
 	cci_ctrl.cci_info = client->cci_client;
 	cci_ctrl.cfg.cci_i2c_write_cfg.reg_setting = reg_conf_tbl;
 	cci_ctrl.cfg.cci_i2c_write_cfg.data_type = MSM_CAMERA_I2C_BYTE_DATA;
@@ -182,6 +193,8 @@ int32_t msm_camera_cci_i2c_write_seq(struct msm_camera_i2c_client *client,
 			core, ioctl, VIDIOC_MSM_CCI_CFG, &cci_ctrl);
 	CDBG("%s line %d rc = %d\n", __func__, __LINE__, rc);
 	rc = cci_ctrl.status;
+	kfree(reg_conf_tbl);
+	reg_conf_tbl = NULL;
 	return rc;
 }
 
