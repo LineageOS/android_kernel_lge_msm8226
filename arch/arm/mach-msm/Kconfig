@@ -567,6 +567,15 @@ config MSM_SOC_REV_A
 	select ARCH_MSM7X27A if ARCH_MSM7X27
 endchoice
 
+choice
+	prompt "Target type phone/wearable"
+	default MSM_PHONE
+config MSM_PHONE
+	bool "Phone"
+config MSM_WEARABLE
+	bool "Wearable"
+endchoice
+
 config MSM_KRAIT_TBB_ABORT_HANDLER
 	bool "Krait TBB/TBH data abort handler"
 	depends on ARCH_MSM_KRAIT
