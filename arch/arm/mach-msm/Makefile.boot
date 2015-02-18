@@ -138,6 +138,10 @@ endif
 	dtb-$(CONFIG_ARCH_MSM8226)	+= apq8026-v2-1080p-cdp.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= apq8026-v2-720p-mtp.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= apq8026-v2-1080p-mtp.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= apq8026-v2-320p-w-mtp.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= apq8026-v2-320p-w-cdp.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-v2-320p-w-mtp.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-v2-320p-w-cdp.dtb
 
 # FSM9XXX
    zreladdr-$(CONFIG_ARCH_FSM9XXX)	:= 0x10008000

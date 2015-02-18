@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,16 +10,23 @@
  * GNU General Public License for more details.
  */
 
-/dts-v1/;
-/include/ "msm8226-v1.dtsi"
-/include/ "msm8226-720p-cdp.dtsi"
-/include/ "msm8226-memory.dtsi"
-/include/ "msm8226-ion.dtsi"
-/include/ "msm8226-qseecom.dtsi"
-/include/ "msm8226-sharedmem.dtsi"
-
 / {
-	model = "Qualcomm MSM 8226 CDP";
-	compatible = "qcom,msm8226-cdp", "qcom,msm8226", "qcom,cdp";
-	qcom,board-id = <1 0>;
+
+	rmtfs_sharedmem {
+		compatible = "qcom,sharedmem-uio";
+		reg = <0x0fd80000 0x00180000>;
+		reg-names = "rmtfs";
+	};
+
+	dsp_sharedmem {
+		compatible = "qcom,sharedmem-uio";
+		reg = <0x0fd60000 0x00020000>;
+		reg-names = "rfsa_dsp";
+	};
+
+	mdm_sharedmem {
+		compatible = "qcom,sharedmem-uio";
+		reg = <0x0fd60000 0x00020000>;
+		reg-names = "rfsa_mdm";
+	};
 };

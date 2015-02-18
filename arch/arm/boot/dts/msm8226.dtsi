@@ -47,7 +47,6 @@
 	soc: soc { };
 };
 
-/include/ "msm8226-ion.dtsi"
 /include/ "msm8226-camera.dtsi"
 /include/ "msm-gdsc.dtsi"
 /include/ "msm8226-iommu.dtsi"
@@ -667,74 +666,6 @@
 		qcom,ipi-ping;
 	};
 
-	qcom,smem@fa00000 {
-		compatible = "qcom,smem";
-		reg = <0xfa00000 0x100000>,
-			<0xf9011000 0x1000>,
-			<0xfc428000 0x4000>;
-		reg-names = "smem", "irq-reg-base", "aux-mem1";
-
-		qcom,smd-modem {
-			compatible = "qcom,smd";
-			qcom,smd-edge = <0>;
-			qcom,smd-irq-offset = <0x8>;
-			qcom,smd-irq-bitmask = <0x1000>;
-			qcom,pil-string = "modem";
-			interrupts = <0 25 1>;
-		};
-
-		qcom,smsm-modem {
-			compatible = "qcom,smsm";
-			qcom,smsm-edge = <0>;
-			qcom,smsm-irq-offset = <0x8>;
-			qcom,smsm-irq-bitmask = <0x2000>;
-			interrupts = <0 26 1>;
-		};
-
-		qcom,smd-adsp {
-			compatible = "qcom,smd";
-			qcom,smd-edge = <1>;
-			qcom,smd-irq-offset = <0x8>;
-			qcom,smd-irq-bitmask = <0x100>;
-			qcom,pil-string = "adsp";
-			interrupts = <0 156 1>;
-		};
-
-		qcom,smsm-adsp {
-			compatible = "qcom,smsm";
-			qcom,smsm-edge = <1>;
-			qcom,smsm-irq-offset = <0x8>;
-			qcom,smsm-irq-bitmask = <0x200>;
-			interrupts = <0 157 1>;
-		};
-
-		qcom,smd-wcnss {
-			compatible = "qcom,smd";
-			qcom,smd-edge = <6>;
-			qcom,smd-irq-offset = <0x8>;
-			qcom,smd-irq-bitmask = <0x20000>;
-			qcom,pil-string = "wcnss";
-			interrupts = <0 142 1>;
-		};
-
-		qcom,smsm-wcnss {
-			compatible = "qcom,smsm";
-			qcom,smsm-edge = <6>;
-			qcom,smsm-irq-offset = <0x8>;
-			qcom,smsm-irq-bitmask = <0x80000>;
-			interrupts = <0 144 1>;
-		};
-
-		qcom,smd-rpm {
-			compatible = "qcom,smd";
-			qcom,smd-edge = <15>;
-			qcom,smd-irq-offset = <0x8>;
-			qcom,smd-irq-bitmask = <0x1>;
-			interrupts = <0 168 1>;
-			qcom,irq-no-suspend;
-		};
-	};
-
 	rpm_bus: qcom,rpm-smd {
 		compatible = "qcom,rpm-smd";
 		rpm-channel-name = "rpm_requests";
@@ -743,24 +674,6 @@
 
 	qcom,bcl {
 		compatible = "qcom,bcl";
-	};
-
-	rmtfs_sharedmem {
-		compatible = "qcom,sharedmem-uio";
-		reg = <0x0fd80000 0x00180000>;
-		reg-names = "rmtfs";
-	};
-
-	dsp_sharedmem {
-		compatible = "qcom,sharedmem-uio";
-		reg = <0x0fd60000 0x00020000>;
-		reg-names = "rfsa_dsp";
-	};
-
-	mdm_sharedmem {
-		compatible = "qcom,sharedmem-uio";
-		reg = <0x0fd60000 0x00020000>;
-		reg-names = "rfsa_mdm";
 	};
 
 	sdcc1: qcom,sdcc@f9824000 {
@@ -1181,13 +1094,6 @@
 		qcom,gpio-force-stop = <&smp2pgpio_ssr_smp2p_1_out 0 0>;
 	};
 
-	memory_hole: qcom,msm-mem-hole {
-		compatible = "qcom,msm-mem-hole";
-		qcom,memblock-remove = <0x08400000 0x4000000
-					0x0d200000 0x2300000
-					0x0fa00000 0x500000>; /* Address and Size of Hole */
-	};
-
 	tsens: tsens@fc4a8000 {
 		compatible = "qcom,msm-tsens";
 		reg = <0xfc4a8000 0x2000>,
@@ -1322,26 +1228,6 @@
 		compatible = "qcom,ipc-spinlock-sfpb";
 		reg = <0xfd484000 0x400>;
 		qcom,num-locks = <8>;
-	};
-
-	qcom,qseecom@d980000 {
-		compatible = "qcom,qseecom";
-		reg = <0xd980000 0x256000>;
-		reg-names = "secapp-region";
-		qcom,disk-encrypt-pipe-pair = <2>;
-		qcom,hlos-ce-hw-instance = <0>;
-		qcom,qsee-ce-hw-instance = <0>;
-		qcom,support-bus-scaling;
-		qcom,msm-bus,name = "qseecom-noc";
-		qcom,msm-bus,num-cases = <4>;
-		qcom,msm-bus,active-only = <0>;
-		qcom,msm-bus,num-paths = <1>;
-		qcom,support-fde;
-		qcom,msm-bus,vectors-KBps =
-				<55 512 0 0>,
-				<55 512 0 0>,
-				<55 512 120000 1200000>,
-				<55 512 393600 3936000>;
 	};
 
 	qcom,qcrypto@fd404000 {
