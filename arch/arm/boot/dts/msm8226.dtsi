@@ -1108,7 +1108,7 @@
 		qcom,calib-mode = "fuse_map2";
 	};
 
-	qcom,msm-thermal {
+	thermal: qcom,msm-thermal {
 		compatible = "qcom,msm-thermal";
 		qcom,sensor-id = <0>;
 		qcom,poll-ms = <250>;

@@ -53,3 +53,7 @@
 &tsens {
 	status = "disabled";
 };
+
+&thermal {
+	status = "disabled";
+};
