@@ -1937,8 +1937,8 @@ static void mxt_proc_t24_messages(struct mxt_data *data, u8 *message)
 		wake_lock_timeout(&touch_wake_lock, msecs_to_jiffies(2000));
 		TOUCH_INFO_MSG("Knock On detected x[%3d] y[%3d] \n", x, y);
 		kobject_uevent_env(&lge_touch_sys_device.kobj, KOBJ_CHANGE, knockon_event);
-		input_report_key(input_dev, KEY_POWER, 1);
-		input_report_key(input_dev, KEY_POWER, 0);
+		input_report_key(input_dev, KEY_DOUBLE_TAP, 1);
+		input_report_key(input_dev, KEY_DOUBLE_TAP, 0);
 		input_sync(input_dev);
 	} else {
 		TOUCH_INFO_MSG("%s msg = %d \n", __func__, msg);
@@ -4961,7 +4961,7 @@ int mxt_initialize_t9_input_device(struct mxt_data *data)
 	}
 
 	set_bit(EV_KEY, input_dev->evbit);
-	set_bit(KEY_POWER, input_dev->keybit);
+	set_bit(KEY_DOUBLE_TAP, input_dev->keybit);
 
 	input_set_drvdata(input_dev, data);
 
