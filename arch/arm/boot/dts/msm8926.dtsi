@@ -18,10 +18,6 @@
 
 /include/ "msm8226.dtsi"
 /include/ "msm8226-v2-pm.dtsi"
-/include/ "msm8226-memory.dtsi"
-/include/ "msm8226-ion.dtsi"
-/include/ "msm8226-qseecom.dtsi"
-/include/ "msm8226-sharedmem.dtsi"
 
 / {
 	model = "Qualcomm MSM 8926";
@@ -188,10 +184,6 @@
 	ngpio = <121>;
 };
 
-&memory_hole {
-	qcom,memblock-remove = <0x08000000 0x7500000
-				0x0fa00000 0x500000>; /* Address and size of the hole */
-};
 
 &hsic_host {
 	interrupt-map = <0 &intc 0 136 0
