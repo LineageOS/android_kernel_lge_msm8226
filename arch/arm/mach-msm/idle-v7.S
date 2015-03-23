@@ -18,7 +18,6 @@
 #include <linux/linkage.h>
 #include <linux/threads.h>
 #include <asm/assembler.h>
-#include <asm/unwind.h>
 
 	.arm
 ENTRY(msm_pm_boot_entry)
@@ -49,7 +48,6 @@ skip_pc_debug3:
 
 	add     r1, r1, r0, LSL #2       /* locate boot vector for our cpu */
 	ldr     pc, [r1]                 /* jump                           */
-ENDPROC(msm_pm_boot_entry)
 
 3:	.long	.
 

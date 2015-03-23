@@ -48,6 +48,7 @@
 #include <asm/system.h>
 
 #include <mach/socinfo.h>
+#include <mach/msm_rtb.h>
 
 union gic_base {
 	void __iomem *common_base;
@@ -85,14 +86,6 @@ static DEFINE_RAW_SPINLOCK(irq_controller_lock);
 #ifdef CONFIG_CPU_PM
 static unsigned int saved_dist_ctrl, saved_cpu_ctrl;
 #endif
-
-/*
- * The GIC mapping of CPU interfaces does not necessarily match
- * the logical CPU numbering.  Let's use a mapping as returned
- * by the GIC itself.
- */
-#define NR_GIC_CPU_IF 8
-static u8 gic_cpu_map[NR_GIC_CPU_IF] __read_mostly;
 
 /*
  * Supported arch specific GIC irq extension.
@@ -318,7 +311,7 @@ static void gic_eoi_irq(struct irq_data *d)
 
 	if (gic->need_access_lock)
 		raw_spin_lock(&irq_controller_lock);
-	writel_relaxed(gic_irq(d), gic_cpu_base(d) + GIC_CPU_EOI);
+	writel_relaxed_no_log(gic_irq(d), gic_cpu_base(d) + GIC_CPU_EOI);
 	if (gic->need_access_lock)
 		raw_spin_unlock(&irq_controller_lock);
 }
@@ -389,15 +382,15 @@ static int gic_set_affinity(struct irq_data *d, const struct cpumask *mask_val,
 	unsigned int cpu = cpumask_any_and(mask_val, cpu_online_mask);
 	u32 val, mask, bit;
 
-	if (cpu >= NR_GIC_CPU_IF || cpu >= nr_cpu_ids)
+	if (cpu >= 8 || cpu >= nr_cpu_ids)
 		return -EINVAL;
 
 	mask = 0xff << shift;
-	bit = gic_cpu_map[cpu] << shift;
+	bit = 1 << (cpu_logical_map(cpu) + shift);
 
 	raw_spin_lock(&irq_controller_lock);
-	val = readl_relaxed(reg) & ~mask;
-	writel_relaxed(val | bit, reg);
+	val = readl_relaxed_no_log(reg) & ~mask;
+	writel_relaxed_no_log(val | bit, reg);
 	raw_spin_unlock(&irq_controller_lock);
 
 	return IRQ_SET_MASK_OK;
@@ -442,7 +435,7 @@ asmlinkage void __exception_irq_entry gic_handle_irq(struct pt_regs *regs)
 	do {
 		if (gic->need_access_lock)
 			raw_spin_lock(&irq_controller_lock);
-		irqstat = readl_relaxed(cpu_base + GIC_CPU_INTACK);
+		irqstat = readl_relaxed_no_log(cpu_base + GIC_CPU_INTACK);
 		if (gic->need_access_lock)
 			raw_spin_unlock(&irq_controller_lock);
 		irqnr = irqstat & ~0x1c00;
@@ -450,16 +443,18 @@ asmlinkage void __exception_irq_entry gic_handle_irq(struct pt_regs *regs)
 		if (likely(irqnr > 15 && irqnr < 1021)) {
 			irqnr = irq_find_mapping(gic->domain, irqnr);
 			handle_IRQ(irqnr, regs);
+			uncached_logk(LOGK_IRQ, (void *)(uintptr_t)irqnr);
 			continue;
 		}
 		if (irqnr < 16) {
 			if (gic->need_access_lock)
 				raw_spin_lock(&irq_controller_lock);
-			writel_relaxed(irqstat, cpu_base + GIC_CPU_EOI);
+			writel_relaxed_no_log(irqstat, cpu_base + GIC_CPU_EOI);
 			if (gic->need_access_lock)
 				raw_spin_unlock(&irq_controller_lock);
 #ifdef CONFIG_SMP
 			handle_IPI(irqnr, regs);
+			uncached_logk(LOGK_IRQ, (void *)(uintptr_t)irqnr);
 #endif
 			continue;
 		}
@@ -523,6 +518,11 @@ static void __init gic_dist_init(struct gic_chip_data *gic)
 	u32 cpumask;
 	unsigned int gic_irqs = gic->gic_irqs;
 	void __iomem *base = gic_data_dist_base(gic);
+	u32 cpu = cpu_logical_map(smp_processor_id());
+
+	cpumask = 1 << cpu;
+	cpumask |= cpumask << 8;
+	cpumask |= cpumask << 16;
 
 	writel_relaxed(0, base + GIC_DIST_CTRL);
 
@@ -535,7 +535,6 @@ static void __init gic_dist_init(struct gic_chip_data *gic)
 	/*
 	 * Set all global interrupts to this CPU only.
 	 */
-	cpumask = readl_relaxed(base + GIC_DIST_TARGET + 0);
 	for (i = 32; i < gic_irqs; i += 4)
 		writel_relaxed(cpumask, base + GIC_DIST_TARGET + i * 4 / 4);
 
@@ -574,23 +573,7 @@ static void __cpuinit gic_cpu_init(struct gic_chip_data *gic)
 {
 	void __iomem *dist_base = gic_data_dist_base(gic);
 	void __iomem *base = gic_data_cpu_base(gic);
-	unsigned int cpu_mask, cpu = smp_processor_id();
 	int i;
-
-	/*
-	 * Get what the GIC says our CPU mask is.
-	 */
-	BUG_ON(cpu >= NR_GIC_CPU_IF);
-	cpu_mask = readl_relaxed(dist_base + GIC_DIST_TARGET + 0);
-	gic_cpu_map[cpu] = cpu_mask;
-
-	/*
-	 * Clear our mask from the other map entries in case they're
-	 * still undefined.
-	 */
-	for (i = 0; i < NR_GIC_CPU_IF; i++)
-		if (i != cpu)
-			gic_cpu_map[i] &= ~cpu_mask;
 
 	/*
 	 * Deal with the banked PPI and SGI interrupts - disable all
@@ -733,19 +716,22 @@ static void gic_cpu_save(unsigned int gic_nr)
 	if (!dist_base || !cpu_base)
 		return;
 
-	saved_cpu_ctrl = readl_relaxed(cpu_base + GIC_CPU_CTRL);
+	saved_cpu_ctrl = readl_relaxed_no_log(cpu_base + GIC_CPU_CTRL);
 
 	for (i = 0; i < DIV_ROUND_UP(32, 4); i++)
-		gic_data[gic_nr].saved_dist_pri[i] = readl_relaxed(dist_base +
+		gic_data[gic_nr].saved_dist_pri[i] = readl_relaxed_no_log(
+							dist_base +
 							GIC_DIST_PRI + i * 4);
 
 	ptr = __this_cpu_ptr(gic_data[gic_nr].saved_ppi_enable);
 	for (i = 0; i < DIV_ROUND_UP(32, 32); i++)
-		ptr[i] = readl_relaxed(dist_base + GIC_DIST_ENABLE_SET + i * 4);
+		ptr[i] = readl_relaxed_no_log(dist_base +
+				GIC_DIST_ENABLE_SET + i * 4);
 
 	ptr = __this_cpu_ptr(gic_data[gic_nr].saved_ppi_conf);
 	for (i = 0; i < DIV_ROUND_UP(32, 16); i++)
-		ptr[i] = readl_relaxed(dist_base + GIC_DIST_CONFIG + i * 4);
+		ptr[i] = readl_relaxed_no_log(dist_base +
+				GIC_DIST_CONFIG + i * 4);
 
 }
 
@@ -767,18 +753,20 @@ static void gic_cpu_restore(unsigned int gic_nr)
 
 	ptr = __this_cpu_ptr(gic_data[gic_nr].saved_ppi_enable);
 	for (i = 0; i < DIV_ROUND_UP(32, 32); i++)
-		writel_relaxed(ptr[i], dist_base + GIC_DIST_ENABLE_SET + i * 4);
+		writel_relaxed_no_log(ptr[i], dist_base +
+			GIC_DIST_ENABLE_SET + i * 4);
 
 	ptr = __this_cpu_ptr(gic_data[gic_nr].saved_ppi_conf);
 	for (i = 0; i < DIV_ROUND_UP(32, 16); i++)
-		writel_relaxed(ptr[i], dist_base + GIC_DIST_CONFIG + i * 4);
+		writel_relaxed_no_log(ptr[i], dist_base +
+			GIC_DIST_CONFIG + i * 4);
 
 	for (i = 0; i < DIV_ROUND_UP(32, 4); i++)
-		writel_relaxed(gic_data[gic_nr].saved_dist_pri[i],
+		writel_relaxed_no_log(gic_data[gic_nr].saved_dist_pri[i],
 			dist_base + GIC_DIST_PRI + i * 4);
 
-	writel_relaxed(0xf0, cpu_base + GIC_CPU_PRIMASK);
-	writel_relaxed(saved_cpu_ctrl, cpu_base + GIC_CPU_CTRL);
+	writel_relaxed_no_log(0xf0, cpu_base + GIC_CPU_PRIMASK);
+	writel_relaxed_no_log(saved_cpu_ctrl, cpu_base + GIC_CPU_CTRL);
 }
 
 static int gic_notifier(struct notifier_block *self, unsigned long cmd,	void *v)
@@ -900,7 +888,7 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 {
 	irq_hw_number_t hwirq_base;
 	struct gic_chip_data *gic;
-	int gic_irqs, irq_base, i;
+	int gic_irqs, irq_base;
 
 	BUG_ON(gic_nr >= MAX_GIC_NR);
 
@@ -939,13 +927,6 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 		gic->cpu_base.common_base = cpu_base;
 		gic_set_base_accessor(gic, gic_get_common_base);
 	}
-
-	/*
-	 * Initialize the CPU interface map to all CPUs.
-	 * It will be refined as each CPU probes its ID.
-	 */
-	for (i = 0; i < NR_GIC_CPU_IF; i++)
-		gic_cpu_map[i] = 0xff;
 
 	/*
 	 * For primary GICs, skip over SGIs.
@@ -1005,7 +986,7 @@ void gic_raise_softirq(const struct cpumask *mask, unsigned int irq)
 
 	/* Convert our logical CPU mask into a physical one. */
 	for_each_cpu(cpu, mask)
-		map |= gic_cpu_map[cpu];
+		map |= 1 << cpu_logical_map(cpu);
 
 	sgir = (map << 16) | irq;
 	if (is_cpu_secure())
@@ -1020,7 +1001,7 @@ void gic_raise_softirq(const struct cpumask *mask, unsigned int irq)
 	if (gic->need_access_lock)
 		raw_spin_lock_irqsave(&irq_controller_lock, flags);
 	/* this always happens on GIC0 */
-	writel_relaxed(sgir, gic_data_dist_base(gic) + GIC_DIST_SOFTINT);
+	writel_relaxed_no_log(sgir, gic_data_dist_base(gic) + GIC_DIST_SOFTINT);
 	if (gic->need_access_lock)
 		raw_spin_unlock_irqrestore(&irq_controller_lock, flags);
 	mb();

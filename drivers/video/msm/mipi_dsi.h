@@ -202,8 +202,6 @@ struct dsi_buf {
 	int len;	/* data length */
 	dma_addr_t dmap; /* mapped dma addr */
 };
-
-/* dcs read/write */
 #define DTYPE_DCS_WRITE		0x05	/* short write, 0 parameter */
 #define DTYPE_DCS_WRITE1	0x15	/* short write, 1 parameter */
 #define DTYPE_DCS_READ		0x06	/* read */

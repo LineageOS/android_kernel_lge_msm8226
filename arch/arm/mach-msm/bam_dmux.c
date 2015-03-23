@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -230,7 +230,7 @@ static struct srcu_struct bam_dmux_srcu;
 #define UL_TIMEOUT_DELAY 1000	/* in ms */
 #define ENABLE_DISCONNECT_ACK	0x1
 #define SHUTDOWN_TIMEOUT_MS	500
-#define UL_WAKEUP_TIMEOUT_MS	2000
+#define UL_WAKEUP_TIMEOUT_MS	5000
 static void toggle_apps_ack(void);
 static void reconnect_to_bam(void);
 static void disconnect_to_bam(void);
@@ -1607,7 +1607,7 @@ static void ul_timeout(struct work_struct *work)
 		return;
 	ret = write_trylock_irqsave(&ul_wakeup_lock, flags);
 	if (!ret) { /* failed to grab lock, reschedule and bail */
-		queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+		schedule_delayed_work(&ul_timeout_work,
 				msecs_to_jiffies(UL_TIMEOUT_DELAY));
 		return;
 	}
@@ -1631,7 +1631,7 @@ static void ul_timeout(struct work_struct *work)
 			BAM_DMUX_LOG("%s: pkt written %d\n",
 				__func__, ul_packet_written);
 			ul_packet_written = 0;
-			queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+			schedule_delayed_work(&ul_timeout_work,
 					msecs_to_jiffies(UL_TIMEOUT_DELAY));
 		} else {
 			ul_powerdown();
@@ -1717,7 +1717,7 @@ static void ul_wakeup(void)
 		}
 		if (likely(do_vote_dfab))
 			vote_dfab();
-		queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+		schedule_delayed_work(&ul_timeout_work,
 				msecs_to_jiffies(UL_TIMEOUT_DELAY));
 		bam_is_connected = 1;
 		mutex_unlock(&wakeup_lock);
@@ -1762,7 +1762,7 @@ static void ul_wakeup(void)
 
 	bam_is_connected = 1;
 	BAM_DMUX_LOG("%s complete\n", __func__);
-	queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+	schedule_delayed_work(&ul_timeout_work,
 				msecs_to_jiffies(UL_TIMEOUT_DELAY));
 	mutex_unlock(&wakeup_lock);
 }
@@ -2578,7 +2578,8 @@ static int __init bam_dmux_init(void)
 	}
 #endif
 
-	bam_ipc_log_txt = ipc_log_context_create(BAM_IPC_LOG_PAGES, "bam_dmux");
+	bam_ipc_log_txt = ipc_log_context_create(BAM_IPC_LOG_PAGES, "bam_dmux",
+			0);
 	if (!bam_ipc_log_txt) {
 		pr_err("%s : unable to create IPC Logging Context", __func__);
 	}
