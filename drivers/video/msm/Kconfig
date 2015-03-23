@@ -225,6 +225,10 @@ config FB_MSM_MIPI_DSI_TIANMA
 	bool
 	select FB_MSM_MIPI_DSI
 
+config FB_MSM_MIPI_DSI_LGD_INCELL
+	bool
+	select FB_MSM_MIPI_DSI
+
 config FB_MSM_MIPI_DSI_TC358764_DSI2LVDS
 	bool
 	select FB_MSM_MIPI_DSI
@@ -398,6 +402,11 @@ config FB_MSM_MIPI_TIANMA_CMD_HVGA_PT
 config FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT
 	bool
 	select FB_MSM_MIPI_DSI_TIANMA
+	default n
+
+config FB_MSM_MIPI_LGD_INCELL_VIDEO_WVGA_PT
+	bool
+	select FB_MSM_MIPI_DSI_LGD_INCELL
 	default n
 
 config FB_MSM_MIPI_CHIMEI_WXGA
@@ -742,6 +751,12 @@ config FB_MSM_MIPI_TIANMA_CMD_HVGA_PT_PANEL
 	---help---
 	Support for TIANMA CMD HVGA PT panel
 
+config FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL
+	bool "MIPI LGD VIDEO WVGA PT panel"
+	select FB_MSM_MIPI_LGD_INCELL_VIDEO_WVGA_PT
+	---help---
+	Support for LGD VIDEO WVGA PT panel
+
 config FB_MSM_MIPI_SIMULATOR_VIDEO_PANEL
 	bool "MIPI Simulator Video Panel"
 	select FB_MSM_MIPI_SIMULATOR_VIDEO
@@ -757,6 +772,43 @@ config FB_MSM_HDMI_AS_PRIMARY
 	bool "Use HDMI as primary panel"
 	---help---
 	Support for using HDMI as primary
+
+config LGE_MIPI_TOVIS_VIDEO_540P_PANEL
+        bool "MIPI TOVIS VIDEO 540P PANEL && MIPI TOVIS VIDEO 540 PANEL WITH DSV"
+
+config FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL
+        bool "MIPI LGD Display HD PT Panel"
+
+config LGE_MIPI_NT35521_VIDEO_720P_PANEL
+        bool "MIPI NT35521 VIDEO 720P PANEL && MIPI NT35521 VIDEO 720P PANEL WITH DSV"
+
+config FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL
+        bool "MIPI TIANMA VIDEO QHD PT panel"
+        select FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT
+        ---help---
+        Support for TIANMA VIDEO QHD PT panel
+
+config FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL
+        bool "MIPI LGD VIDEO WVGA PT INCELL panel"
+        select FB_MSM_MIPI_LGD_INCELL_VIDEO_WVGA_PT
+        ---help---
+        Support for LGD VIDEO WVGA PT INCELL panel
+
+config FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
+        bool "MIPI LG Display HD PT Panel"
+        ---help---
+        Support for LGIT LH470WX1 VIDEO QHD PT panel
+
+config FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL
+        bool "MIPI TOVIS Display HD PT Panel"
+        ---help---
+        Support for TOVIS LM570HN1A  VIDEO HD PT panel
+
+config LGE_MIPI_DSI_LGD_LVDS_WXGA
+        bool "MIPI LGD LVDS WXGA PANEL"
+
+config LGE_MIPI_DSI_LGD_NT35521_WXGA
+        bool "MIPI LGD NT35521 WXGA PANEL"
 
 config FB_MSM_PANEL_NONE
 	bool "NONE"
