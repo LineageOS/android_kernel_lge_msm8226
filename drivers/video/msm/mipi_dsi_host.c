@@ -726,6 +726,7 @@ int mipi_dsi_cmd_dma_add(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 {
 	int len = 0;
 
+	printk("cm->dtype = %d\n",cm->dtype);
 	switch (cm->dtype) {
 	case DTYPE_GEN_WRITE:
 	case DTYPE_GEN_WRITE1:
@@ -1159,6 +1160,7 @@ static int mipi_dsi_cmds_tx(struct dsi_buf *tp,
 	cm = cmds;
 	mipi_dsi_buf_init(tp);
 	for (i = 0; i < cnt; i++) {
+		printk("## Kernel mipi_dsi_cmds_tx+, payload 0 = %x\n",cm->payload[0]);
 		mipi_dsi_enable_irq(DSI_CMD_TERM);
 		mipi_dsi_buf_init(tp);
 		mipi_dsi_cmd_dma_add(tp, cm);

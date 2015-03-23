@@ -64,6 +64,17 @@ static int lowmem_minfree[6] = {
 };
 static int lowmem_minfree_size = 4;
 static int lmk_fast_run = 1;
+#ifdef CONFIG_LGE_ANDROID_LOW_MEMORY_KILLER_IMPROVE
+enum {
+        TUNE_LEVEL_OFILE,	/* use default other file value */
+        TUNE_LEVEL_RECLAIMABLE,	/* reclaimable instead of ofile*/
+        TUNE_LEVEL_AFILE,	/* ofile - active file */
+        TUNE_LEVEL_MAPPED,	/* ofile - mapped */
+};
+
+//static int lmk_tune_level = TUNE_LEVEL_RECLAIMABLE;
+static int lmk_tune_level = TUNE_LEVEL_OFILE;
+#endif
 
 static unsigned long lowmem_deathpending_timeout;
 
@@ -234,6 +245,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int tasksize;
 	int i;
 	int min_score_adj = OOM_SCORE_ADJ_MAX + 1;
+	int minfree = 0;
 	int selected_tasksize = 0;
 	int selected_oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
@@ -248,6 +260,27 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 
 	other_free = global_page_state(NR_FREE_PAGES);
 
+#ifdef CONFIG_LGE_ANDROID_LOW_MEMORY_KILLER_IMPROVE
+        if (global_page_state(NR_SHMEM) + total_swapcache_pages <
+                global_page_state(NR_FILE_PAGES)) {
+                other_file = global_page_state(NR_FILE_PAGES) - global_page_state(NR_SHMEM)-total_swapcache_pages;
+
+                if (lmk_tune_level == TUNE_LEVEL_RECLAIMABLE) {
+                        int reclaimable_pages = global_page_state(NR_ACTIVE_FILE) + global_page_state(NR_INACTIVE_FILE);
+                        if (other_file > reclaimable_pages) {
+                            other_file = reclaimable_pages;
+                        }
+                }
+                else if (lmk_tune_level == TUNE_LEVEL_AFILE) {
+                    other_file -= global_page_state(NR_ACTIVE_FILE);
+                }
+                else if (lmk_tune_level >= TUNE_LEVEL_MAPPED) {
+                    other_file -= global_page_state(NR_FILE_MAPPED);
+                }
+        }
+        else
+                other_file = 0;
+#else
 	if (global_page_state(NR_SHMEM) + total_swapcache_pages <
 		global_page_state(NR_FILE_PAGES))
 		other_file = global_page_state(NR_FILE_PAGES) -
@@ -255,6 +288,16 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 						total_swapcache_pages;
 	else
 		other_file = 0;
+#endif
+
+
+#ifdef CONFIG_LGE_ANDROID_LOW_MEMORY_KILLER_IMPROVE
+        lowmem_print(4, "lowmem_shrink %lu, %x, ofree %d %d, ma %hd, file : %lu, shmem : %lu, swapcache : %lu, mapped : %lu, active_anon : %lu, active_file : %lu, inactive_anon : %lu, inactive_file : %lu\n", \
+            nr_to_scan, sc->gfp_mask, other_free, \
+            other_file, min_score_adj, global_page_state(NR_FILE_PAGES), global_page_state(NR_SHMEM), total_swapcache_pages,\
+            global_page_state(NR_FILE_MAPPED), global_page_state(NR_ACTIVE_ANON), global_page_state(NR_ACTIVE_FILE), \
+            global_page_state(NR_INACTIVE_ANON), global_page_state(NR_INACTIVE_FILE));
+#endif
 
 	tune_lmk_param(&other_free, &other_file, sc);
 
@@ -263,8 +306,8 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	if (lowmem_minfree_size < array_size)
 		array_size = lowmem_minfree_size;
 	for (i = 0; i < array_size; i++) {
-		if (other_free < lowmem_minfree[i] &&
-		    other_file < lowmem_minfree[i]) {
+		minfree = lowmem_minfree[i];
+		if (other_free < minfree && other_file < minfree) {
 			min_score_adj = lowmem_adj[i];
 			break;
 		}
@@ -319,11 +362,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			task_unlock(p);
 			continue;
 		}
-		if (fatal_signal_pending(p)) {
-			lowmem_print(2, "skip slow dying process %d\n", p->pid);
-			task_unlock(p);
-			continue;
-		}
 		tasksize = get_mm_rss(p->mm);
 		task_unlock(p);
 		if (tasksize <= 0)
@@ -345,6 +383,63 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		lowmem_print(1, "send sigkill to %d (%s), adj %d, size %d\n",
 			     selected->pid, selected->comm,
 			     selected_oom_score_adj, selected_tasksize);
+		lowmem_print(2, "Killing '%s' (%d), adj %hd,\n" \
+				"   to free %ldkB on behalf of '%s' (%d) because\n" \
+				"   cache %ldkB is below limit %ldkB for oom_score_adj %hd\n" \
+				"   Free memory is %ldkB above reserved.\n" \
+				"   Free CMA is %ldkB\n" \
+				"   Total reserve is %ldkB\n" \
+				"   Total free pages is %ldkB\n" \
+				"   Total file cache is %ldkB\n" \
+				"   Total shmem is %ldkB\n" \
+				"   Total swapcache is %ldkB\n" \
+				"   Total file mapped is %ldkB\n" \
+				"   Total Active Anon is %ldkB\n" \
+				"   Total Active File is %ldkB\n" \
+				"   Total Inactive Anon is %ldkB\n" \
+				"   Total Inactive File is %ldkB\n" \
+				"   Slab Reclaimable is %ldkB\n" \
+				"   Slab UnReclaimable is %ldkB\n" \
+				"   Total Slab is %ldkB\n" \
+				"   GFP mask is 0x%x\n",
+			     selected->comm, selected->pid,
+			     selected_oom_score_adj,
+			     selected_tasksize * (long)(PAGE_SIZE / 1024),
+			     current->comm, current->pid,
+			     other_file * (long)(PAGE_SIZE / 1024),
+			     minfree * (long)(PAGE_SIZE / 1024),
+			     min_score_adj,
+			     other_free * (long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_FREE_CMA_PAGES) *
+				(long)(PAGE_SIZE / 1024),
+			     totalreserve_pages * (long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_FREE_PAGES) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_FILE_PAGES) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_SHMEM) *
+				(long)(PAGE_SIZE / 1024),
+			     total_swapcache_pages *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_FILE_MAPPED) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_ACTIVE_ANON) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_ACTIVE_FILE) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_INACTIVE_ANON) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_INACTIVE_FILE) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_SLAB_RECLAIMABLE) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_SLAB_UNRECLAIMABLE) *
+				(long)(PAGE_SIZE / 1024),
+			     global_page_state(NR_SLAB_RECLAIMABLE) *
+				(long)(PAGE_SIZE / 1024) +
+			     global_page_state(NR_SLAB_UNRECLAIMABLE) *
+				(long)(PAGE_SIZE / 1024),
+			     sc->gfp_mask);
 		lowmem_deathpending_timeout = jiffies + HZ;
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
@@ -469,6 +564,9 @@ module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
 			 S_IRUGO | S_IWUSR);
 module_param_named(debug_level, lowmem_debug_level, uint, S_IRUGO | S_IWUSR);
 module_param_named(lmk_fast_run, lmk_fast_run, int, S_IRUGO | S_IWUSR);
+#ifdef CONFIG_LGE_ANDROID_LOW_MEMORY_KILLER_IMPROVE
+module_param_named(lmk_tune_level, lmk_tune_level, int, S_IRUGO | S_IWUSR);
+#endif
 
 module_init(lowmem_init);
 module_exit(lowmem_exit);

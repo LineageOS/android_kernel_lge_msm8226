@@ -46,16 +46,6 @@ config ANDROID_RAM_CONSOLE
 	select ANDROID_PERSISTENT_RAM
 	default n
 
-config ANDROID_PERSISTENT_RAM_EXT_BUF
-	bool "Allow printing to old persistent ram"
-	default n
-	depends on ANDROID_RAM_CONSOLE && ANDROID_PERSISTENT_RAM
-	help
-	  Adding function which can print to old persistent ram. It accepts
-	  similar parameters as printk.
-	  Content printed will be visible in last_kmsg.
-	  If unsure, say N.
-
 config PERSISTENT_TRACER
 	bool "Persistent function tracer"
 	depends on HAVE_FUNCTION_TRACER
@@ -104,6 +94,13 @@ config ANDROID_INTF_ALARM_DEV
 	  Provides non-wakeup and rtc backed wakeup alarms based on rtc or
 	  elapsed realtime, and a non-wakeup alarm on the monotonic clock.
 	  Also exports the alarm interface to user-space.
+
+config LGE_ANDROID_LOW_MEMORY_KILLER_IMPROVE
+        bool "Android Low Memory Killer: improve LMK behavior to sync up with kswapd"
+        depends on ANDROID_LOW_MEMORY_KILLER
+        default n
+        ---help---
+          adjust other file pages to sync up with kswapd
 
 endif # if ANDROID
 

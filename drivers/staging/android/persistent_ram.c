@@ -79,6 +79,23 @@ static inline void buffer_size_add(struct persistent_ram_zone *prz, size_t a)
 	} while (atomic_cmpxchg(&prz->buffer->size, old, new) != old);
 }
 
+/* increase the size counter, retuning an error if it hits the max size */
+static inline ssize_t buffer_size_add_clamp(struct persistent_ram_zone *prz,
+	size_t a)
+{
+	size_t old;
+	size_t new;
+
+	do {
+		old = atomic_read(&prz->buffer->size);
+		new = old + a;
+		if (new > prz->buffer_size)
+			return -ENOMEM;
+	} while (atomic_cmpxchg(&prz->buffer->size, old, new) != old);
+
+	return 0;
+}
+
 static void notrace persistent_ram_encode_rs8(struct persistent_ram_zone *prz,
 	uint8_t *data, size_t len, uint8_t *ecc)
 {
@@ -250,144 +267,6 @@ static void notrace persistent_ram_update(struct persistent_ram_zone *prz,
 	persistent_ram_update_ecc(prz, start, count);
 }
 
-#ifdef CONFIG_ANDROID_PERSISTENT_RAM_EXT_BUF
-struct persistent_ram_ext_buf {
-	struct list_head list;
-	int size, space;
-	char data[];
-};
-
-struct persistent_ram_ext_buffer {
-	spinlock_t lock;	/* protect list and buf */
-	struct list_head list;
-	struct persistent_ram_ext_buf *buf;
-	int total_size;
-	int stop;
-} rs_ext_buf __initdata = {
-	.lock	= __SPIN_LOCK_UNLOCKED(rs_ext_buf.lock),
-	.list	= LIST_HEAD_INIT(rs_ext_buf.list),
-};
-
-int __init persistent_ram_ext_oldbuf_print(const char *fmt, ...)
-{
-	va_list args;
-	unsigned long flags;
-	int len = 0;
-	char line_buf[512];
-	struct persistent_ram_ext_buf *buf;
-
-	va_start(args, fmt);
-	len += vsnprintf(line_buf + len, sizeof(line_buf) - len, fmt, args);
-	va_end(args);
-
-	spin_lock_irqsave(&rs_ext_buf.lock, flags);
-	if (rs_ext_buf.stop) {
-		spin_unlock_irqrestore(&rs_ext_buf.lock, flags);
-		pr_err("%s() called too late by %pf()\n", __func__,
-				__builtin_return_address(0));
-		return 0;
-	}
-
-	while (1) {
-		if (!rs_ext_buf.buf) {
-			buf = (struct persistent_ram_ext_buf *)
-				__get_free_page(GFP_ATOMIC);
-			if (buf) {
-				buf->size = 0;
-				buf->space = PAGE_SIZE - 1 -
-					offsetof(struct persistent_ram_ext_buf,
-							data);
-				rs_ext_buf.buf = buf;
-			} else {
-				pr_err("%s NOMEM\n", __func__);
-				len = 0;
-				break;
-			}
-		}
-		buf = rs_ext_buf.buf;
-		if (len + 1 > buf->space) {
-			buf->data[buf->size] = '\0';
-			list_add_tail(&buf->list, &rs_ext_buf.list);
-			rs_ext_buf.total_size += buf->size;
-			rs_ext_buf.buf = NULL;
-			continue;
-		}
-		memcpy(&buf->data[buf->size], line_buf, len);
-		buf->space -= len;
-		buf->size += len;
-		break;
-	}
-	spin_unlock_irqrestore(&rs_ext_buf.lock, flags);
-	return len;
-}
-
-static int __init persistent_ram_ext_oldbuf_print_stop(void)
-{
-	int ret;
-	unsigned long flags;
-	struct persistent_ram_ext_buf *buf;
-	spin_lock_irqsave(&rs_ext_buf.lock, flags);
-	rs_ext_buf.stop = 1;
-	if (rs_ext_buf.buf) {
-		buf = rs_ext_buf.buf;
-		rs_ext_buf.buf = NULL;
-		buf->data[buf->size] = '\0';
-		list_add_tail(&buf->list, &rs_ext_buf.list);
-		rs_ext_buf.total_size += buf->size;
-	}
-	ret = rs_ext_buf.total_size;
-	spin_unlock_irqrestore(&rs_ext_buf.lock, flags);
-	return ret;
-}
-
-static void __init persistent_ram_ext_oldbuf_push(char *ptr)
-{
-	unsigned long flags;
-	struct persistent_ram_ext_buf *buf, *n;
-
-	spin_lock_irqsave(&rs_ext_buf.lock, flags);
-	list_for_each_entry_safe(buf, n, &rs_ext_buf.list, list) {
-		if (ptr) {
-			memcpy(ptr, buf->data, buf->size);
-			ptr += buf->size;
-		}
-		list_del(&buf->list);
-		free_page((unsigned long)buf);
-	}
-	spin_unlock_irqrestore(&rs_ext_buf.lock, flags);
-}
-
-void __init persistent_ram_ext_oldbuf_merge(struct persistent_ram_zone *prz)
-{
-	size_t ext_size;
-	char *old_log2;
-
-	ext_size = persistent_ram_ext_oldbuf_print_stop();
-	if (ext_size) {
-		if (!prz || !prz->old_log_size) {
-			persistent_ram_ext_oldbuf_push(NULL);
-			pr_info("persistent_ram: discarded ext buf size %zu\n",
-				ext_size);
-			return;
-		}
-		old_log2 = krealloc(prz->old_log,
-				prz->old_log_size + ext_size, GFP_KERNEL);
-		if (old_log2) {
-			persistent_ram_ext_oldbuf_push(old_log2 +
-				prz->old_log_size);
-			prz->old_log = old_log2;
-			prz->old_log_size += ext_size;
-			pr_info("persistent_ram: merged ext buf size %zu\n",
-				ext_size);
-		} else {
-			pr_err("persistent_ram: cannot merge ext buf size %zu\n",
-				ext_size);
-			persistent_ram_ext_oldbuf_push(NULL);
-		}
-	}
-}
-#endif
-
 static void __devinit
 persistent_ram_save_old(struct persistent_ram_zone *prz)
 {
@@ -422,7 +301,7 @@ int notrace persistent_ram_write(struct persistent_ram_zone *prz,
 		c = prz->buffer_size;
 	}
 
-	buffer_size_add(prz, c);
+	buffer_size_add_clamp(prz, c);
 
 	start = buffer_start_add(prz, c);
 
