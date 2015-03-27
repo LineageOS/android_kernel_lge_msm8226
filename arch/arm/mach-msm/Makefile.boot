@@ -144,6 +144,8 @@ endif
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-v2-320p-w-cdp.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-v2-320p-w-cdp.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-v2-320p-w-mtp.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)      += msm8926-v1-320p-w-cdp.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)      += msm8926-v1-320p-w-mtp.dtb
 
 # FSM9XXX
    zreladdr-$(CONFIG_ARCH_FSM9XXX)	:= 0x10008000
