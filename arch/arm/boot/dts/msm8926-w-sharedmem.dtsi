@@ -13,7 +13,7 @@
 / {
 	rmtfs_sharedmem {
 		compatible = "qcom,sharedmem-uio";
-		reg = <0x08200000 0x180000>;
+		reg = <0x08400000 0x200000>;
 		reg-names = "rmtfs";
 	};
 
