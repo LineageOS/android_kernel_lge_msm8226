@@ -25,15 +25,10 @@
 	};
 
 	memory {
-		secure_mem: secure_region {
-			linux,contiguous-region;
-			reg = <0 0x6D00000>;
-			label = "secure_mem";
-		};
 
 		adsp_mem: adsp_region {
 			linux,contiguous-region;
-			reg = <0 0x2a00000>;
+			reg = <0 0x1400000>;
 			label = "adsp_mem";
 		};
 
