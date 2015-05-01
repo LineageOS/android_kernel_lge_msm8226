@@ -10,6 +10,8 @@
  * GNU General Public License for more details.
  */
 
+/include/ "msm8226-w-ion.dtsi"
+
 / {
 	qcom,smem@fa00000 {
 		compatible = "qcom,smem";

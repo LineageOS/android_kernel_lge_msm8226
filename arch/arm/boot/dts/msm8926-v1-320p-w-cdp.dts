@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,7 +10,6 @@
  * GNU General Public License for more details.
  */
 
-
 /dts-v1/;
 /include/ "msm8926-v1.dtsi"
 /include/ "msm8926-w-memory.dtsi"
@@ -21,8 +20,8 @@
 
 / {
 	model = "Qualcomm Technologies, Inc. MSM 8926v1W CDP";
-        compatible = "qcom,msm8926-cdp", "qcom,msm8926", "qcom,cdp";
-        qcom,board-id = <1 4>;
+	compatible = "qcom,msm8926-cdp", "qcom,msm8926", "qcom,cdp";
+	qcom,board-id = <1 4>;
 };
 
 &cci {
@@ -34,25 +33,17 @@
 
 &mdss_fb0 {
 	/* cont_splash memory*/
-	qcom,memblock-reserve = <0x0149c000 0x64000>;
-};
-
-&soc {
-	i2c@f9927000 { /* BLSP1 QUP5 */
-		synaptics@20 {
-			synaptics,display-coords = <0 0 319 239>;
-			/delete-property/ synaptics,power-down;
-			/delete-property/ synaptics,disable-gpios;
-			synaptics,is_wake;
-		};
-	};
+	qcom,memblock-reserve = <0x07e9c000 0x64000>;
 };
 
 &mdss_dsi0 {
-	qcom,dsi-pref-prim-pan = <&dsi_nt35590_qvga_cmd>;
+	qcom,dsi-pref-prim-pan = <&dsi_auo_qvga_cmd>;
 };
 
-&dsi_nt35590_qvga_cmd {
+&dsi_auo_qvga_cmd {
 	qcom,cont-splash-enabled;
 };
 
+&pm8x26_rtc {
+	qcom,qpnp-rtc-write = <1>;
+};
