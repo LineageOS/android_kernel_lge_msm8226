@@ -38,12 +38,31 @@
 	qcom,memblock-reserve = <0x07e9c000 0x64000>;
 };
 
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		synaptics@20 {
+			synaptics,display-coords = <0 0 319 239>;
+			/delete-property/ synaptics,power-down;
+			/delete-property/ synaptics,disable-gpios;
+			synaptics,is_wake;
+		};
+	};
+};
+
 &mdss_dsi0 {
 	qcom,dsi-pref-prim-pan = <&dsi_nt35590_qvga_cmd>;
 };
 
 &dsi_nt35590_qvga_cmd {
 	qcom,cont-splash-enabled;
+};
+
+&tsens {
+	status = "disabled";
+};
+
+&thermal {
+	status = "disabled";
 };
 
 &pm8x26_rtc {
