@@ -12,15 +12,21 @@
 
 /dts-v1/;
 /include/ "msm8926-v1.dtsi"
-/include/ "msm8226-memory.dtsi"
-/include/ "msm8226-qseecom.dtsi"
-/include/ "msm8226-sharedmem.dtsi"
 /include/ "msm8926-qrd-skug.dtsi"
+/include/ "msm8926-w-memory.dtsi"
+/include/ "msm8926-w-qseecom.dtsi"
+/include/ "msm8926-w-sharedmem.dtsi"
+/include/ "msm8926-w-ion.dtsi"
 
 / {
-	model = "Qti MSM 8926 QRD SKUG PVT";
+	model = "Qti MSM 8926v1 QRD SKUG PVT";
 	compatible = "qcom,msm8926-qrd", "qcom,msm8926", "qcom,qrd";
 	qcom,board-id = <0x2000b 5>;
+};
+
+&mdss_fb0 {
+	/* cont_splash memory*/
+	qcom,memblock-reserve = <0x0149c000 0x64000>;
 };
 
 &pm8226_vadc {
