@@ -95,10 +95,6 @@
 	qcom,dsi-pref-prim-pan = <&dsi_ssd2080m_720_vid>;
 };
 
-&dsi_ssd2080m_720_vid {
-	qcom,cont-splash-enabled;
-};
-
 &sdhc_2 {
 	qcom,nonremovable;
 
