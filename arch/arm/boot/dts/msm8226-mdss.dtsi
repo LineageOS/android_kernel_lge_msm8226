@@ -47,6 +47,7 @@
 		qcom,mdss-pipe-vig-fetch-id = <1>;
 		qcom,mdss-pipe-rgb-fetch-id = <7>;
 		qcom,mdss-pipe-dma-fetch-id = <4>;
+		qcom,mdss-idle-power-collapse-enabled;
 
 		qcom,mdss-pipe-vig-xin-id = <0>;
 		qcom,mdss-pipe-rgb-xin-id = <1>;
