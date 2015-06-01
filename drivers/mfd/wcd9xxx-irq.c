@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -596,6 +596,9 @@ wcd9xxx_get_irq_drv_d(const struct wcd9xxx_core_resource *wcd9xxx_res)
 		return NULL;
 
 	domain = irq_find_host(pnode);
+	if (unlikely(!domain))
+		return NULL;
+
 	return (struct wcd9xxx_irq_drv_data *)domain->host_data;
 }
 
@@ -653,7 +656,7 @@ static int wcd9xxx_map_irq(struct wcd9xxx_core_resource *wcd9xxx_res, int irq)
 	return of_irq_to_resource(wcd9xxx_res->dev->of_node, irq, NULL);
 }
 
-static int __devinit wcd9xxx_irq_probe(struct platform_device *pdev)
+static int wcd9xxx_irq_probe(struct platform_device *pdev)
 {
 	int irq;
 	struct irq_domain *domain;
