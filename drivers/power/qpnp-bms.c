@@ -4471,8 +4471,8 @@ static int bms_resume(struct device *dev)
 	if (time_until_next_recalc == 0)
 		bms_stay_awake(&chip->soc_wake_source);
 	schedule_delayed_work(&chip->calculate_soc_delayed_work,
-		round_jiffies_relative(msecs_to_jiffies
-		(time_until_next_recalc)));
+		msecs_to_jiffies(time_until_next_recalc));
+
 	return 0;
 }
 
