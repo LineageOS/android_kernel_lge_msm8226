@@ -1004,48 +1004,4 @@ config LGE_PM_BATTERY_CAPACITY_8000mAh
 
 endmenu
 
-config LGE_CRASH_FOOTPRINT
-	boolean "Crash footprint for MLT"
-	default n
-	depends on MACH_LGE && LGE_HANDLE_PANIC
-	help
-	  This feature is crash footprint for MLT.
-	  This refers to lge.bootreason and give information if the crash occured in previous to MLT.
-	  Device Node : /sys/module/lge_handle_panic/parameters/crash_footprint
-
-config LGE_QSDL_SUPPORT
-    tristate "Support for Quality Statistics Data Logging"
-    default n
-    depends on MACH_LGE
-    help
-       QSDL is a feature which notify infomation for quality statistics
-       data logging of device.
-
-config LGE_KSWITCH
-       tristate "Support LGE Kill Switch"
-       default n
-       depends on MACH_LGE
-       help
-         LGE Kill Switch
-
-config LGE_PRINT_WAKEUP_PENDING
-       tristate "print active wakeup source"
-       default n
-       depends on MACH_LGE
-       help
-         print active wakeup source
-
-config LGE_ENABLE_PRINT_CLK_LOG
-	bool "Support Enable print clock log"
-	default n
-	help
-	 Support Enable printing clock log
-
-config PRE_SELF_DIAGNOSIS
-	tristate "Support LGE self diagnosis for factory"
-	default n
-	depends on MACH_LGE
-	help
-	  LGE self diagnosis
-
 endmenu

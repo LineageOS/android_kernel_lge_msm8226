@@ -29,13 +29,10 @@
 #define SCM_EINVAL_ARG		-2
 #define SCM_ERROR		-1
 #define SCM_INTERRUPTED		1
+
 #define SCM_EBUSY		-55
 #define SCM_EBUSY_WAIT_MS	30
 #ifdef CONFIG_MACH_LGE
-/* LGE_CHANGE
- * QCT recommand MAX_RETRY 20->200
- * 2014-0333-26 yongkyu.lee@lge.com
- */
 #define SCM_EBUSY_MAX_RETRY	200
 #else
 #define SCM_EBUSY_MAX_RETRY	20
@@ -328,14 +325,6 @@ int scm_call(u32 svc_id, u32 cmd_id, const void *cmd_buf, size_t cmd_len,
 					resp_buf, resp_len, cmd, len);
 		if (ret == SCM_EBUSY)
 			msleep(SCM_EBUSY_WAIT_MS);
-#ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	 * for error detecting (retry_count)
-	 * 2014-03-26 , yongkyu.lee@lge.com
-	 */
-		if(ret == SCM_EBUSY && (retry_count > 0))
-			printk("scm call retry_count =%d",retry_count);
-#endif
 	} while (ret == SCM_EBUSY && (retry_count++ < SCM_EBUSY_MAX_RETRY));
 
 	kfree(cmd);

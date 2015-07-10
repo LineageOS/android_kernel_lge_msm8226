@@ -620,17 +620,11 @@ int pil_boot(struct pil_desc *desc)
 	const struct firmware *fw;
 	struct pil_priv *priv = desc->priv;
 
-	pil_info(desc, "step 0\n"); /* Log requested by QMC for CASE-01148068 */
 	/* Reinitialize for new image */
 	pil_release_mmap(desc);
 
 	down_read(&pil_pm_rwsem);
 	snprintf(fw_name, sizeof(fw_name), "%s.mdt", desc->name);
-#ifdef CONFIG_MACH_LGE
-	if (!strcmp(desc->name, "modem") || !strcmp(desc->name, "mba"))
-		pil_info(desc, "Start booting PIL, desc name : %s, fw_name : "
-				"%s \n", desc->name, fw_name);
-#endif
 	ret = request_firmware(&fw, fw_name, desc->dev);
 	if (ret) {
 		pil_err(desc, "Failed to locate %s\n", fw_name);
@@ -642,7 +636,6 @@ int pil_boot(struct pil_desc *desc)
 		ret = -EIO;
 		goto release_fw;
 	}
-	pil_info(desc, "step 1\n"); /* Log requested by QMC for CASE-01148068 */
 
 	mdt = (const struct pil_mdt *)fw->data;
 	ehdr = &mdt->hdr;
@@ -669,14 +662,12 @@ int pil_boot(struct pil_desc *desc)
 	if (ret)
 		goto release_fw;
 
-	pil_info(desc, "step 2\n"); /* Log requested by QMC for CASE-01148068 */
 	if (desc->ops->init_image)
 		ret = desc->ops->init_image(desc, fw->data, fw->size);
 	if (ret) {
 		pil_err(desc, "Invalid firmware metadata\n");
 		goto release_fw;
 	}
-	pil_info(desc, "step 3\n"); /* Log requested by QMC for CASE-01148068 */
 
 	if (desc->ops->mem_setup)
 		ret = desc->ops->mem_setup(desc, priv->region_start,
@@ -685,14 +676,12 @@ int pil_boot(struct pil_desc *desc)
 		pil_err(desc, "Memory setup error\n");
 		goto release_fw;
 	}
-	pil_info(desc, "step 4\n"); /* Log requested by QMC for CASE-01148068 */
 
 	list_for_each_entry(seg, &desc->priv->segs, list) {
 		ret = pil_load_seg(desc, seg);
 		if (ret)
 			goto release_fw;
 	}
-	pil_info(desc, "step 5\n"); /* Log requested by QMC for CASE-01148068 */
 
 	desc->priv->unvoted_flag = 0;
 	ret = pil_proxy_vote(desc);
@@ -700,7 +689,6 @@ int pil_boot(struct pil_desc *desc)
 		pil_err(desc, "Failed to proxy vote\n");
 		goto release_fw;
 	}
-	pil_info(desc, "step 6\n"); /* Log requested by QMC for CASE-01148068 */
 
 	ret = desc->ops->auth_and_reset(desc);
 	if (ret) {
@@ -767,10 +755,6 @@ int pil_desc_init(struct pil_desc *desc)
 	int ret;
 	void __iomem *addr;
 	char buf[sizeof(priv->info->name)];
-#ifdef CONFIG_MACH_LGE
-	if (!strcmp(desc->name, "pil-q6v5-mss") || !strcmp(desc->name,"modem"))
-		pil_info(desc, " pil description init : %s \n", desc->name);
-#endif
 
 	if (WARN(desc->ops->proxy_unvote && !desc->ops->proxy_vote,
 				"Invalid proxy voting. Ignoring\n"))

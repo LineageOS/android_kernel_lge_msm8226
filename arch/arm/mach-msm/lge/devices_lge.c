@@ -11,9 +11,6 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/of_fdt.h>
-#ifdef CONFIG_LGE_HANDLE_PANIC
-#include <mach/lge_handle_panic.h>
-#endif
 
 #ifdef CONFIG_LGE_PM
 #include <linux/qpnp/qpnp-adc.h>
@@ -248,11 +245,6 @@ void __init lge_add_persistent_device(void)
 {
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
 	platform_device_register(&ram_console_device);
-#ifdef CONFIG_LGE_HANDLE_PANIC
-	/* write ram console addr to imem */
-	lge_set_ram_console_addr(lge_persist_ram.start,
-			LGE_RAM_CONSOLE_SIZE);
-#endif
 #endif
 #ifdef CONFIG_PERSISTENT_TRACER
 	platform_device_register(&persistent_trace_device);

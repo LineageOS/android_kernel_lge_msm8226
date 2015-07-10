@@ -22,7 +22,7 @@
 #include <linux/module.h>
 #include <mach/board_lge.h>
 
-#if defined(CONFIG_LCD_KCAL)
+#ifdef CONFIG_LCD_KCAL
 static struct kcal_platform_data *kcal_pdata;
 static int last_status_kcal_ctrl;
 

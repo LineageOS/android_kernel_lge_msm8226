@@ -33,24 +33,6 @@
 
 #include "internal.h"
 
-/* LGE_CHANGE_S
- *
- * do read/mmap profiling during booting
- * in order to use the data as readahead args
- *
- * byungchul.park@lge.com 20120503
- */
-#include "sreadahead_prof.h"
-/* LGE_CHAGE_E */
-
-
-#define	DEBUG_FILE_OPEN_CLOSE	1
-
-#ifdef DEBUG_FILE_OPEN_CLOSE
-#define	FD_NUM_LIMIT 1024
-int detect_fd_leak = 0;
-#endif
-
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	struct file *filp)
 {
@@ -890,90 +872,6 @@ void fd_install(unsigned int fd, struct file *file)
 	fdt = files_fdtable(files);
 	BUG_ON(fdt->fd[fd] != NULL);
 	rcu_assign_pointer(fdt->fd[fd], file);
-	// Added by dongwook.seo - Start... debug for EMFILE
-#ifdef DEBUG_FILE_OPEN_CLOSE
-	if(unlikely(detect_fd_leak)){
-		char *cwd;
-		char *buf;
-		struct timespec time;
-		struct tm tmresult;
-		struct task_struct	*task = current;
-
-		if( fd == FD_NUM_LIMIT )
-		{
-			int i = 0;
-			int end = rlimit(RLIMIT_NOFILE);
-
-			buf = ( char*) kmalloc( PATH_MAX*sizeof(char), GFP_KERNEL);
-			if ( buf != NULL ) {
-				while( i < end ) {
-					if( fdt->fd[i] != NULL ) {
-						cwd = d_path(&(fdt->fd[i]->f_path), buf, PATH_MAX*sizeof(char));
-						if(IS_ERR(cwd)) {
-							printk("[DBG_EMFILE_PID %d(%d)-%s] d_path return error %ld\n", task->pid, task->tgid, task->comm, PTR_ERR(cwd));
-							break;
-						}
-						time = fdt->fd[i]->f_dentry->d_inode->i_mtime;
-						time_to_tm(time.tv_sec, sys_tz.tz_minuteswest * 60 * (-1), &tmresult);
-
-						printk("[%02d-%02d %02d:%02d:%02d.%03lu]-pgid=%d,[DEBUG_EMFILE_PID %d(%d)-%s] Open file with fd %d %s\n",
-								tmresult.tm_mon+1,
-								tmresult.tm_mday,
-								tmresult.tm_hour,
-								tmresult.tm_min,
-								tmresult.tm_sec,
-								(unsigned long) time.tv_nsec/1000000,
-								(int)task_pgrp_nr(task),
-								task->pid, task->tgid, task->comm, i , cwd);
-					}
-					/*else{
-					  printk("fdt->fd[%d] is NULL\n", fd);
-					  }*/
-					i++;
-				}
-				kfree(buf);
-			}
-			else {
-				printk("[DEBUG_EMFILE_PID %d(%d)-%s] Buf allocation Fail!!\n",task->pid, task->tgid, task->comm);
-			}
-		}
-		else if(fd > FD_NUM_LIMIT )
-		{
-			buf = ( char*) kmalloc( PATH_MAX*sizeof(char), GFP_KERNEL);
-			if ( buf != NULL ) {
-				if( fdt->fd[fd] != NULL ) {
-					cwd = d_path(&(fdt->fd[fd]->f_path), buf, PATH_MAX*sizeof(char));
-					if(IS_ERR(cwd)) {
-						printk("-[DBG_EMFILE_PID %d(%d)-%s] d_path return error %ld\n", task->pid, task->tgid, task->comm, PTR_ERR(cwd));
-						kfree(buf);
-						goto out;
-					}
-					time = fdt->fd[fd]->f_dentry->d_inode->i_mtime;
-
-					time_to_tm(time.tv_sec, sys_tz.tz_minuteswest * 60 * (-1), &tmresult);
-					printk("+[%02d-%02d %02d:%02d:%02d.%03lu]-pgid=%d,[DEBUG_EMFILE_PID %d(%d)-%s] Open file with fd %d %s\n",
-							tmresult.tm_mon+1,
-							tmresult.tm_mday,
-							tmresult.tm_hour,
-							tmresult.tm_min,
-							tmresult.tm_sec,
-							(unsigned long) time.tv_nsec/1000000,
-							(int)task_pgrp_nr(task),
-							task->pid, task->tgid, task->comm, fd , cwd);
-				}
-				else{
-					printk("-fdt->fd[%d] is NULL\n", fd);
-				}
-				kfree(buf);
-			}
-			else {
-				printk("-[DEBUG_EMFILE_PID %d(%d)-%s] Buf allocation Fail!!\n",task->pid, task->tgid, task->comm);
-			}
-		}
-	}
-out:
-#endif // DEBUG_FILE_OPEN_CLOSE...
-	// Added by dongwook.seo - End
 	spin_unlock(&files->file_lock);
 }
 
@@ -1089,16 +987,6 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 			} else {
 				fsnotify_open(f);
 				fd_install(fd, f);
-                /* LGE_CHANGE_S
-                 *
-                 * do read/mmap profiling during booting
-                 * in order to use the data as readahead args
-                 *
-                 * byungchul.park@lge.com 20120503
-                 */
-                sreadahead_prof( f, 0, 0);
-                /* LGE_CHANGE_E */
-
 			}
 		}
 		putname(tmp);

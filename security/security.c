@@ -672,9 +672,6 @@ int security_file_permission(struct file *file, int mask)
 	return fsnotify_perm(file, mask);
 }
 
-#ifdef CONFIG_LGE_B2B_VMWARE
-EXPORT_SYMBOL_GPL(security_file_permission);
-#endif
 int security_file_alloc(struct file *file)
 {
 	return security_ops->file_alloc_security(file);

@@ -43,9 +43,6 @@
 #include "pm-boot.h"
 #include "clock.h"
 
-#ifdef CONFIG_LGE_PM
-#include "clock.h"
-#endif
 #define CREATE_TRACE_POINTS
 #include <mach/trace_msm_low_power.h>
 
@@ -695,10 +692,6 @@ static enum msm_pm_time_stats_id msm_pm_power_collapse(bool from_idle)
 	if (cpu_online(cpu) && !msm_no_ramp_down_pc)
 		saved_acpuclk_rate = ramp_down_last_cpu(cpu);
 
-#ifdef CONFIG_LGE_PM
-	if (cpu == 0 && from_idle == 0)
-		clock_debug_print_enabled();
-#endif
 	collapsed = msm_pm_spm_power_collapse(cpu, from_idle, true);
 
 	if (cpu_online(cpu) && !msm_no_ramp_down_pc)

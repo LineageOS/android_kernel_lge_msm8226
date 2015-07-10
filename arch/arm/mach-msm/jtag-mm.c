@@ -232,12 +232,6 @@ static struct etm_ctx etm;
 
 static struct clk *clock[NR_CPUS];
 
-//darkwood
-static int boot_enable=1;
-module_param_named(
-    boot_enable, boot_enable, int, S_IRUGO
-);
-
 static void etm_os_lock(struct etm_cpu_ctx *etmdata)
 {
 	uint32_t count;
@@ -574,9 +568,6 @@ void msm_jtag_save_state(void)
 {
 	int cpu;
 
-    if(boot_enable == 0)
-        return;
-
 	cpu = raw_smp_processor_id();
 
 	msm_jtag_save_cntr[cpu]++;
@@ -593,9 +584,6 @@ EXPORT_SYMBOL(msm_jtag_save_state);
 void msm_jtag_restore_state(void)
 {
 	int cpu;
-
-    if(boot_enable == 0)
-        return;
 
 	cpu = raw_smp_processor_id();
 
@@ -798,9 +786,6 @@ static int __devinit jtag_mm_probe(struct platform_device *pdev)
 	static uint32_t cpu;
 	static uint32_t count;
 	struct device *dev = &pdev->dev;
-
-     if(boot_enable == 0)
-         return -EPERM;
 
 	if (msm_jtag_fuse_apps_access_disabled())
 		return -EPERM;

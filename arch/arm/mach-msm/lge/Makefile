@@ -118,7 +118,6 @@ obj-$(CONFIG_MACH_MSM8X10_L70PN_GLOBAL_COM) += board-8610-l70pn-global-com.o boa
 obj-$(CONFIG_MACH_MSM8X10_L70PDS_GLOBAL_COM) += board-8610-l70pds-global-com.o board-8610-l70pds-global-com-gpiomux.o
 
 obj-$(CONFIG_LGE_BOOTLOADER_LOG) += lge_bootloader_log.o
-obj-$(CONFIG_LGE_HANDLE_PANIC) += lge_handle_panic.o
 obj-$(CONFIG_LGE_BOOTLOADER_TIME_CHECKER) += lge_bootloader_time_checker.o
 
 ifdef CONFIG_MACH_MSM8926_X5_SPR
@@ -136,7 +135,6 @@ endif
 endif
 
 obj-$(CONFIG_MACH_LGE) += lge_kcal_ctrl.o
-obj-$(CONFIG_LGE_QSDL_SUPPORT) += lge_qsdl.o
 
 #[WiFi]_S[sangheon.shim@lge.com] BRCM WLAN
 obj-$(CONFIG_WIFI_CONTROL_FUNC) += wifi_bcm_lge.o
@@ -169,6 +167,4 @@ obj-$(CONFIG_LGE_PM_BATTERY_CAPACITY_8000mAh) += bms-batterydata_LGE_BL_T13_8000
 endif
 
 CFLAGS_devices_lge.o += -Idrivers/staging/android
-
-obj-$(CONFIG_PRE_SELF_DIAGNOSIS) += lge_pre_selfd.o
 
