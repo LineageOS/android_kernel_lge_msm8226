@@ -43,6 +43,8 @@
 static struct acpuclk_drv_data *priv;
 static uint32_t bus_perf_client;
 
+int g_speed_bin;
+
 /* Update the bus bandwidth request. */
 static void set_bus_bw(unsigned int bw)
 {
@@ -380,6 +382,8 @@ void __init get_speed_bin(void __iomem *base, struct bin_info *bin)
 		bin->speed = (pte_efuse >> 27) & 0x7;
 
 	bin->speed_valid = !!(pte_efuse & BIT(3));
+
+	g_speed_bin = bin->speed;
 }
 
 static struct clkctl_acpu_speed *__init select_freq_plan(void)

@@ -26,6 +26,10 @@
 #include "mdss_dsi_cmd.h"
 #include "mdss_dsi.h"
 
+#ifdef CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL
+#include "mdss_debug.h"
+#endif
+
 /*
  * mipi dsi buf mechanism
  */
@@ -501,6 +505,128 @@ static int mdss_dsi_blank_pkt(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	return DSI_HOST_HDR_SIZE; /* 4 bytes */
 }
 
+#ifdef CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL
+static int mipi_dsi_generic_lwrite_ppp(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
+{
+	char *bp;
+	u32 *hp;
+	int i, len;
+
+	printk("mipi_dsi_generic_lwrite_ppp \n");
+
+	bp = mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
+
+	/* fill up payload */
+	if (cm->payload) {
+		len = cm->dchdr.dlen;
+		len += 3;
+		len &= ~0x03;	/* multipled by 4 */
+		for (i = 0; i < cm->dchdr.dlen; i++)
+			*bp++ = cm->payload[i];
+
+		/* append 0xff to the end */
+		for (; i < len; i++)
+			*bp++ = 0xff;
+
+		dp->len += len;
+	}
+
+	/* fill up header */
+	hp = dp->hdr;
+	*hp = 0;
+	*hp = DSI_HDR_WC(cm->dchdr.dlen);
+	*hp |= DSI_HDR_VC(cm->dchdr.vc);
+	*hp |= DSI_HDR_LONG_PKT;
+	*hp |= DSI_HDR_DTYPE(MIPI_DSI_PACKED_PIXEL_STREAM_24);
+	if (cm->dchdr.last)
+		*hp |= DSI_HDR_LAST;
+
+	mdss_dsi_buf_push(dp, DSI_HOST_HDR_SIZE);
+
+	return dp->len;
+}
+
+static int mipi_dsi_generic_swrite_vsync(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
+{
+	u32 *hp;
+	int len;
+
+	if (cm->dchdr.dlen && cm->payload == 0) {
+		pr_err("%s: NO payload error\n", __func__);
+		return 0;
+	}
+	printk("mipi_dsi_generic_swrite_vsync \n");
+	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
+	hp = dp->hdr;
+	*hp = 0;
+	*hp |= DSI_HDR_VC(cm->dchdr.vc);
+	if (cm->dchdr.last)
+		*hp |= DSI_HDR_LAST;
+
+
+	len = (cm->dchdr.dlen > 2) ? 2 : cm->dchdr.dlen;
+
+	if (len == 1) {
+		*hp |= DSI_HDR_DTYPE(MIPI_DSI_V_SYNC_START);
+		*hp |= DSI_HDR_DATA1(cm->payload[0]);
+		*hp |= DSI_HDR_DATA2(0);
+	} else if (len == 2) {
+		*hp |= DSI_HDR_DTYPE(MIPI_DSI_V_SYNC_START);
+		*hp |= DSI_HDR_DATA1(cm->payload[0]);
+		*hp |= DSI_HDR_DATA2(cm->payload[1]);
+	} else {
+		*hp |= DSI_HDR_DTYPE(MIPI_DSI_V_SYNC_START);
+		*hp |= DSI_HDR_DATA1(0);
+		*hp |= DSI_HDR_DATA2(0);
+	}
+
+	mdss_dsi_buf_push(dp, DSI_HOST_HDR_SIZE);
+
+	return dp->len;	/* 4 bytes */
+}
+
+static int mipi_dsi_generic_swrite_hsync(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
+{
+	u32 *hp;
+	int len;
+
+	printk("mipi_dsi_generic_swrite_hsync \n");
+
+	if (cm->dchdr.dlen && cm->payload == 0) {
+		pr_err("%s: NO payload error\n", __func__);
+		return 0;
+	}
+
+	mdss_dsi_buf_reserve_hdr(dp, DSI_HOST_HDR_SIZE);
+	hp = dp->hdr;
+	*hp = 0;
+	*hp |= DSI_HDR_VC(cm->dchdr.vc);
+	if (cm->dchdr.last)
+		*hp |= DSI_HDR_LAST;
+
+
+	len = (cm->dchdr.dlen > 2) ? 2 : cm->dchdr.dlen;
+
+	if (len == 1) {
+		*hp |= DSI_HDR_DTYPE(MIPI_DSI_H_SYNC_START);
+		*hp |= DSI_HDR_DATA1(cm->payload[0]);
+		*hp |= DSI_HDR_DATA2(0);
+	} else if (len == 2) {
+		*hp |= DSI_HDR_DTYPE(MIPI_DSI_H_SYNC_START);
+		*hp |= DSI_HDR_DATA1(cm->payload[0]);
+		*hp |= DSI_HDR_DATA2(cm->payload[1]);
+	} else {
+		*hp |= DSI_HDR_DTYPE(MIPI_DSI_H_SYNC_START);
+		*hp |= DSI_HDR_DATA1(0);
+		*hp |= DSI_HDR_DATA2(0);
+	}
+
+	mdss_dsi_buf_push(dp, DSI_HOST_HDR_SIZE);
+
+	return dp->len;	/* 4 bytes */
+}
+#endif
+
 /*
  * prepare cmd buffer to be txed
  */
@@ -512,6 +638,17 @@ int mdss_dsi_cmd_dma_add(struct dsi_buf *dp, struct dsi_cmd_desc *cm)
 	dchdr = &cm->dchdr;
 
 	switch (dchdr->dtype) {
+#ifdef CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL
+	case MIPI_DSI_V_SYNC_START:
+		len = mipi_dsi_generic_swrite_vsync(dp, cm);
+			break;
+	case MIPI_DSI_H_SYNC_START:
+		len = mipi_dsi_generic_swrite_hsync(dp, cm);
+			break;
+	case MIPI_DSI_PACKED_PIXEL_STREAM_24:
+		len = mipi_dsi_generic_lwrite_ppp(dp, cm);
+			break;
+#endif
 	case DTYPE_GEN_WRITE:
 	case DTYPE_GEN_WRITE1:
 	case DTYPE_GEN_WRITE2:

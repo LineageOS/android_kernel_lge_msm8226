@@ -129,16 +129,32 @@ static void irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
 	wake_up_process(action->thread);
 }
 
+
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+extern void wakeup_irq_record_one(unsigned int irq);
+#endif
+	
+
 irqreturn_t
 handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
 {
 	irqreturn_t retval = IRQ_NONE;
 	unsigned int random = 0, irq = desc->irq_data.irq;
 
+#ifdef CONFIG_LGE_WAKE_IRQ_PRINT
+	if (!(action->flags & IRQF_DISABLED))
+		local_irq_enable_in_hardirq();
+#endif
+
 	do {
 		irqreturn_t res;
 
 		trace_irq_handler_entry(irq, action);
+
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+        wakeup_irq_record_one(irq);
+#endif
+	
 		res = action->handler(irq, action->dev_id);
 		trace_irq_handler_exit(irq, action, res);
 

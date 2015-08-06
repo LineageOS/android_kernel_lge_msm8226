@@ -159,11 +159,66 @@ EXPORT_SYMBOL_GPL(power_supply_set_scope);
  * @psy:	the power supply to control
  * @supply_type:	sets type property of power supply
  */
+#ifdef CONFIG_LGE_PM_CHARGING_EXTERNAL_OVP
+#if !defined (CONFIG_MACH_MSM8226_E7WIFI) || !defined (CONFIG_MACH_MSM8226_E8WIFI) || \
+    !defined (CONFIG_MACH_MSM8926_E8LTE) || !defined (CONFIG_MACH_MSM8226_E9WIFI) || \
+    !defined (CONFIG_MACH_MSM8226_E9WIFIN) || !defined (CONFIG_MACH_MSM8926_T8LTE)
+static bool is_chg_detect_first = true;
+
+bool lge_check_fast_chg_irq(void);
+void lge_set_chg_path_to_external(void);
+void lge_set_chg_path_to_internal(void);
+#endif
+#endif
+
+#ifdef CONFIG_LGE_PM
+int global_supply_type = 0;
+
+int lge_power_supply_get_type(void)
+{
+     return global_supply_type;
+}
+ EXPORT_SYMBOL(lge_power_supply_get_type);
+
+
+void lge_power_supply_set_type(int supply_type)
+{
+     global_supply_type = supply_type;
+
+	 pr_err("======== [lge_power_supply_set_type] SUPPLY_TYPE = %d =========\n", global_supply_type);
+}
+EXPORT_SYMBOL(lge_power_supply_set_type);
+#endif
+
 int power_supply_set_supply_type(struct power_supply *psy,
 				enum power_supply_type supply_type)
 {
 	const union power_supply_propval ret = {supply_type,};
 
+#ifdef CONFIG_LGE_PM
+    global_supply_type = supply_type;
+#endif
+
+#ifdef CONFIG_LGE_PM_CHARGING_EXTERNAL_OVP
+#if !defined (CONFIG_MACH_MSM8226_E7WIFI) || !defined (CONFIG_MACH_MSM8226_E8WIFI) || \
+    !defined (CONFIG_MACH_MSM8926_E8LTE) || !defined (CONFIG_MACH_MSM8226_E9WIFI) || \
+    !defined (CONFIG_MACH_MSM8226_E9WIFIN) || !defined (CONFIG_MACH_MSM8926_T8LTE)
+	/*
+	* we will enable to external OVP FET in qpnp-charger
+	* This is because of timing, which enables to Ext OVP FET before fastchg_irq occurs.
+	*/
+	if (is_chg_detect_first && lge_check_fast_chg_irq()) {
+		if (supply_type == POWER_SUPPLY_TYPE_USB_DCP) {
+			/* pr_debug("======= [Power Supply Set] DCP CABLE - Ext. OVP is HIGH =============\n"); */
+			lge_set_chg_path_to_external();
+		} else {
+			/* pr_debug("======= [Power Supply Set] SCP CABLE - Ext. OVP is LOW =============\n"); */
+			lge_set_chg_path_to_internal();
+		}
+		is_chg_detect_first = false;
+	}
+#endif
+#endif
 	if (psy->set_property)
 		return psy->set_property(psy, POWER_SUPPLY_PROP_TYPE,
 								&ret);

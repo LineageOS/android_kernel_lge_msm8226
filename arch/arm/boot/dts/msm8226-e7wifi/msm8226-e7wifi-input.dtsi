@@ -1,0 +1,936 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+
+	gpio_keys {
+		home {
+			unused;
+		};
+
+		quick_clip {
+			unused;
+		};
+	};
+
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		synaptics@20 {
+			//synaptics,fw-image-name = "synaptics/PR1237618-DS4.3.5.0.16.img";
+			revision = "rev_0";
+			status = "disable";
+		};
+
+		melfas_mms136@48 {
+			melfas,product = "E4A47A";
+			melfas,fw-image-name = "melfas/w7ds_global_com/w7ds_global_com_rev_a_v102.mfsb";
+			melfas,panel-spec-name = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_a";
+			status = "disable";
+		};
+
+		melfas_mms136_rev_b@48 {
+			melfas,product = "E4A47A";
+			interrupts = <17 0x0>;
+			melfas,fw-image-name = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			melfas,panel-spec-name = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_b";
+			status = "disable";
+		};
+
+		melfas_mms136_rev_c@48 {
+			melfas,product = "E4A47A";
+			melfas,fw-image-name = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			melfas,panel-spec-name = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			vdd-supply = <0>;
+			melfas,ce = <60>;
+			melfas,auto_fw_update = <1>;
+			melfas,enalbe_active_mode = <0>;
+			revision = "rev_c...rev_d";
+			status ="disable";
+		};
+
+		atmel_s336@4a {
+			revision = "rev_e...";
+			status = "disable";
+
+			atmel,t15_key_state = <1 2 4 8>;
+			atmel,t15_key_map = <158 172 139 249>;
+
+			atmel,fw_name = "atmel/E4A47P2_1_01.fw";
+			atmel,panel_check = <1>;
+			atmel,t15_extra_key_state = <2 128 8 1>;
+			atmel,extra_fw_name = "atmel/E4A47P1_1_01.fw";
+		};
+
+		lge_touch@48 {
+			lge,product = "E4A47A";
+			lge,fw_image = "melfas/w7ds_global_com/w7ds_global_com_rev_a_v102.mfsb";
+			lge,panel_spec = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_a";
+			status = "disable";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+		};
+
+		lge_touch_rev_b@48 {
+			lge,product = "E4A47A";
+			interrupts = <17 0x2>;
+			lge,fw_image = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			lge,panel_spec = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_b";
+			status = "disable";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+		};
+
+		lge_touch_rev_c@48 {
+			lge,product = "E4A47A";
+			lge,fw_image = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			lge,panel_spec = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_c...rev_d";
+			status = "disable";
+			vdd_type0 = <1>;
+			vdd_name0 = "high";
+			vdd_value0 = <60>;
+			vdd_type1 = <2>;
+		};
+
+		lge_ts_misc {
+			revision = "rev_c...rev_d";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="disable";
+		};
+
+		atmel_1188S@4b {
+			revision = "rev_0";
+			compatible = "atmel,1188S";
+			status = "ok";
+			reg = <0x4b>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x2>;
+			vcc_i2c-supply = <&pm8226_lvs1>;
+			vdd_ana-supply = <&pm8226_l22>;
+			vcc_dig-supply = <0>;
+			//atmel,ldo-gpio = <&msmgpio 112 0x00>;
+			atmel,reset-gpio = <&msmgpio 60 0x00>;
+			atmel,irq-gpio = <&msmgpio 17 0x00>;
+			atmel,numtouch = <10>;
+			atmel,max_x = <4095>;
+			atmel,max_y = <4095>;
+			atmel,irqflags = <0x00000002>;
+			atmel,t19_num_keys = <0>;
+			atmel,accuracy_filter_enable = <0>;
+			atmel,ghost_detection_enable = <0>;
+			atmel,cfg_1 {
+			atmel,config_t37 = [	25
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00
+				00	00	00	00	00	00	00	00	02	00	];
+			atmel,config_t38 = [	26			/* 	[SPT_USERDATA_T38 INSTANCE 0]	 */
+				01			/* 	0 1 DATA[0]	 */
+				23			/* 	1 1 DATA[1]	 */
+				05			/* 	2 1 DATA[2]	 */
+				E2			/* 	3 1 DATA[3]	 */
+				FF			/* 	4 1 DATA[4]	 */
+				01			/* 	5 1 DATA[5]	 */
+				0A			/* 	6 1 DATA[6]	 */
+				32
+				FF
+				01
+				00
+				00
+				03
+				01
+				00
+				E8
+				03
+				03
+				01
+				00
+				40
+				1F
+				08
+				05
+				1E
+				00
+				00
+				00
+				08
+				19
+				06
+				06
+				05
+				03
+				0A
+				19
+				32
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				02
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				02
+				00
+				00
+				00
+				00
+				00 	];	/* 	7 1 DATA[7]	 */
+			atmel,config_t71 = [	47			/* 	[SPT_DYNAMICCONFIGURATIONCONTAINER_T71 INSTANCE 0]	 */
+				01			/* 	0 1 DATA[0]	 */
+				01			/* 	1 1 DATA[1]	 */
+				00			/* 	2 1 DATA[2]	 */
+				2C			/* 	3 1 DATA[3]	 */
+				01			/* 	4 1 DATA[4]	 */
+				00			/* 	5 1 DATA[5]	 */
+				0F			/* 	6 1 DATA[6]	 */
+				00			/* 	7 1 DATA[7]	 */
+				00			/* 	8 1 DATA[8]	 */
+				00			/* 	9 1 DATA[9]	 */
+				05			/* 	10 1 DATA[10]	 */
+				03			/* 	11 1 DATA[11]	 */
+				00			/* 	12 1 DATA[12]	 */
+				00			/* 	13 1 DATA[13]	 */
+				00			/* 	14 1 DATA[14]	 */
+				00			/* 	15 1 DATA[15]	 */
+				00			/* 	16 1 DATA[16]	 */
+				00			/* 	17 1 DATA[17]	 */
+				00			/* 	18 1 DATA[18]	 */
+				00			/* 	19 1 DATA[19]	 */
+				00			/* 	20 1 DATA[20]	 */
+				00			/* 	21 1 DATA[21]	 */
+				00			/* 	22 1 DATA[22]	 */
+				00			/* 	23 1 DATA[23]	 */
+				00			/* 	24 1 DATA[24]	 */
+				00			/* 	25 1 DATA[25]	 */
+				00			/* 	26 1 DATA[26]	 */
+				00			/* 	27 1 DATA[27]	 */
+				00			/* 	28 1 DATA[28]	 */
+				00			/* 	29 1 DATA[29]	 */
+				00			/* 	30 1 DATA[30]	 */
+				00			/* 	31 1 DATA[31]	 */
+				00			/* 	32 1 DATA[32]	 */
+				00			/* 	33 1 DATA[33]	 */
+				00			/* 	34 1 DATA[34]	 */
+				00			/* 	35 1 DATA[35]	 */
+				00			/* 	36 1 DATA[36]	 */
+				00			/* 	37 1 DATA[37]	 */
+				00			/* 	38 1 DATA[38]	 */
+				00			/* 	39 1 DATA[39]	 */
+				00			/* 	40 1 DATA[40]	 */
+				00			/* 	41 1 DATA[41]	 */
+				00			/* 	42 1 DATA[42]	 */
+				00			/* 	43 1 DATA[43]	 */
+				00			/* 	44 1 DATA[44]	 */
+				00			/* 	45 1 DATA[45]	 */
+				00			/* 	46 1 DATA[46]	 */
+				00			/* 	47 1 DATA[47]	 */
+				00			/* 	48 1 DATA[48]	 */
+				00			/* 	49 1 DATA[49]	 */
+				00			/* 	50 1 DATA[50]	 */
+				00			/* 	51 1 DATA[51]	 */
+				00			/* 	52 1 DATA[52]	 */
+				00			/* 	53 1 DATA[53]	 */
+				00			/* 	54 1 DATA[54]	 */
+				00			/* 	55 1 DATA[55]	 */
+				00			/* 	56 1 DATA[56]	 */
+				00			/* 	57 1 DATA[57]	 */
+				00			/* 	58 1 DATA[58]	 */
+				00			/* 	59 1 DATA[59]	 */
+				00			/* 	60 1 DATA[60]	 */
+				00			/* 	61 1 DATA[61]	 */
+				00			/* 	62 1 DATA[62]	 */
+				00			/* 	63 1 DATA[63]	 */
+				00			/* 	64 1 DATA[64]	 */
+				00			/* 	65 1 DATA[65]	 */
+				00			/* 	66 1 DATA[66]	 */
+				00			/* 	67 1 DATA[67]	 */
+				00			/* 	68 1 DATA[68]	 */
+				00			/* 	69 1 DATA[69]	 */
+				00			/* 	70 1 DATA[70]	 */
+				00			/* 	71 1 DATA[71]	 */
+				00			/* 	72 1 DATA[72]	 */
+				00			/* 	73 1 DATA[73]	 */
+				00			/* 	74 1 DATA[74]	 */
+				00			/* 	75 1 DATA[75]	 */
+				00			/* 	76 1 DATA[76]	 */
+				00			/* 	77 1 DATA[77]	 */
+				00			/* 	78 1 DATA[78]	 */
+				00			/* 	79 1 DATA[79]	 */
+				00			/* 	80 1 DATA[80]	 */
+				00			/* 	81 1 DATA[81]	 */
+				00			/* 	82 1 DATA[82]	 */
+				00			/* 	83 1 DATA[83]	 */
+				00			/* 	84 1 DATA[84]	 */
+				00			/* 	85 1 DATA[85]	 */
+				00			/* 	86 1 DATA[86]	 */
+				00			/* 	87 1 DATA[87]	 */
+				00			/* 	88 1 DATA[88]	 */
+				00			/* 	89 1 DATA[89]	 */
+				00			/* 	90 1 DATA[90]	 */
+				00			/* 	91 1 DATA[91]	 */
+				00			/* 	92 1 DATA[92]	 */
+				00			/* 	93 1 DATA[93]	 */
+				00			/* 	94 1 DATA[94]	 */
+				00			/* 	95 1 DATA[95]	 */
+				00			/* 	96 1 DATA[96]	 */
+				00			/* 	97 1 DATA[97]	 */
+				00			/* 	98 1 DATA[98]	 */
+				00			/* 	99 1 DATA[99]	 */
+				00			/* 	100 1 DATA[100]	 */
+				00			/* 	101 1 DATA[101]	 */
+				00			/* 	102 1 DATA[102]	 */
+				00			/* 	103 1 DATA[103]	 */
+				00			/* 	104 1 DATA[104]	 */
+				00			/* 	105 1 DATA[105]	 */
+				00			/* 	106 1 DATA[106]	 */
+				00			/* 	107 1 DATA[107]	 */
+				00			/* 	108 1 DATA[108]	 */
+				00			/* 	109 1 DATA[109]	 */
+				00			/* 	110 1 DATA[110]	 */
+				00			/* 	111 1 DATA[111]	 */
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			/* 	120 1 DATA[110]	 */
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			/* 	130 1 DATA[110]	 */
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			/* 	140 1 DATA[110]	 */
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			/* 	150 1 DATA[110]	 */
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			/* 	160 1 DATA[110]	 */
+				00
+				00
+				00
+				00
+				00
+				00
+				00		];
+			atmel,config_t7 = [	07			/* 	[GEN_POWERCONFIG_T7 INSTANCE 0]	 */
+				20			/* 	0 1 IDLEACQINT	 */
+				09			/* 	1 1 ACTVACQINT	 */
+				05			/* 	2 1 ACTV2IDLETO	 */
+				43			/* 	3 1 CFG	 */
+				00		];	/* 	4 1 CFG2	 */
+			atmel,config_t8 = [	08			/* 	[GEN_ACQUISITIONCONFIG_T8 INSTANCE 0]	 */
+				4E			/* 	0 1 CHRGTIME	 */
+				00			/* 	1 1 ATCHDRIFT	 */
+				03			/* 	2 1 TCHDRIFT	 */
+				01			/* 	3 1 DRIFTST	 */
+				00			/* 	4 1 TCHAUTOCAL	 */
+				00			/* 	5 1 SYNC	 */
+				FF			/* 	6 1 ATCHCALST	 */
+				01			/* 	7 1 ATCHCALSTHR	 */
+				00			/* 	8 1 ATCHFRCCALTHR	 */
+				00			/* 	9 1 ATCHFRCCALRATIO	 */
+				00			/* 	10 1 MEASALLOW	 */
+				00			/* 	11 1 MEASIDLEDEF	 */
+				00			/* 	12 1 MEASACTVDEF	 */
+				00			/* 	13 1 REFMODE	 */
+				00		];	/* 	14 1 CFG	 */
+			atmel,config_t9 = [	09
+				8B	00	00	1B	2C	00	9B	32	02	04
+				05	08	07	31	0A	0A	1E	0A	FF	0F
+				FF	0F	10	10	00	00	8A	10	00	00
+				32	0A	2A	2A	00	96	05	C1	0F	6E
+				00	00	00	00	00	82	00	];
+			atmel,config_t15 = [	0F			/* 	[TOUCH_KEYARRAY_T15 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 XORIGIN	 */
+				00			/* 	2 1 YORIGIN	 */
+				00			/* 	3 1 XSIZE	 */
+				00			/* 	4 1 YSIZE	 */
+				00			/* 	5 1 AKSCFG	 */
+				00			/* 	6 1 BLEN	 */
+				00			/* 	7 1 TCHTHR	 */
+				00			/* 	8 1 TCHDI	 */
+				00			/* 	9 1 TCHHYST	 */
+				00		];	/* 	10 1 RESERVED[0]	 */
+			atmel,config_t18 = [	12			/* 	[SPT_COMMSCONFIG_T18 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00		];	/* 	1 1 COMMAND	 */
+			atmel,config_t19 = [	13			/* 	[SPT_GPIOPWM_T19 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 REPORTMASK	 */
+				00			/* 	2 1 DIR	 */
+				00			/* 	3 1 INTPULLUP	 */
+				00			/* 	4 1 OUT	 */
+				00		];	/* 	5 1 WAKE	 */
+			atmel,config_t24 = [	18			/* 	[PROCI_ONETOUCHGESTUREPROCESSOR_T24 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				01			/* 	1 1 NUMGEST	 */
+				08	00		/* 	2 2 GESTEN	 */
+				08			/* 	4 1 PROCESS	 */
+				7F			/* 	5 1 TAPTO	 */
+				00			/* 	6 1 FLICKTO	 */
+				00			/* 	7 1 DRAGTO	 */
+				00			/* 	8 1 SPRESSTO	 */
+				00			/* 	9 1 LPRESSTO	 */
+				00			/* 	10 1 REPPRESSTO	 */
+				00	00		/* 	11 2 FLICKTHR	 */
+				00	00		/* 	13 2 DRAGTHR	 */
+				90	01		/* 	15 2 TAPTHR	 */
+				00	00		/* 	17 2 THROWTHR	 */
+				00		];	/* 	19 1 UNKNOWN	 */
+			atmel,config_t25 = [	19			/* 	[SPT_SELFTEST_T25 INSTANCE 0]	 */
+				03			/* 	0 1 CTRL	 */
+				00			/* 	1 1 CMD	 */
+				9C	63		/* 	2 2 SIGLIM[0].UPSIGLIM	 */
+				14	50		/* 	4 2 SIGLIM[0].LOSIGLIM	 */
+				00	00		/* 	6 2 SIGLIM[1].UPSIGLIM	 */
+				00	00		/* 	8 2 SIGLIM[1].LOSIGLIM	 */
+				00	00		/* 	10 2 SIGLIM[2].UPSIGLIM	 */
+				00	00		/* 	12 2 SIGLIM[2].LOSIGLIM	 */
+				C8			/* 	14 1 PINDWELLUS	 */
+				88	13		/* 	15 2 SIGRANGELIM[0]	 */
+				00	00		/* 	17 2 SIGRANGELIM[1]	 */
+				00	00	];	/* 	19 2 SIGRANGELIM[2]	 */
+			atmel,config_t40 = [	28			/* 	[PROCI_GRIPSUPPRESSION_T40 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				1E			/* 	1 1 XLOGRIP	 */
+				1E			/* 	2 1 XHIGRIP	 */
+				28			/* 	3 1 YLOGRIP	 */
+				28		];	/* 	4 1 YHIGRIP	 */
+			atmel,config_t42 = [	2A			/* 	[PROCI_TOUCHSUPPRESSION_T42 INSTANCE 0]	 */
+				37			/* 	0 1 CTRL	 */
+				00			/* 	1 1 APPRTHR	 */
+				46			/* 	2 1 MAXAPPRAREA	 */
+				50			/* 	3 1 MAXTCHAREA	 */
+				B4			/* 	4 1 SUPSTRENGTH	 */
+				00			/* 	5 1 SUPEXTTO	 */
+				00			/* 	6 1 MAXNUMTCHS	 */
+				C8			/* 	7 1 SHAPESTRENGTH	 */
+				03			/* 	8 1 SUPDIST	 */
+				01			/* 	9 1 DISTHYST	 */
+				00			/* 	10 1 MAXSCRNAREA	 */
+				04			/* 	11 1 CFG	 */
+				00		];	/* 	12 1 UNKNOWN[12]	 */
+			atmel,config_t43 = [	2B		/* 	[MXT_SPT_DIGITIZER_T43 INSTANCE 0]	 */
+				88
+				00
+				7D
+				00
+				DF
+				00
+				00
+				00
+				00
+				00
+				00
+				00		];
+			atmel,config_t46 = [	2E			/* 	[SPT_CTECONFIG_T46 INSTANCE 0]	 */
+				04			/* 	0 1 CTRL	 */
+				00			/* 	1 1 MODE	 */
+				08			/* 	2 1 IDLESYNCSPERX	 */
+				18			/* 	3 1 ACTVSYNCSPERX	 */
+				00			/* 	4 1 ADCSPERSYNC	 */
+				00			/* 	5 1 PULSESPERADC	 */
+				01			/* 	6 1 XSLEW	 */
+				00	00		/* 	7 2 SYNCDELAY	 */
+				0F
+				0A		];	/* 	9 1 XVOLTAGE	 */
+			atmel,config_t47 = [	2F			/* 	[PROCI_STYLUS_T47 INSTANCE 0]	 */
+				49			/* 	0 1 CTRL	 */
+				14			/* 	1 1 CONTMIN	 */
+				50			/* 	2 1 CONTMAX	 */
+				FF			/* 	3 1 STABILITY	 */
+				02			/* 	4 1 MAXTCHAREA	 */
+				14			/* 	5 1 AMPLTHR	 */
+				14			/* 	6 1 STYSHAPE	 */
+				B4			/* 	7 1 HOVERSUP	 */
+				01			/* 	8 1 CONFTHR	 */
+				08			/* 	9 1 SYNCSPERX	 */
+				EC			/* 	10 1 XPOSADJ	 */
+				EC			/* 	11 1 YPOSADJ	 */
+				0F			/* 	12 1 CFG	 */
+				00			/* 	13 1 RESERVED[0]	 */
+				00			/* 	14 1 RESERVED[1]	 */
+				00			/* 	15 1 RESERVED[2]	 */
+				00			/* 	16 1 RESERVED[3]	 */
+				00			/* 	17 1 RESERVED[4]	 */
+				00			/* 	18 1 RESERVED[5]	 */
+				00			/* 	19 1 RESERVED[6]	 */
+				00			/* 	20 1 SUPSTYTO	 */
+				00			/* 	21 1 MAXNUMSTY	 */
+				94			/* 	22 1 XEDGECTRL	 */
+				23			/* 	23 1 XEDGEDIST	 */
+				00			/* 	24 1 YEDGECTRL	 */
+				00			/* 	25 1 YEDGEDIST	 */
+				00
+				00			];
+			atmel,config_t55 = [	37			/* 	[PROCI_ADAPTIVETHRESHOLD_T55 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 TARGETTHR	 */
+				00			/* 	2 1 THRADJLIM	 */
+				00			/* 	3 1 RESETSTEPTIME	 */
+				00			/* 	4 1 FORCECHGDIST	 */
+				00			/* 	5 1 FORCECHGTIME	 */
+				00		];	/* 	6 1 LOWESTTHR	 */
+			atmel,config_t56 = [	38			/* 	[PROCI_SHIELDLESS_T56 INSTANCE 0]	 */
+				03			/* 	0 1 CTRL	 */
+				00			/* 	1 1 COMMAND	 */
+				01			/* 	2 1 OPTINT	 */
+				29			/* 	3 1 INTTIME	 */
+				0E			/* 	4 1 INTDELAY[0]	 */
+				0E			/* 	5 1 INTDELAY[1]	 */
+				0E			/* 	6 1 INTDELAY[2]	 */
+				0E			/* 	7 1 INTDELAY[3]	 */
+				0E			/* 	8 1 INTDELAY[4]	 */
+				0E			/* 	9 1 INTDELAY[5]	 */
+				0E			/* 	10 1 INTDELAY[6]	 */
+				0E			/* 	11 1 INTDELAY[7]	 */
+				0D			/* 	12 1 INTDELAY[8]	 */
+				0E			/* 	13 1 INTDELAY[9]	 */
+				0E			/* 	14 1 INTDELAY[10]	 */
+				0E			/* 	15 1 INTDELAY[11]	 */
+				0E			/* 	16 1 INTDELAY[12]	 */
+				0E			/* 	17 1 INTDELAY[13]	 */
+				0E			/* 	18 1 INTDELAY[14]	 */
+				0F			/* 	19 1 INTDELAY[15]	 */
+				0F			/* 	20 1 INTDELAY[16]	 */
+				0F			/* 	21 1 INTDELAY[17]	 */
+				0F			/* 	22 1 INTDELAY[18]	 */
+				0F			/* 	23 1 INTDELAY[19]	 */
+				0F			/* 	24 1 INTDELAY[20]	 */
+				0F			/* 	25 1 INTDELAY[21]	 */
+				10			/* 	26 1 INTDELAY[22]	 */
+				10			/* 	27 1 INTDELAY[23]	 */
+				10			/* 	28 1 INTDELAY[24]	 */
+				10			/* 	29 1 INTDELAY[25]	 */
+				10			/* 	30 1 INTDELAY[26]	 */
+				00			/* 	31 1 INTDELAY[27]	 */
+				00			/* 	32 1 INTDELAY[28]	 */
+				00			/* 	33 1 INTDELAY[29]	 */
+				00			/* 	34 1 MULTICUTGC	 */
+				00			/* 	35 1 GCLIMIT	 */
+				02
+				40
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00	];
+			atmel,config_t57 = [	39
+				E3
+				32
+				01	];
+			atmel,config_t61 = [	3D			/* 	[SPT_TIMER_T61 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 CMD	 */
+				00			/* 	2 1 MODE	 */
+				00	00		/* 	3 2 PERIOD	 */
+							/* 	[SPT_TIMER_T61 INSTANCE 1]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 CMD	 */
+				00			/* 	2 1 MODE	 */
+				00	00		/* 	3 2 PERIOD	 */
+							/* 	[SPT_TIMER_T61 INSTANCE 2]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 CMD	 */
+				00			/* 	2 1 MODE	 */
+				00	00		/* 	3 2 PERIOD	 */
+							/* 	[SPT_TIMER_T61 INSTANCE 3]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 CMD	 */
+				00			/* 	2 1 MODE	 */
+				00	00	];	/* 	3 2 PERIOD	 */
+			atmel,config_t62 = [	3E
+				01
+				28
+				50
+				06
+				0B
+				19
+				20
+				00
+				32
+				00
+				23
+				2B
+				1E
+				0C
+				05
+				32
+				0A
+				05
+				05
+				AA
+				23
+				0F
+				18
+				0A
+				64
+				0C
+				08
+				06
+				3F
+				00
+				23
+				2B
+				1E
+				0C
+				82
+				46
+				02
+				05
+				03
+				00
+				0A
+				0A
+				1E
+				00
+				00
+				00
+				00
+				80
+				00
+				80
+				00
+				28
+				0A
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			];
+			atmel,config_t63 = [	3F
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00
+				00			];
+			atmel,config_t65 = [	41			/* 	[PROCI_LENSBENDING_T65 INSTANCE 0]	 */
+				01			/* 	0 1 CTRL	 */
+				06			/* 	1 1 GRADTHR	 */
+				00	00		/* 	2 2 YLONOISEMUL	 */
+				00	00		/* 	4 2 YLONOISEDIV	 */
+				00	00		/* 	6 2 YHINOISEMUL	 */
+				00	00		/* 	8 2 YHINOISEDIV	 */
+				00			/* 	10 1 LPFILTCOEF	 */
+				00	00		/* 	11 2 FORCESCALE	 */
+				00			/* 	13 1 FORCETHR	 */
+				00			/* 	14 1 FORCETHRHYST	 */
+				00			/* 	15 1 FORCEDI	 */
+				00		];	/* 	16 1 FORCEHYST	 */
+			atmel,config_t66 = [	42			/* 	[SPT_GOLDENREFERENCES_T66 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00			/* 	1 1 FCALFAILTHR	 */
+				00		];	/* 	2 1 FCALDRIFTCNT	 */
+			atmel,config_t70 = [	46			/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 0]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 1]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 2]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 3]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 4]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 5]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 6]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+							/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 7]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+											/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 8]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+											/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 9]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+											/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 10]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00			/* 	9 1 LENGTH	 */
+											/* 	[SPT_DYNAMICCONFIGURATIONCONTROLLER_T70 INSTANCE 11]	 */
+				00			/* 	0 1 CTRL	 */
+				00	00		/* 	1 2 EVENT	 */
+				00			/* 	3 1 OBJTYPE	 */
+				00			/* 	4 1 RESERVED[0]	 */
+				00			/* 	5 1 OBJINST	 */
+				00			/* 	6 1 DSTOFFSET	 */
+				00	00		/* 	7 2 SRCOFFSET	 */
+				00		];	/* 	9 1 LENGTH	 */
+			atmel,config_t73 = [	49			/* 	[MXT_PROCI_ZONEINDICATION_T73 INSTANCE 0]	 */
+				00
+				00
+				00
+				00
+				00
+				00			];
+			atmel,config_t77 = [	4D
+				09
+				04
+				78
+				28	];
+			atmel,config_t79 = [	4F
+				00
+				00
+				00	];
+			atmel,config_t82 = [	52
+				00
+				00
+				00		];
+			};
+		};
+
+		atmel_t641_revB@4a {									/*touch ic I2C bus adddress*/
+			revision = "rev_a...rev_b";								/*board version */
+			compatible = "atmel,t641";						/*dtsi name*/
+			status = "ok";									/*OK-used*/
+			reg = <0x4a>;									/*touch ic I2C bus adddress 0x4a -> @4a*/
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x2>;							/*interrupt pin number*/
+			vdd_ana-supply = <0>;
+			vcc_i2c-supply = <&pm8226_l23>;
+			vcc_dig-supply = <0>;							/*because of  GPIO use*/
+			atmel,ldo2-gpio = <&msmgpio 16 0x00>;	//GPIO[016] TOUCH_LDO2_EN
+			atmel,ldo1-gpio = <&msmgpio 112 0x00>;	//GPIO[112] TOUCH_LDO1_EN
+			atmel,reset-gpio = <&msmgpio 60 0x00>;
+			atmel,irq-gpio = <&msmgpio 17 0x00>;
+			atmel,numtouch = <10>;							/*multi-touch count*/
+			atmel,irqflags = <0x00000002>;					/*interrup flag type*/
+			atmel,t15_num_keys = <0>;
+			atmel,fw_name = "atmel/E7_0_101.fw";
+			atmel,panel_check = <0>;
+			atmel,extra_fw_name = "atmel/E7_0_101.fw";
+			atmel,accuracy_filter_enable = <0>;
+			atmel,knock_on_type = <1>;
+			atmel,auto_fw_update = <0>;
+			// atmel,t15_extra_key_state = <0 0>;
+			atmel,global_access_pixel = <0>;
+			atmel,use_mfts = <1>; // Enable for CoF type only
+			atmel,lcd_x = <4095>;
+			atmel,lcd_y = <4095>;
+			atmel,butt_check_enable = <0>;
+			atmel,ghost_detection_enable = <0>;
+			atmel,ghost_detection_value = <10 10 100 25 250 10>;
+		};
+
+		atmel_t641@4a {									/*touch ic I2C bus adddress*/
+			revision = "rev_c...";								/*board version */
+			compatible = "atmel,t641";						/*dtsi name*/
+			status = "ok";									/*OK-used*/
+			reg = <0x4a>;									/*touch ic I2C bus adddress 0x4a -> @4a*/
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x2>;							/*interrupt pin number*/
+			vdd_ana-supply = <0>;
+			vcc_i2c-supply = <&pm8226_l23>;
+			vcc_dig-supply = <0>;							/*because of  GPIO use*/
+			atmel,ldo2-gpio = <&msmgpio 16 0x00>;	//GPIO[016] TOUCH_LDO2_EN
+			atmel,ldo1-gpio = <&msmgpio 112 0x00>;	//GPIO[112] TOUCH_LDO1_EN
+			atmel,reset-gpio = <&msmgpio 60 0x00>;
+			atmel,irq-gpio = <&msmgpio 17 0x00>;
+			atmel,numtouch = <10>;							/*multi-touch count*/
+			atmel,irqflags = <0x00000002>;					/*interrup flag type*/
+			atmel,t15_num_keys = <0>;
+			atmel,fw_name = "atmel/E7_0_53.fw";
+			atmel,panel_check = <0>;
+			atmel,extra_fw_name = "atmel/E7_0_53.fw";
+			atmel,accuracy_filter_enable = <0>;
+			atmel,knock_on_type = <1>;
+			atmel,auto_fw_update = <0>;
+			// atmel,t15_extra_key_state = <0 0>;
+			atmel,global_access_pixel = <0>;
+			atmel,use_mfts = <1>; // Enable for CoF type only
+			atmel,lcd_x = <4095>;
+			atmel,lcd_y = <4095>;
+			atmel,butt_check_enable = <0>;
+			atmel,ghost_detection_enable = <0>;
+			atmel,ghost_detection_value = <10 10 100 25 250 10>;
+		};
+	};
+};

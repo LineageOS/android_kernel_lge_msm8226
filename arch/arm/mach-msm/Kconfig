@@ -567,15 +567,6 @@ config MSM_SOC_REV_A
 	select ARCH_MSM7X27A if ARCH_MSM7X27
 endchoice
 
-choice
-	prompt "Target type phone/wearable"
-	default MSM_PHONE
-config MSM_PHONE
-	bool "Phone"
-config MSM_WEARABLE
-	bool "Wearable"
-endchoice
-
 config MSM_KRAIT_TBB_ABORT_HANDLER
 	bool "Krait TBB/TBH data abort handler"
 	depends on ARCH_MSM_KRAIT
@@ -1148,6 +1139,20 @@ config MACH_FSM9XXX_SURF
 	  FFA board.
 
 endmenu
+
+
+# LGE_CHANGED_BEGIN
+# lge specific kconfig
+# jungsu06.kim@lge.com
+source "arch/arm/mach-msm/lge/Kconfig"
+# LGE_CHANGED_END
+
+config USE_QUP1_I2C
+	bool "Use QUP1 I2C"
+	default n
+	help
+	  Enable QUP1 I2C
+
 
 config MSM_STACKED_MEMORY
 	bool "Stacked Memory"
@@ -2741,6 +2746,8 @@ config MSM_OCMEM_POWER_DISABLE
 
 config SENSORS_ADSP
 	bool "Enable Sensors Driver Support for ADSP"
+	depends on (ARCH_MSM8226 || ARCH_MSM8974)
+	default y
 	help
 	  Add support for sensors ADSP driver.
 	  This driver is used for exercising different sensors use cases,
@@ -3052,12 +3059,5 @@ config KRAIT_REGULATOR
 	 line from the PMIC. This supply line is powered by multiple
 	 regulators running in ganged mode inside the PMIC. Enable
 	 this option to support such configurations.
-endif
 
-config KERNEL_TEXT_MPU_PROT
-        bool "Enable xpu protection of kernel r/o sections"
-        help
-          Enables xpu protection of kernel code and read-only data
-          sections early in boot. Read access is permitted to
-          all masters; Write access is only permited to the
-          secure world.
+endif

@@ -1,0 +1,490 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+/ {
+
+};
+
+&spmi_bus {
+	qcom,pm8226@0 {
+		qcom,leds@a100 {
+			status = "okay";
+			qcom,led_mpp_2 {
+				label = "mpp";
+				linux,name = "red";
+				linux,default-trigger = "none";
+				qcom,default-state = "off";
+				qcom,max-current = <40>;
+				qcom,current-setting = <5>;
+				qcom,id = <6>;
+				qcom,mode = "lpg";
+				qcom,pwm-us = <1000>;
+				qcom,source-sel = <8>;
+				qcom,mode-ctrl = <0x60>;
+				qcom,pwm-channel = <0>;
+				qcom,start-idx = <0>;
+				qcom,idx-len = <63>;
+				qcom,ramp-step-ms = <1000>;
+				qcom,duty-pcts = [
+					FF 00 00 00 00
+					00 00 00 15 2A
+					3F 2A 15 00 00
+					00 00 00 00 00
+					00 00 2C 57 5E
+					64 63 63 63 62
+					60 5F 5D 5A 58
+					53 4F 4A 41 37
+					2D 17 00 00 00
+					22 43 2C 16 00
+					00 00 00 00 00
+					09 10 21 31 21
+					10 09 00
+				];
+				qcom,use-blink;
+			};
+		};
+	qcom,power-on@800 {
+		compatible = "qcom,qpnp-power-on";
+		interrupt-names = "kpdpwr", "resin", "resin-bark", "kpdpwr-resin-bark", "cblpwr";
+		interrupts = <0x0 0x8 0x0>,
+				     <0x0 0x8 0x1>,
+				     <0x0 0x8 0x4>,
+				     <0x0 0x8 0x5>,
+				      <0x0 0x8 0x2>;
+		qcom,pon-dbc-delay = <0x3d09>;
+		qcom,s3-debounce = <128>;
+		qcom,system-reset;
+		reg = <0x800 0x100>;
+		qcom,pon_1 {
+			qcom,support-reset = <0>;
+		};
+		qcom,pon_3 {
+			qcom,support-reset = <0>;
+		};
+		qcom,pon_4 {
+			qcom,pon-type = <0x2>;
+			qcom,pull-up = <0x1>;
+		};
+	};
+	};
+	qcom,pm8226@1 {
+		pwm@b300 {
+			compatible = "qcom,qpnp-pwm";
+			revision = "rev_a";
+			status = "okay";
+			reg = <0xb300 0x100>,
+			      <0xb042 0x7e>;
+			reg-names = "qpnp-lpg-channel-base", "qpnp-lpg-lut-base";
+			qcom,channel-id = <2>;
+			qcom,supported-sizes = <6>, <9>;
+			qcom,ramp-index = <2>;
+			qcom,force-pwm-size = <9>;
+			/*add start*/
+			qcom,period = <20000>;
+			qcom,mode-select = <0>;
+			qcom,pwm {
+			label = "pwm";
+			qcom,duty = <8000>;};
+		};
+		qcom,vibrator@c000 {
+                        status = "okay";
+                        qcom,vib-timeout-ms = <15000>;
+                        qcom,vib-vtg-level-mV = <3100>;
+                };
+		qcom,leds@d300 {
+			status = "okay";
+			pm8226_flash0: qcom,flash_0 {
+				qcom,max-current = <1000>;
+				qcom,default-state = "off";
+				qcom,headroom = <3>;
+				qcom,duration = <1280>;
+				qcom,clamp-curr = <200>;
+				qcom,startup-dly = <3>;
+				qcom,safety-timer;
+				label = "flash";
+				linux,default-trigger =
+					"flash0_trigger";
+				qcom,id = <1>;
+				linux,name = "led:flash_0";
+				qcom,current = <1000>;
+			};
+			pm8226_torch: qcom,flash_torch {
+				qcom,max-current = <200>;
+				qcom,default-state = "off";
+				qcom,headroom = <3>;
+				qcom,startup-dly = <3>;
+				linux,default-trigger =
+						"torch_trigger";
+				label = "flash";
+				qcom,id = <1>;
+				linux,name = "led:flash_torch";
+				qcom,current = <200>;
+				qcom,torch-enable;
+			};
+
+		};
+
+		qcom,leds@d800 {
+			status = "okay";
+			qcom,wled_0 {
+				label = "wled";
+				linux,name = "wled:backlight";
+				linux,default-trigger = "bkl-trigger";
+				qcom,cs-out-en;
+				qcom,op-fdbck = <1>;
+				qcom,default-state = "off";
+				qcom,max-current = <18>;
+				qcom,ctrl-delay-us = <0>;
+				qcom,boost-curr-lim = <3>;
+				qcom,cp-sel = <0>;
+				qcom,switch-freq = <11>;
+				qcom,ovp-val = <0>;
+				qcom,num-strings = <1>;
+				qcom,id = <0>;
+			};
+		};
+	};
+};
+
+&pm8226_gpios {
+	gpio@c000 { /* GPIO 1 */    /* PMIC_AUDIO_REF_CLK */
+		/* XO_PMIC_CDC_MCLK enable for tapan codec */
+		qcom,mode = <1>;		/* Digital output */
+		qcom,output-type = <0>;	/* CMOS logic */
+		qcom,pull = <5>;		/* QPNP_PIN_PULL_NO*/
+		qcom,vin-sel = <3>;		/* QPNP_PIN_VIN2 */
+		qcom,out-strength = <3>;/* QPNP_PIN_OUT_STRENGTH_HIGH */
+		qcom,src-sel = <2>;		/* QPNP_PIN_SEL_FUNC_1 */
+		qcom,master-en = <1>;	/* Enable GPIO */
+	};
+
+	gpio@c100 { /* GPIO 2 */		/* CDC_BOOST_ENABLE */
+		qcom,mode = <1>;			/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,output-type = <0>;	    /* CMOS logic */
+		qcom,pull = <5>;			/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <3>;			/* QPNP_PIN_VIN2 */
+		qcom,invert = <0>;			/* QPNP_PIN_INVERT_DISABLE */
+		qcom,out-strength = <2>;	/* QPNP_PIN_OUT_STRENGTH_MED */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;		/* Enable GPIO */
+	};
+
+	gpio@c200 { /* GPIO 3 */		/* NFC_CLK_REQ */
+		qcom,mode = <0>;			/* QPNP_PIN_MODE_DIG_IN */
+		qcom,pull = <4>;			/* QPNP_PIN_PULL_DN - Not Fixed */
+		qcom,vin-sel = <3>;			/* QPNP_PIN_VIN2 */
+		qcom,src-sel = <2>;			/* QPNP_PIN_SEL_FUNC_1 */
+	};
+
+	gpio@c300 { /* GPIO 4 */		/* BATT_UIM_ALARM - TBD */
+	};
+
+	gpio@c400 { /* GPIO 5 */		/* FLASH_STROBE_TRIG */
+		qcom,mode = <0>;			/* QPNP_PIN_MODE_DIG_IN */
+		qcom,pull = <4>;			/* QPNP_PIN_PULL_DN - Not Fixed */
+		qcom,vin-sel = <3>;			/* QPNP_PIN_VIN2 */
+		qcom,src-sel = <2>;			/* QPNP_PIN_SEL_FUNC_1 */
+	};
+
+	gpio@c500 { /* GPIO 6 */		/* CABC_WLED_PM */
+		qcom,mode = <0>;			/* QPNP_PIN_MODE_DIG_IN */
+		qcom,pull = <5>;			/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <3>;			/* QPNP_PIN_VIN2 */
+		qcom,src-sel = <2>;			/* QPNP_PIN_SEL_FUNC_1 */
+	};
+
+	gpio@c600 { /* GPIO 7 */		/* TX_GTR_THRES */
+	};
+
+	gpio@c700 { /* GPIO 8 */		/* WIRELESS CHARGER CHARGING COMPLETE IRQ */
+		qcom,mode = <0>;			/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,master-en = <0>;		/* Disable GPIO */
+	};
+};
+
+&pm8226_mpps {
+	mpp@a000 { /* MPP 1 */			/* VREF_MSM_PX */
+		qcom,mode = <5>;			/* QPNP_PIN_MODE_AOUT */
+		qcom,aout-ref = <0>;		/* QPNP_PIN_AOUT_1V25 - Not Fixed */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD */
+		qcom,master-en = <1>;		/* Enable MPP */
+	};
+
+	mpp@a100 { /* MPP 2 */			/* HR_LED_SINK */
+		qcom,mode = <6>;			/* QPNP_PIN_MODE_SINK */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD */
+		qcom,cs-out = <0>;			/* QPNP_PIN_CS_OUT_5MA */
+		qcom,master-en = <1>;		/* Enable MPP */
+	};
+
+	mpp@a200 { /* MPP 3 */			/* VREF_LDO */
+		qcom,mode = <5>;			/* QPNP_PIN_MODE_AOUT */
+		qcom,aout-ref = <0>;		/* QPNP_PIN_AOUT_1V25 */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD */
+		qcom,master-en = <1>;		/* Enable MPP */
+	};
+
+	mpp@a300 { /* MPP 4 */			/* NC */
+		qcom,mode = <0>;			/* DIGITAL INPUT */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD */
+		qcom,master-en = <0>;		/* Enable MPP */
+	};
+
+	mpp@a400 { /* MPP 5 */			/* PA_THERM0 */
+		/* PA_THERM0 config */
+		qcom,mode = <4>; /* AIN input */
+		qcom,invert = <1>; /* Enable MPP */
+		qcom,ain-route = <0>; /* AMUX 5 */
+		qcom,master-en = <1>;
+		qcom,src-sel = <0>; /* Function constant */
+	};
+
+	mpp@a500 { /* MPP 6 */			/* NC */
+		qcom,mode = <0>;			/* DIGITAL INPUT */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD */
+		qcom,master-en = <0>;		/* Enable MPP */
+	};
+
+	mpp@a600 { /* MPP 7 */			/* BOARD_ID */
+		qcom,mode = <4>;			/* AIN input */
+		qcom,ain-route = <2>;		/* QPNP_PIN_AIN_AMUX_CH7 */
+		qcom,src-sel = <0>;			/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;		/* Enable MPP */
+	};
+
+	mpp@a700 { /* MPP 8 */
+		/* PA_THERM1 config */
+		qcom,mode = <4>; /* AIN input */
+		qcom,invert = <1>; /* Enable MPP */
+		qcom,ain-route = <3>; /* AMUX 8 */
+		qcom,master-en = <1>;
+		qcom,src-sel = <0>; /* Function constant */
+	};
+};
+
+&pm8226_vadc {
+	chan@14 {
+		label = "pa_therm0";
+		reg = <0x14>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <2>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@17 {
+		label = "pa_therm1";
+		reg = <0x17>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <2>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@39 {
+		label = "usb_id_lv";
+		reg = <0x39>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+};
+
+&soc{
+	/* Cable type definition.
+	* Modify the USB cable and move to SoC
+	* to get each table for different USB Pull up resistor via HW Rev
+	* This must have the compatible property "lge,usb-id".
+	* If you don't want to use revision you can remove status & revision property.
+	* If this node is not exist, the charger driver would not be probed.
+	* Each cable type has 3 values
+	* that we can configure the threshold of ADC value and TA/USB IUSB max current value.
+	* ex)
+	*    cable type = <adc_threshold, TA_MA, USB_MA>.
+	*/
+
+	lge,usb_cable@0 {
+		compatible = "lge,usb-id";
+		usb_adc_table@200{
+			status = "okay";
+			revision = "rev_0...";
+			lge,no-init-cable = <197000 500 500>;
+			lge,cable-56k = <496875 1500 1500>;
+			lge,cable-100k = <654545 500 500>;
+			lge,cable-130k = <780861 1500 1500>;
+			lge,cable-180k = <876316 1200 500>;
+			lge,cable-200k = <921429 1200 500>;
+			lge,cable-220k = <988450 1200 500>;
+			lge,cable-270k = <1077399 1200 500>;
+			lge,cable-330k = <1240865 500 500>;
+			lge,cable-620k = <1418326 500 500>;
+			lge,cable-910k = <1637838 1500 1500>;
+			lge,cable-none = <1900000 1200  500>;
+		};
+	};
+
+	richtek,rt9536 {
+		compatible = "richtek,rt9536";
+		status = "ok";
+		rt9536,chg_en_set = <&msmgpio 35 0x0>;
+		interrupt-parent = <&msmgpio>;
+        	interrupts = <5 0x0>;
+		rt9536,wlc_irq_n = <&msmgpio 5 0x0>;
+		rt9536,wlc_enable = <1>;
+	};
+
+	i2c@f9923000 {
+		max17048@36 {
+			compatible = "maxim,max17048";
+			status = "ok";
+			interrupt-parent = <&msmgpio>;
+			interrupts = <67 0x2>;
+			reg = <0x36>;
+			max17048,alert_gpio = <&msmgpio 67 0x01>;
+			max17048,alert_threshold = <2>;
+			/* LGC battery profile */
+			max17048,rcomp_l = <102>;
+			max17048,temp_co_hot_l = <45>;
+			max17048,temp_co_cold_l = <4325>;
+			max17048,empty_l = <280>;     /* 3.3 Cut-off 3.1%  */
+			/* Sanyoo battery profile */
+			max17048,rcomp_d = <102>;
+			max17048,temp_co_hot_d = <975>;
+			max17048,temp_co_cold_d = <7500>;
+			max17048,empty_d = <280>;     /* 3.3 Cut-off 3.1%  */
+			max17048,full_design = <2540>;
+		};
+	};
+};
+
+
+&pm8226_chg {
+       qcom,vddmax-mv = <4350>;
+	qcom,vddsafe-mv = <4380>;
+	qcom,vinmin-mv = <4350>;
+	qcom,ibatterm-ma = <150>;
+	qcom,vbatdet-delta-mv = <100>;
+	qcom,tchg-mins = <480>;
+	qcom,btc-disabled = <1>;
+	qcom,ext-ovp-present = <1>;
+
+	lge,ext_ovp_gpio = <&msmgpio 31 0x00>;
+};
+&pm8226_bms{
+
+	qcom,r-sense-uohm = <10000>;
+	qcom,v-cutoff-uv = <3300000>;
+	qcom,max-voltage-uv = <4350000>;
+	qcom,r-conn-mohm = <18>;
+	qcom,shutdown-soc-valid-limit = <20>;
+	qcom,adjust-soc-low-threshold = <25>;
+	qcom,adjust-soc-high-threshold = <45>;
+	qcom,ocv-voltage-high-threshold-uv = <3900000>;
+	qcom,ocv-voltage-low-threshold-uv = <3650000>;
+	qcom,low-soc-calculate-soc-threshold = <15>;
+	qcom,low-soc-calculate-soc-ms = <5000>;
+	qcom,calculate-soc-ms = <20000>;
+	qcom,low-voltage-calculate-soc-ms=<1000>;
+	qcom,chg-term-ua = <100000>;
+	qcom,batt-type = <0>;
+	qcom,low-voltage-threshold = <3320000>;
+	qcom,use-external-rsense = <1>;
+	qcom,use-external-fuelgauge = <1>;
+};
+
+&pm8226_iadc {
+       qcom,rsense = <10000000>;
+};
+
+&rpm_bus {
+	rpm-regulator-smpa3 {
+		status = "okay";
+		pm8226_s3: regulator-s3 {
+			regulator-max-microvolt = <1350000>;
+			qcom,init-voltage = <1350000>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa15 {
+		status = "okay";
+		pm8226_l15: regulator-l15 {
+			regulator-name = "8226_l15";
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3000000>;
+			qcom,init-voltage = <3000000>;
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa19 {
+		status = "okay";
+		pm8226_l19: regulator-l19 {
+			regulator-always-on;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa21 {
+		status = "okay";
+		pm8226_l21: regulator-l21 {
+			regulator-always-on;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa23 {
+		status = "okay";
+		pm8226_l23: regulator-l23 {
+			revision = "...rev_a";
+			regulator-min-microvolt = <1800000>;
+   			regulator-max-microvolt = <1800000>;
+   			qcom,init-voltage = <1800000>;
+			regulator-always-on;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa26 {
+		status = "okay";
+		pm8226_l26: regulator-l26 {
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa27 {
+		status = "okay";
+		pm8226_l27: regulator-l27 {
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa28 {
+		status = "okay";
+		pm8226_l28: regulator-l28 {
+			regulator-max-microvolt = <3050000>;
+			qcom,init-voltage = <3050000>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-vsa1 {
+		status = "okay";
+		pm8226_lvs1: regulator-lvs1 {
+			regulator-always-on;
+			status = "okay";
+		};
+	};
+};

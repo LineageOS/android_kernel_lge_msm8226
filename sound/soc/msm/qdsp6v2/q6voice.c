@@ -28,8 +28,9 @@
 #include "audio_acdb.h"
 #include "q6voice.h"
 
-
+//LGE_UPDATE_S beekay.lee 2013-11-27 volte mute issue. from G2 project.
 #define TIMEOUT_MS 500
+//LGE_UPDATE_E
 
 
 #define CMD_STATUS_SUCCESS 0
@@ -98,6 +99,32 @@ static int voc_disable_cvp(uint32_t session_id);
 static int voc_enable_cvp(uint32_t session_id);
 
 static struct voice_data *voice_get_session_by_idx(int idx);
+
+
+//[AUDIO_BSP_START]minyoung1.kim@lge.com
+static uint32_t audio_start = 0;
+//static String audio_start = "/sys/module/q6voice/parameters/audio_start";
+static int set_start_call(const char *buf, struct kernel_param *kp)
+{
+        audio_start = buf[0] - '0';
+		pr_info("%s: LG audio bsp: set  %d \n", __func__, audio_start);
+        return 1;
+}
+
+
+
+static int get_start_call(char *buf, struct kernel_param *kp)
+{
+	    int ret = 0;
+		
+		ret = sprintf(buf, "%d\n", audio_start);
+		pr_info("%s:LG audio bsp: get  %d \n", __func__, audio_start);
+	    return ret;
+}
+module_param_call(audio_start,set_start_call, get_start_call, NULL, 0664);
+//[AUDIO_BSP_END]minyoung1.kim@lge.com
+
+
 
 static void voice_itr_init(struct voice_session_itr *itr,
 			   u32 session_id)
@@ -460,7 +487,10 @@ static void init_session_id(void)
 
 static int voice_apr_register(void)
 {
+#if !defined(CONFIG_MACH_MSM8226_E7WIFI) && !defined(CONFIG_MACH_MSM8226_E8WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFIN) && !defined(CONFIG_MACH_MSM8926_E9LTE_VZW_US)
+
 	void *modem_mvm, *modem_cvs, *modem_cvp;
+#endif
 
 	pr_debug("%s\n", __func__);
 
@@ -484,13 +514,16 @@ static int voice_apr_register(void)
 		 * is not stored since it is used only to receive notifications
 		 * and not for communication
 		 */
+#if !defined(CONFIG_MACH_MSM8226_E7WIFI) && !defined(CONFIG_MACH_MSM8226_E8WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFIN) && !defined(CONFIG_MACH_MSM8926_E9LTE_VZW_US)
+
 		modem_mvm = apr_register("MODEM", "MVM",
 						qdsp_mvm_callback,
 						0xFFFFFFFF, &common);
 		if (modem_mvm == NULL)
 			pr_err("%s: Unable to register MVM for MODEM\n",
 					__func__);
-	}
+#endif
+		}
 
 	if (common.apr_q6_cvs == NULL) {
 		pr_debug("%s: Start to register CVS callback\n", __func__);
@@ -509,12 +542,14 @@ static int voice_apr_register(void)
 		 * is not stored since it is used only to receive notifications
 		 * and not for communication
 		 */
+#if !defined(CONFIG_MACH_MSM8226_E7WIFI) && !defined(CONFIG_MACH_MSM8226_E8WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFIN) && !defined(CONFIG_MACH_MSM8926_E9LTE_VZW_US)
 		modem_cvs = apr_register("MODEM", "CVS",
 						qdsp_cvs_callback,
 						0xFFFFFFFF, &common);
 		 if (modem_cvs == NULL)
 			pr_err("%s: Unable to register CVS for MODEM\n",
 					__func__);
+#endif
 
 	}
 
@@ -535,12 +570,14 @@ static int voice_apr_register(void)
 		 * is not stored since it is used only to receive notifications
 		 * and not for communication
 		 */
+#if !defined(CONFIG_MACH_MSM8226_E7WIFI) && !defined(CONFIG_MACH_MSM8226_E8WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFI) && !defined(CONFIG_MACH_MSM8226_E9WIFIN) && !defined(CONFIG_MACH_MSM8926_E9LTE_VZW_US)
 		modem_cvp = apr_register("MODEM", "CVP",
 						qdsp_cvp_callback,
 						0xFFFFFFFF, &common);
 		if (modem_cvp == NULL)
 			pr_err("%s: Unable to register CVP for MODEM\n",
 					__func__);
+#endif
 
 	}
 
@@ -1109,7 +1146,7 @@ static int voice_send_tty_mode_cmd(struct voice_data *v)
 	ret = apr_send_pkt(apr_mvm, (uint32_t *) &mvm_tty_mode_cmd);
 	if (ret < 0) {
 		pr_err("%s: Error %d sending SET_TTY_MODE\n",
-		       __func__, ret);
+			   __func__, ret);
 		goto fail;
 	}
 	ret = wait_event_timeout(v->mvm_wait,
@@ -3170,6 +3207,7 @@ static int voice_setup_vocproc(struct voice_data *v)
 		voice_send_netid_timing_cmd(v);
 	}
 
+	/* enable slowtalk if st_enable is set and tty_mode is 0 */
 	if (v->st_enable && !v->tty_mode)
 		voice_send_set_pp_enable_cmd(v,
 					     MODULE_ID_VOICE_MODULE_ST,
@@ -4490,6 +4528,7 @@ static int voc_enable_cvp(uint32_t session_id)
 		}
 
 		voice_send_tty_mode_cmd(v);
+		/* enable slowtalk if st_enable is set and tty_mode is 0 */
 		if (v->st_enable && !v->tty_mode)
 			voice_send_set_pp_enable_cmd(v,
 					     MODULE_ID_VOICE_MODULE_ST,
@@ -4833,6 +4872,11 @@ int voc_end_voice_call(uint32_t session_id)
 {
 	struct voice_data *v = voice_get_session(session_id);
 	int ret = 0;
+  //[AUDIO_BSP_START]minyoung1.kim@lge.com
+	char temp_buf[2] = "0";   
+
+   set_start_call(temp_buf,NULL); 
+  //[AUDIO_BSP_END]minyoung1.kim@lge.com
 
 	if (v == NULL) {
 		pr_err("%s: invalid session_id 0x%x\n", __func__, session_id);
@@ -4874,11 +4918,13 @@ int voc_standby_voice_call(uint32_t session_id)
 	u16 mvm_handle;
 	int ret = 0;
 
-	pr_debug("%s: voc state=%d", __func__, v->voc_state);
 	if (v == NULL) {
 		pr_err("%s: v is NULL\n", __func__);
 		return -EINVAL;
 	}
+
+	pr_debug("%s: voc state=%d", __func__, v->voc_state); // LGE_UPDATE 2013-12-10 WBT issue(TD2170538882)
+
 	if (v->voc_state == VOC_RUN) {
 		apr_mvm = common.apr_q6_mvm;
 		if (!apr_mvm) {
@@ -5081,6 +5127,7 @@ int voc_start_voice_call(uint32_t session_id)
 {
 	struct voice_data *v = voice_get_session(session_id);
 	int ret = 0;
+	char temp_buf[2] = "1";  //[AUDIO_BSP_START]minyoung1.kim@lge.com
 
 	if (v == NULL) {
 		pr_err("%s: invalid session_id 0x%x\n", __func__, session_id);
@@ -5147,6 +5194,12 @@ int voc_start_voice_call(uint32_t session_id)
 			goto fail;
 		}
 		ret = voice_setup_vocproc(v);
+		//[AUDIO_BSP_START]minyoung1.kim@lge.com
+		if(ret == 0){
+			set_start_call(temp_buf,NULL); 
+			pr_info("LG audio bsp - stated voice call \n");
+		}
+		//[AUDIO_BSP_END]minyoung1.kim@lge.com
 		if (ret < 0) {
 			pr_err("setup voice failed\n");
 			goto fail;

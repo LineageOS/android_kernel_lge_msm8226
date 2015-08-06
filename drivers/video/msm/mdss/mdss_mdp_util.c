@@ -186,8 +186,28 @@ irqreturn_t mdss_mdp_isr(int irq, void *ptr)
 	}
 
 	if (isr & MDSS_MDP_INTR_INTF_1_VSYNC) {
+#ifndef CONFIG_LGE_VSYNC_SKIP
 		mdss_mdp_intr_done(MDP_INTR_VSYNC_INTF_1);
 		mdss_misr_crc_collect(mdata, DISPLAY_MISR_DSI0);
+#else
+		if (mdata->enable_skip_vsync) {
+			mdata->bucket += mdata->weight;
+			if (mdata->skip_first == false) {
+				mdata->skip_first = true;
+				mdss_mdp_intr_done(MDP_INTR_VSYNC_INTF_1);
+				mdss_misr_crc_collect(mdata, DISPLAY_MISR_DSI0);
+			} else if (mdata->skip_value <= mdata->bucket) {
+				mdss_mdp_intr_done(MDP_INTR_VSYNC_INTF_1);
+				mdss_misr_crc_collect(mdata, DISPLAY_MISR_DSI0);
+				mdata->bucket -= mdata->skip_value;
+			} else {
+				mdata->skip_count++;
+			}
+		} else {
+			mdss_mdp_intr_done(MDP_INTR_VSYNC_INTF_1);
+			mdss_misr_crc_collect(mdata, DISPLAY_MISR_DSI0);
+		}
+#endif
 	}
 
 	if (isr & MDSS_MDP_INTR_INTF_2_VSYNC) {
@@ -502,7 +522,7 @@ int mdss_mdp_put_img(struct mdss_mdp_img_data *data)
 			pr_err("invalid ion client\n");
 			return -ENOMEM;
 		} else {
-			if (data->mapped) {
+			if (is_mdss_iommu_attached()) {
 				int domain;
 				if (data->flags & MDP_SECURE_OVERLAY_SESSION)
 					domain = MDSS_IOMMU_DOMAIN_SECURE;
@@ -515,7 +535,6 @@ int mdss_mdp_put_img(struct mdss_mdp_img_data *data)
 					msm_ion_unsecure_buffer(iclient,
 							data->srcp_ihdl);
 				}
-				data->mapped = false;
 			}
 			ion_free(iclient, data->srcp_ihdl);
 			data->srcp_ihdl = NULL;
@@ -594,7 +613,6 @@ int mdss_mdp_get_img(struct msmfb_data *img, struct mdss_mdp_img_data *data)
 			if (ret && (domain == MDSS_IOMMU_DOMAIN_SECURE))
 				msm_ion_unsecure_buffer(iclient,
 						data->srcp_ihdl);
-			data->mapped = true;
 		} else {
 			ret = ion_phys(iclient, data->srcp_ihdl, start,
 				       (size_t *) len);

@@ -1,0 +1,66 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		melfas_mms136@48 {
+			melfas,product = "S2A47A";
+			melfas,fw-image-name = "melfas/x5_spr_us/x5_spr_us_rev_0_v102.mfsb";
+			melfas,panel-spec-name = "melfas/x5_spr_us/x5_spr_us_limit.txt";
+			revision = "rev_0...rev_b";
+			melfas,button-map = <158 139>;
+			status = "ok";
+		};
+
+		melfas_mms136_rev_c@48 {
+			melfas,product = "S2A47A";
+			melfas,fw-image-name = "melfas/x5_spr_us/x5_spr_us_rev_0_v102.mfsb";
+			melfas,panel-spec-name = "melfas/x5_spr_us/x5_spr_us_limit.txt";
+			vdd-supply = <0>;
+			melfas,ce = <60>;
+			revision = "rev_c";
+			melfas,button-map = <158 139>;
+			status ="ok";
+		};
+
+		lge_touch@48 {
+			lge,product = "S2A47A";
+			lge,fw_image = "melfas/x5_spr_us/x5_spr_us_rev_0_v102.mfsb";
+			lge,panel_spec = "melfas/x5_spr_us/x5_spr_us_limit.txt";
+			revision = "rev_0...rev_c";
+			status = "disable";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+			button_name = <158 139>;
+		};
+
+		atmel_s336@4a {
+			revision = "rev_d...";
+			status = "ok";
+			atmel,t15_key_array = <0 12 1 12>;
+			atmel,fw_name = "atmel/S2A47P1_2_07.fw";
+			atmel,panel_check = <0>;
+			atmel,ghost_detection_enable = <1>;
+			atmel,butt_check_enable = <1>;
+		};
+
+		lge_ts_misc {
+			revision = "rev_c...";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="ok";
+		};
+	};
+
+};

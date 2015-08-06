@@ -1,0 +1,111 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+&soc {
+	i2c@f9923000{
+		lgd_mit200@34 {
+			revision = "rev_0...";
+			status = "disable";
+		};
+		lge_touch_incell@34 {
+			revision = "rev_0...rev_a";
+			status = "ok";
+			lge,auto_fw_update = <1>;
+			lge,product = "L0M45P2";
+			lge,fw_image = "melfas/mit200/l70p/L0M45P2_0_05.fw";
+			button_name = <158 139>;
+			lge,id-gpio = <&msmgpio 0 0x00>;
+			lge,id2-gpio = <&msmgpio 0 0x00>;
+			booting_delay = <10>;
+                        reset_delay = <5>;
+                        use_crack_mode = <1>;
+                        gap = <24>;
+			
+			/* Limitation Value. */
+			raw_data_max = <42125>;
+			raw_data_min = <11394>;
+			open_short_max = <550>;
+			open_short_min = <100>;
+			slope_max = <110>;
+			slope_min = <90>;  			
+			
+			
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <1>;
+			vdd_name0 = "high";
+			vdd_value0 = <82>;
+			vdd-supply = <0>;
+			vdd_type1 = <2>;
+			vdd_name1 = "vdd_io";
+			vdd_value1 = <1800000>;
+			vdd_io-supply = <&pm8110_l8>;
+			
+			//vdd_type2 = <2>;
+			//vdd_name2 = "vio_int";
+			//vdd_value2 = <1800000>;
+			//vio_int-supply = <&pm8110_l8>;
+		};
+                lge_touch_incell_rev_b@34 {
+			revision = "rev_b...";
+			status = "ok";
+			lge,auto_fw_update = <1>;
+			lge,product = "L0M45P2";
+			lge,fw_image = "melfas/mit200/l70p/L0M45P2_0_05.fw";
+			button_name = <158 139>;
+			lge,id-gpio = <&msmgpio 0 0x00>;
+			lge,id2-gpio = <&msmgpio 0 0x00>;
+			booting_delay = <10>;
+                        reset_delay = <5>;
+                        use_crack_mode = <1>;
+                        gap = <24>;
+
+			/* Limitation Value. */
+			raw_data_max = <42125>;
+			raw_data_min = <11394>;
+			open_short_max = <550>;
+			open_short_min = <100>;
+			slope_max = <110>;
+			slope_min = <90>;                        
+			
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <1>;
+			vdd_name0 = "high";
+			vdd_value0 = <76>;
+			vdd-supply = <0>;
+			vdd_type1 = <1>;
+			vdd_name1 = "high";
+			vdd_value1 = <82>;
+			vdd-supply = <0>;
+			//vdd_type1 = <2>;
+			//vdd_name1 = "vdd_io";
+			//vdd_value1 = <1800000>;
+			//vdd_io-supply = <&pm8110_l8>;
+			//vdd_type2 = <2>;
+			//vdd_name2 = "vio_int";
+			//vdd_value2 = <1800000>;
+			//vio_int-supply = <&pm8110_l8>;
+		}; 
+	};
+};

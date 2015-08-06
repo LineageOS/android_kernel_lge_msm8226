@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,9 +29,6 @@
 #define MDSS_REG_READ(addr) readl_relaxed(mdss_res->mdp_base + addr)
 
 #define MAX_DRV_SUP_MMB_BLKS	44
-
-#define MDSS_PINCTRL_STATE_DEFAULT "mdss_default"
-#define MDSS_PINCTRL_STATE_SLEEP  "mdss_sleep"
 
 enum mdss_mdp_clk_type {
 	MDSS_CLK_AHB,
@@ -130,9 +127,7 @@ struct mdss_data_type {
 	u32 has_decimation;
 	u8 has_wfd_blk;
 	u32 has_no_lut_read;
-	atomic_t sd_client_count;
 	u8 has_wb_ad;
-	bool idle_pc_enabled;
 
 	u32 rotator_ot_limit;
 	u32 mdp_irq_mask;
@@ -143,8 +138,6 @@ struct mdss_data_type {
 	u8 fs_ena;
 	u8 vsync_ena;
 	unsigned long min_mdp_clk;
-
-	struct notifier_block gdsc_cb;
 
 	u32 res_init;
 
@@ -213,12 +206,17 @@ struct mdss_data_type {
 
 	int handoff_pending;
 	struct mdss_prefill_data prefill_data;
-	bool idle_pc;
-	bool allow_cx_vddmin;
-	bool vdd_cx_en;
+	bool ulps;
 	int iommu_ref_cnt;
-	atomic_t active_intf_cnt;
-
+#ifdef CONFIG_LGE_VSYNC_SKIP
+	char enable_skip_vsync;
+	ulong skip_value;
+	ulong weight;
+	ulong bucket;
+	ulong skip_count;
+	int skip_ratio;
+	bool skip_first;
+#endif
 	u64 ab[MDSS_MAX_HW_BLK];
 	u64 ib[MDSS_MAX_HW_BLK];
 };
@@ -261,13 +259,5 @@ static inline int mdss_get_iommu_domain(u32 type)
 		return -ENODEV;
 
 	return mdss_res->iommu_map[type].domain_idx;
-}
-
-static inline int mdss_get_sd_client_cnt(void)
-{
-	if (!mdss_res)
-		return 0;
-	else
-		return atomic_read(&mdss_res->sd_client_count);
 }
 #endif /* MDSS_H */

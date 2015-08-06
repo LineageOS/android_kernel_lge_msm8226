@@ -1,0 +1,93 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	/* I2C device */
+	i2c@f9926000 {
+		qcom,i2c-bus-freq = <100000>;
+		qcom,i2c-src-freq = <19200000>;
+		qcom,sda-gpio = <&msmgpio 14 0>;
+		qcom,scl-gpio = <&msmgpio 15 0>;
+		qcom,master-id = <86>;
+		
+		/* sx9311 cap sensor */
+		Semtech_sx9311@28 {
+			revision = "rev_a";
+			compatible = "Semtech,sx9311";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <54 0x2>;
+			Semtech,irq-gpio = <&msmgpio 54 0x00>;
+			Semtech,vdd-supply = <&pm8226_l15>;
+			Semtech,svdd-supply = <&pm8226_l23>;
+			Semtech,vdd_supply_min = <2800000>;
+			Semtech,vdd_supply_max = <2800000>;
+			Semtech,vdd_load_ua = <15000>;
+			Semtech,svdd_supply_min = <1800000>;
+			Semtech,svdd_supply_max = <1800000>;
+			Semtech,svdd_load_ua = <10000>;
+			Semtech,RegIrqMask = <0x03 0x70>;
+			Semtech,RegProxCtrl0 = <0x10 0x25>;
+			Semtech,RegProxCtrl1 = <0x11 0x00>;
+			Semtech,RegProxCtrl2 = <0x12 0x0B>;
+			Semtech,RegProxCtrl3 = <0x13 0x0F>;
+			Semtech,RegProxCtrl4 = <0x14 0x0D>;
+			Semtech,RegProxCtrl5 = <0x15 0xC1>;
+			Semtech,RegProxCtrl6 = <0x16 0x60>;
+			Semtech,RegProxCtrl7 = <0x17 0x8C>;
+			Semtech,RegProxCtrl8 = <0x18 0x7E>;
+			Semtech,RegProxCtrl9 = <0x19 0x7E>;
+			Semtech,RegProxCtrl10 = <0x1A 0x00>;
+			Semtech,RegProxCtrl11 = <0x1B 0x00>;
+			Semtech,RegProxCtrl12 = <0x1C 0x00>;
+			Semtech,RegProxCtrl13 = <0x1D 0x00>;
+			Semtech,RegProxCtrl14 = <0x1E 0x00>;
+			Semtech,RegProxCtrl15 = <0x1F 0x00>;
+			Semtech,RegProxCtrl16 = <0x20 0x00>;
+			Semtech,RegProxCtrl17 = <0x21 0x00>;
+			Semtech,RegProxCtrl18 = <0x22 0x00>;
+			Semtech,RegProxCtrl19 = <0x23 0x00>;
+			Semtech,RegSarCtrl0 = <0x2A 0x00>;
+			Semtech,RegSarCtrl1 = <0x2B 0x00>;
+			Semtech,RegSarCtrl2 = <0x2C 0x00>;
+			Semtech,RegSensorSel = <0x30 0x02>;
+			Semtech,InputPinsNum = <1>;
+			Semtech,InputMainSensor = <0x00>;
+			Semtech,InputMainSensor2 = <0x0F>;
+			Semtech,InputRefSensor = <0x02>;
+			Semtech,DynamicThres_Offset = <82000>;
+			Semtech,DynamicThres_Temp_Slope = <60>;
+			Semtech,DynamicThres_Hysteresis = <800>;
+			Semtech,Calibration_Margin = <0>;
+			Semtech,Startup_Touch_RegAvgThres = <0x0D>;
+			Semtech,Startup_Release_RegAvgThres = <0x10>;
+			status = "ok";
+		};
+		/* ATMF04 cap sensor */
+		adsemicon_atmf04@5a {
+			revision = "rev_b...";
+			compatible = "adsemicon,atmf04";
+			reg = <0x5a>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <54 0x2>;
+			Adsemicon,vdd_ana-supply = <&pm8226_l23>;
+			Adsemicon,irq-gpio = <&msmgpio 54 0x00>;
+			Adsemicon,vdd_ana_supply_min = <1800000>;
+			Adsemicon,vdd_ana_supply_max = <1800000>;
+			Adsemicon,vdd_ana_load_ua = <15000>;
+			Adsemicon,chip_enable = <&msmgpio 12 0x00>;
+			Adsemicon,InputPinsNum = <1>;
+			Adsemicon,fw_name = "atmf04/atmf04_T8_0_42.fw";
+			status = "ok";
+		};
+	};
+};

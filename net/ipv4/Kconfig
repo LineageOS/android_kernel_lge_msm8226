@@ -625,8 +625,11 @@ config TCP_MD5SIG
 	select CRYPTO
 	select CRYPTO_MD5
 	---help---
-	  RFC2385 specifies a method of giving MD5 protection to TCP sessions.
-	  Its main (only?) use is to protect BGP sessions between core routers
-	  on the Internet.
+	RFC2385 specifies a method of giving MD5 protection to TCP sessions.
+	Its main (only?) use is to protect BGP sessions between core routers
+	on the Internet.
 
-	  If unsure, say N.
+	If unsure, say N.
+
+config LGP_DATA_TCPIP_TCP_SYN_RETRY_CONFIG_UPLUS
+	bool "TCP sync retry count : LGU+ requirement"

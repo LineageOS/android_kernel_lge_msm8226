@@ -68,8 +68,10 @@ struct msm_sensor_ctrl_t {
 	struct v4l2_subdev_ops *sensor_v4l2_subdev_ops;
 	struct msm_sensor_fn_t *func_tbl;
 	struct msm_camera_i2c_reg_setting stop_setting;
+	bool free_power_setting;
 	void *misc_regulator;
 	enum msm_sensor_state_t sensor_state;
+	uint16_t isFirstStream; //LGE_CHANGE, mipi end packet issue, 2013-10-15, kwangsik83.kim@lge.com
 	uint8_t is_probe_succeed;
 	uint32_t id;
 	struct device_node *of_node;

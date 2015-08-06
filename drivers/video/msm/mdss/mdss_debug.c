@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2013, 2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2009-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -382,9 +382,6 @@ int mdss_debugfs_init(struct mdss_data_type *mdata)
 	debugfs_create_u32("min_mdp_clk", 0644, mdd->root,
 			(u32 *)&mdata->min_mdp_clk);
 
-	debugfs_create_bool("allow_cx_vddmin", 0644, mdd->root,
-		(u32 *)&mdata->allow_cx_vddmin);
-
 	if (mdss_create_xlog_debug(mdd)) {
 		mdss_debugfs_cleanup(mdd);
 		return -ENODEV;
@@ -416,7 +413,7 @@ void mdss_dump_reg(char __iomem *base, int len)
 		len += 16;
 	len /= 16;
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
 	for (i = 0; i < len; i++) {
 		x0 = readl_relaxed(addr+0x0);
 		x4 = readl_relaxed(addr+0x4);
@@ -425,7 +422,7 @@ void mdss_dump_reg(char __iomem *base, int len)
 		pr_info("%p : %08x %08x %08x %08x\n", addr, x0, x4, x8, xc);
 		addr += 16;
 	}
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
 }
 
 int vsync_count;
@@ -520,7 +517,7 @@ int mdss_misr_set(struct mdss_data_type *mdata,
 		pr_err("Invalid MISR Block=%d\n", req->block_id);
 		return -EINVAL;
 	}
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
 	if (req->block_id == DISPLAY_MISR_MDP) {
 		mixer = mdss_mdp_mixer_get(ctl, MDSS_MDP_MIXER_MUX_DEFAULT);
 		mixer_num = mixer->num;
@@ -573,7 +570,7 @@ int mdss_misr_set(struct mdss_data_type *mdata,
 		pr_debug("MISR_CTRL = 0x%x",
 				readl_relaxed(mdata->mdp_base + map->ctrl_reg));
 	}
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
 	return 0;
 }
 
@@ -591,8 +588,7 @@ int mdss_misr_get(struct mdss_data_type *mdata,
 		pr_err("Invalid MISR Block=%d\n", resp->block_id);
 		return -EINVAL;
 	}
-
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
 	switch (map->crc_op_mode) {
 	case MISR_OP_SFM:
 	case MISR_OP_MFM:
@@ -645,7 +641,7 @@ int mdss_misr_get(struct mdss_data_type *mdata,
 		break;
 	}
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
 	return ret;
 }
 

@@ -1,0 +1,164 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_mdp {
+	qcom,mdss-smp-mb-per-pipe = <2>;
+	dsi_lgd_lvds_wxga_video: qcom,mdss_dsi_lgd_lvds_wxga_video {
+		lge,has-dsv;
+		qcom,mdss-dsi-panel-name = "LGD WXGA video mode D2L panel";
+		qcom,mdss-dsi-panel-controller = <&mdss_dsi0>;
+		qcom,mdss-dsi-panel-type = "dsi_video_mode";
+		qcom,mdss-dsi-panel-destination = "display_1";
+		qcom,mdss-dsi-panel-framerate = <60>;
+		qcom,mdss-dsi-virtual-channel-id = <0>;
+		qcom,mdss-dsi-stream = <0>;
+		qcom,mdss-dsi-panel-width = <1280>;
+		qcom,mdss-dsi-panel-height = <800>;
+		qcom,mdss-dsi-h-front-porch = <48>;
+		qcom,mdss-dsi-h-back-porch = <44>;
+		qcom,mdss-dsi-h-pulse-width = <32>;
+		qcom,mdss-dsi-h-sync-skew = <0>;
+		qcom,mdss-dsi-v-back-porch = <12>;
+		qcom,mdss-dsi-v-front-porch = <4>;
+		qcom,mdss-dsi-v-pulse-width = <7>;
+		qcom,mdss-dsi-h-left-border = <0>;
+		qcom,mdss-dsi-h-right-border = <0>;
+		qcom,mdss-dsi-v-top-border = <0>;
+		qcom,mdss-dsi-v-bottom-border = <0>;
+		qcom,mdss-pan-physical-width-dimension = <217>;
+		qcom,mdss-pan-physical-height-dimension = <136>;
+		qcom,mdss-dsi-bpp = <24>;
+		qcom,mdss-dsi-color-order = "rgb_swap_rgb";
+		qcom,mdss-dsi-underflow-color = <0x00>;
+		qcom,mdss-dsi-border-color = <0>;
+		qcom,mdss-dsi-lp11-init =<1>;
+		qcom,mdss-dsi-on-command = [
+			29 01 00 00 00 00 06 3C 01 03 00 02 00
+			29 01 00 00 00 00 06 14 01 02 00 00 00
+			29 01 00 00 00 00 06 64 01 03 00 00 00
+			29 01 00 00 00 00 06 68 01 03 00 00 00
+			29 01 00 00 00 00 06 6C 01 03 00 00 00
+
+			29 01 00 00 00 00 06 70 01 03 00 00 00
+			29 01 00 00 00 00 06 34 01 1F 00 00 00
+			29 01 00 00 00 00 06 10 02 1F 00 00 00
+			29 01 00 00 00 00 06 04 01 01 00 00 00
+			29 01 00 00 00 00 06 04 02 01 00 00 00
+
+			29 01 00 00 00 00 06 50 04 20 01 F0 03
+			29 01 00 00 00 00 06 54 04 20 00 2C 00
+			29 01 00 00 00 00 06 58 04 00 05 30 00
+			29 01 00 00 00 00 06 5C 04 07 00 0C 00
+			29 01 00 00 00 00 06 60 04 20 03 04 00
+
+			29 01 00 00 00 00 06 64 04 01 00 00 00
+			29 01 00 00 01 00 06 A0 04 06 80 44 00
+			29 01 00 00 00 00 06 A0 04 06 80 04 00
+			29 01 00 00 00 00 06 04 05 04 00 00 00
+
+			29 01 00 00 00 00 06 80 04 00 01 02 03
+			29 01 00 00 00 00 06 84 04 04 07 05 08
+			29 01 00 00 00 00 06 88 04 09 0A 0E 0F
+			29 01 00 00 00 00 06 8C 04 0B 0C 0D 10
+			29 01 00 00 00 00 06 90 04 16 17 11 12
+			29 01 00 00 00 00 06 94 04 13 14 15 1B
+			29 01 00 00 00 00 06 98 04 18 19 1A 06
+
+			29 01 00 00 00 00 06 9C 04 31 00 00 00
+		];
+		qcom,mdss-dsi-off-command = [
+			05 01 00 00 32 00 02 28 00
+			05 01 00 00 78 00 02 10 00
+		];
+		qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
+		qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
+		qcom,mdss-dsi-h-sync-pulse = <1>;
+		qcom,mdss-dsi-traffic-mode = <1>;
+		qcom,mdss-dsi-lane-map = <0>;
+		qcom,mdss-dsi-bllp-eof-power-mode;
+		qcom,mdss-dsi-bllp-power-mode;
+		qcom,mdss-dsi-lane-0-state;
+		qcom,mdss-dsi-lane-1-state;
+		qcom,mdss-dsi-lane-2-state;
+		qcom,mdss-dsi-lane-3-state;
+		qcom,mdss-dsi-panel-timings = [69 21 20 00 31 30 1E 23 15 03 04 00];
+		qcom,mdss-dsi-t-clk-post = <0x32>;
+		qcom,mdss-dsi-t-clk-pre = <0x42>;
+		qcom,mdss-dsi-bl-min-level = <1>;
+		qcom,mdss-dsi-bl-max-level = <255>;
+		qcom,mdss-dsi-dma-trigger = <4>;
+		qcom,mdss-dsi-mdp-trigger = <0>;
+		qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
+		qcom,mdss-dsi-reset-sequence = <1 1>, <0 1>, <1 50>;
+	};
+};
+
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_lgd_lvds_wxga_video>;
+};
+
+&dsi_lgd_lvds_wxga_video{
+	revision = "rev_0";
+	qcom,cont-splash-enabled;
+	qcom,lcd_stby-gpio = <&msmgpio 24 0>;
+	qcom,bl_en-gpio = <&msmgpio 32 0>;
+	qcom,bl_vled-gpio = <&msmgpio 104 0>;
+	qcom,bl_pwm-gpio = <&msmgpio 13 0>;
+	status = "ok";
+};
+
+&dsi_lgd_lvds_wxga_video{
+	revision = "rev_a...";
+	qcom,cont-splash-enabled;
+	qcom,lcd_stby-gpio = <&msmgpio 24 0>;
+	qcom,lcd_1v8-gpio = <&msmgpio 112 0>;
+	status = "ok";
+};
+
+&soc {
+
+	i2c@f9925000 { /* BLSP1 QUP3 */
+		rt8555@31 {
+	        compatible = "backlight,rt8555";
+			revision = "rev_a...";
+            status = "ok";
+            reg = <0x31>;
+            rt8555,lcd_bl_en = <&msmgpio 56 0x00>;
+            rt8555,max_current = <0x85>;
+            rt8555,min_brightness = <0x04>;
+            rt8555,default_brightness = <0xA8>;
+            rt8555,max_brightness = <0xFF>;
+            rt8555,enable_pwm = <0>;
+            rt8555,blmap_size = <256>;
+            rt8555,blmap = <
+				8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+				9 9 9 9 9 9 9 9 9 10 10 10 10 10 10
+				10 10 10 10 11 11 11 11 11 11 11 12 12 12 12
+				12 12 13 13 13 13 13 14 14 14 14 14 14 15 15
+				15 15 15 15 16 16 16 16 16 17 17 17 17 18 18
+				19 19 20 21 21 21 22 22 22 23 23 24 24 25 26
+				26 27 28 28 29 30 31 31 32 33 34 34 35 36 36
+				37 38 39 39 40 41 42 43 43 44 45 45 46 47 47
+				48 48 49 50 50 51 52 52 53 54 55 56 57 58 59
+				60 61 63 64 65 66 68 69 70 72 73 74 75 76 77
+				78 79 80 81 82 83 84 85 86 88 89 90 91 93 94
+				95 96 97 98 99 100 101 103 104 106 108 109 110 111 112
+				113 115 116 118 119 121 122 123 124 126 128 130 131 132 134
+				135 136 137 139 141 142 144 146 148 150 152 154 155 157 158
+				160 161 162 164 165 167 168 170 171 173 174 176 178 181 184
+				186 188 191 194 197 199 201 203 205 207 209 211 213 215 217
+				219 221 223 225 227 228 230 232 235 238 240 243 246 249 252
+				255>;
+        };
+    };
+};
+

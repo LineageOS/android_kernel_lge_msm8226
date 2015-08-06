@@ -18,6 +18,8 @@
 #include <linux/module.h>
 #include <linux/hrtimer.h>
 #include <linux/cpu.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
 #include <linux/notifier.h>
@@ -31,6 +33,7 @@
 #include <linux/tick.h>
 #include <asm/smp_plat.h>
 #include <linux/suspend.h>
+#include <linux/err.h>
 
 #define MAX_LONG_SIZE 24
 #define DEFAULT_RQ_POLL_JIFFIES 1
@@ -53,6 +56,7 @@ struct cpu_load_data {
 };
 
 static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
+static DEFINE_PER_CPU(struct clk *, rq_cpu_clks);
 
 static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
 {
@@ -194,11 +198,12 @@ static int cpu_hotplug_handler(struct notifier_block *nb,
 {
 	unsigned int cpu = (unsigned long)data;
 	struct cpu_load_data *this_cpu = &per_cpu(cpuload, cpu);
+	struct clk *cpu_clk = per_cpu(rq_cpu_clks, cpu);
 
 	switch (val) {
 	case CPU_ONLINE:
 		if (!this_cpu->cur_freq)
-			this_cpu->cur_freq = cpufreq_quick_get(cpu);
+			this_cpu->cur_freq = clk_get_rate(cpu_clk);
 	case CPU_ONLINE_FROZEN:
 		this_cpu->avg_load_maxfreq = 0;
 	}
@@ -374,6 +379,7 @@ static int __init msm_rq_stats_init(void)
 {
 	int ret;
 	int i;
+	char clk_name[] = "cpu??_clk";
 	struct cpufreq_policy cpu_policy;
 
 #ifndef CONFIG_SMP
@@ -397,11 +403,19 @@ static int __init msm_rq_stats_init(void)
 
 	for_each_possible_cpu(i) {
 		struct cpu_load_data *pcpu = &per_cpu(cpuload, i);
+		struct clk *clk = per_cpu(rq_cpu_clks, i);
+		snprintf(clk_name, sizeof(clk_name), "cpu%d_clk", i);
+		clk = clk_get_sys("0.qcom,rq-stats", clk_name);
+		if (IS_ERR(clk)) {
+			if (i) //LGE 8x26 specific, do not use for 8974
+				clk = per_cpu(rq_cpu_clks, 0);
+		}
+		per_cpu(rq_cpu_clks, i) = clk;
 		mutex_init(&pcpu->cpu_load_mutex);
 		cpufreq_get_policy(&cpu_policy, i);
 		pcpu->policy_max = cpu_policy.cpuinfo.max_freq;
 		if (cpu_online(i))
-			pcpu->cur_freq = cpufreq_quick_get(i);
+			pcpu->cur_freq = clk_get_rate(clk);
 		cpumask_copy(pcpu->related_cpus, cpu_policy.cpus);
 	}
 	freq_transition.notifier_call = cpufreq_transition_handler;

@@ -298,13 +298,6 @@ config SND_SOC_WCD9320
 config SND_SOC_WCD9306
         tristate
 
-config SND_SOC_WCD9330
-        tristate
-
-config SND_SOC_WCD9XXX
-	tristate
-	default y if SND_SOC_WCD9320=y || SND_SOC_WCD9306=y || SND_SOC_WCD9330=y
-
 config SND_SOC_MSM8X10_WCD
 	tristate
 
@@ -449,6 +442,10 @@ config SND_SOC_WM9712
 config SND_SOC_WM9713
 	tristate
 
+# Boost
+config SND_SPK_BOOST
+	tristate "spk boost"
+
 # Amp
 config SND_SOC_LM4857
 	tristate
@@ -459,6 +456,15 @@ config SND_SOC_MAX9877
 config SND_SOC_TPA6130A2
 	tristate
 
+config SND_SOC_TPA2028D_STEREO
+    bool "Audio subsystem TPA2028D STEREO SPEAKER"
+    default n
+
+config SND_SOC_TPA2028D_STEREO_E9
+    bool "Audio subsystem TPA2028D STEREO SPEAKER addtional code for E9 Series"
+	depends on SND_SOC_TPA2028D_STEREO && (MACH_MSM8226_E9WIFI || MACH_MSM8226_E9WIFIN || MACH_MSM8926_E9LTE_VZW_US)
+    default n
+
 config SND_SOC_MSM_STUB
 	tristate
 
@@ -468,3 +474,15 @@ config SND_SOC_MSM_HDMI_CODEC_RX
 	help
 	HDMI audio drivers should be built only if the platform
         supports hdmi panel.
+
+config LGE_MBHC_FAST_IRQ_HANDLER
+	bool "put irq handler body into work queue to improve headset detection fail rate"
+	default n
+
+config LGE_MBHC_TWIST_HEADSET
+	bool "block headset lineout event when twist headset"
+	default n
+
+config LGE_AUDIO_AUX
+	bool "4pole aux feature"
+	default n

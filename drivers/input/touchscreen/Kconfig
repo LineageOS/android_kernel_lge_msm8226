@@ -11,6 +11,8 @@ menuconfig INPUT_TOUCHSCREEN
 
 if INPUT_TOUCHSCREEN
 
+source "drivers/input/touchscreen/synaptics_dsx/Kconfig"
+
 config TOUCHSCREEN_88PM860X
 	tristate "Marvell 88PM860x touchscreen"
 	depends on MFD_88PM860X
@@ -67,6 +69,18 @@ config TOUCHSCREEN_ATMEL_MAXTOUCH
          To compile this driver as a module, choose M here: the
          module will be called maXTouch.
 
+config TOUCHSCREEN_ATMEL_S540
+	tristate "Atmel mXT S540 I2C Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Atmel mXT series I2C touchscreen,
+	  such as AT42QT602240/ATMXT224, connected to your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_s540.
+
 config TOUCHSCREEN_AD7879
 	tristate "Analog Devices AD7879-1/AD7889-1 touchscreen interface"
 	help
@@ -109,6 +123,66 @@ config TOUCHSCREEN_ATMEL_MXT
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called atmel_mxt_ts.
+
+config TOUCHSCREEN_ATMEL_S336
+	tristate "Atmel mXT S336 I2C Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Atmel mXT series I2C touchscreen,
+	  such as AT42QT602240/ATMXT224, connected to your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_s336.
+
+config TOUCHSCREEN_ATMEL_1188S
+	tristate "Atmel mXT 1188S I2C Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Atmel mXT series I2C touchscreen,
+	  such as AT42QT602240/ATMXT224, connected to your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_mxt1188S.
+
+config TOUCHSCREEN_ATMEL_T641
+	tristate "Atmel mXT 641T I2C Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Atmel mXT series I2C touchscreen,
+	  such as AT42QT602240/ATMXT224, connected to your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_t641.
+
+config TOUCHSCREEN_ATMEL_T1664
+	tristate "Atmel mXT 1664T2 I2C Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Atmel mXT series I2C touchscreen,
+	  such as AT42QT602240/ATMXT224, connected to your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_t1664.
+      
+config TOUCHSCREEN_ATMEL_T1066
+	tristate "Atmel mXT 1066T3 I2C Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Atmel mXT series I2C touchscreen,
+	  such as AT42QT602240/ATMXT224, connected to your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atmel_t1066.
 
 config TOUCHSCREEN_ATMEL_MAXTOUCH_TS
 	tristate "Atmel Maxtouch Touchscreen Family"
@@ -1020,9 +1094,215 @@ config SECURE_TOUCH
 
 	  If unsure, say N.
 
+config TOUCHSCREEN_LDCTC
+	tristate "LGDisplay touchscreen"
+	depends on I2C
+	help
+	  Say Y here to enable support for LG Display Touch driver
+	  series touchscreen controller.
+
+	  If unsure, say N.
+
+	  To compile this driver as module, choose M here: the
+	  module will be called ldctc
+
+config TOUCHSCREEN_APS_MELFAS
+	tristate "LGDisplay touchscreen with melfas"
+	depends on I2C
+	help
+	  Say Y here to enable support for Melfas Touch driver
+	  series touchscreen controller.
+
+	  If unsure, say N.
+
+	  To compile this driver as module, choose M here: the
+	  module will be called ldctc
+
+config TOUCHSCREEN_IST30XX
+       bool "Imagis IST30XX touch driver"
+       depends on I2C
+       help
+         Say Y here if you have a Imagis IST30XX I2C touchscreen
+         connected to your system.
+
+         If unsure, say N.
+
+config TOUCHSCREEN_MELFAS_APS
+	tristate "LGDisplay touchscreen with melfas"
+	depends on I2C
+	help
+	  Say Y here to enable support for Melfas Touch driver
+	  series touchscreen controller.
+
+	  If unsure, say N.
+
+	  To compile this driver as module, choose M here: the
+	  module will be called ldctc
+
+config TOUCHSCREEN_ADS_AGS04
+	tristate "AD-Semiconductor AGS04 touch sensor driver"
+	depends on I2C
+	default n
+	help
+	  Say Y here to enable support for
+	  AD-Semiconductor touchsensor controller.
+
+	  If unsure, say N.
+
+config TOUCHSCREEN_AGS04_TOUCH_KEYPAD
+	tristate "AGS04 touch keypad"
+	default n
+	help
+	  Say Y here to enable support for AGS04 Touch Keypad driver
+
+config TOUCHSCREEN_APS_MIT200
+	bool "LGDisplay touchscreen with melfas"
+	depends on I2C
+	default n
+	help
+	 Say Y here to enable support for Melfas Touch driver
+	 series touchscreen controller.
+
+config TOUCHSCREEN_APS_MIT200_E2
+	bool "LGDisplay touchscreen with melfas"
+	depends on I2C
+	default n
+	help
+	 Say Y here to enable support for Melfas Touch driver
+	 series touchscreen controller.
+
+config TOUCHSCREEN_LGE_TS_MISC
+	bool "LGE Touch Misc driver"
+	depends on I2C
+	default n
+	help
+	 Say Y here if you use lge touch misc
+	 if unsure, say N
+
+config TOUCHSCREEN_LGE_LPWG
+	bool "LGE Touch LPWG feature"
+	depends on I2C
+	default n
+	help
+	 Say Y here if you use lge LPWG feature
+	 if unsure, say N
+
+config LGE_TOUCHSCREEN_SYNAPTIC
+	bool "SYNAPTICS touchscreen"
+	default n
+	help
+		Say Y here if you have the SYNAPTICS touchscreen controller
+		chip in your system.
+
+config LGE_TOUCHSCREEN_CORE
+	tristate "SYNAPTICS TOUCHSCREEN CORE "
+	depends on I2C && LGE_TOUCHSCREEN_SYNAPTIC
+	default y
+	help
+		Say Y here if you have the SYNAPTICS touchscreen controller
+		chip in your system.
+
+		If unsure, say N.
+
+		To compile this driver as a module, choose M here: the
+		module will be called SYNAPTICS_ts.
+
+config LGE_TOUCH_SYNAPTICS
+	tristate "SYNAPTICS SYNAPTICS"
+	depends on I2C && LGE_TOUCHSCREEN_SYNAPTIC
+	default y
+	help
+		Say Y here if you have the SYNAPTICS touchscreen controller
+		chip in your system.
+
+		If unsure, say N.
+
+		To compile this driver as a module, choose M here: the
+		module will be called SYNAPTICS_ts.
+
+config LGE_TOUCH_SYNAPTICS_FW_UPGRADE
+	tristate "SYNAPTICS FW UPGRADE "
+	depends on I2C && LGE_TOUCHSCREEN_SYNAPTIC
+	default y
+		help
+		Say Y here if you have the SYNAPTICS touchscreen controller
+		chip in your system.
+
+		If unsure, say N.
+
+		To compile this driver as a module, choose M here: the
+		module will be called SYNAPTICS_ts.
+config TOUCHSCREEN_MELFAS_MMS100S
+	bool "Melfas MMS100s Series touch driver"
+	depends on I2C
+	default n
+	help
+         Say Y here if you have a Mefas MMS100s Series I2C touchscreen
+         connected to your system.
+
+config TOUCHSCREEN_MELFAS_MMS136
+        tristate "MELFAS MMS136 touchscreen"
+        depends on I2C
+        help
+          Say Y here if you have the MELFAS MMS136 touchscreen controller
+          chip in your system.
+
+          If unsure, say N.
+
+          To compile this driver as a module, choose M here: the
+          module will be called melfas-ts.
+
+config TOUCHSCREEN_LGE_TOUCHCORE
+	bool "LGE Touch Core driver"
+	depends on I2C
+	default n
+	help
+	 Say Y here if you use lge touch core
+	 if unsure, say N
+
+config TOUCHSCREEN_LGE_AIT_TOUCHCORE
+	bool "LGE Touch Core driver"
+	depends on I2C
+	default n
+	help
+	 Say Y here if you use lge touch core
+	 if unsure, say N
+
+config TOUCHSCREEN_LGE_APS_TOUCHCORE_E2
+	bool "LGE Touch Core driver"
+	depends on I2C
+	default n
+	help
+	 Say Y here if you use lge touch core
+	 if unsure, say N
+
+config TOUCHSCREEN_LGE_AIT_MELFAS
+	bool "Melfas MMS-100S or MMS-100A based on LGE Touch Core driver"
+	depends on I2C && TOUCHSCREEN_LGE_AIT_TOUCHCORE
+	default n
+	help
+         Say Y here if you have a Mefas MMS-100S or MMS-100A I2C touchscreen
+         connected to your system.
+
+config TOUCHSCREEN_LGE_MELFAS
+	bool "Melfas MMS-100S or MMS-100A based on LGE Touch Core driver"
+	depends on I2C && TOUCHSCREEN_LGE_TOUCHCORE
+	default n
+	help
+         Say Y here if you have a Mefas MMS-100S or MMS-100A I2C touchscreen
+         connected to your system.
+
+config LGE_ATMEL_S540_KNOCK_CODE_2_5
+	bool "Atmel s540 Knock code 2.5"
+	depends on TOUCHSCREEN_ATMEL_S540
+	default n
+	help
+         Say Y here if you use knock code 2.5 in Atmel s540.
+
 config TOUCHSCREEN_GT9XX
 	bool "Goodix touchpanel GT9xx series"
 	depends on I2C
+	default n
 	help
 	  Say Y here if you have a Goodix GT9xx touchscreen.
 	  Gt9xx controllers are multi touch controllers which can
@@ -1032,16 +1312,5 @@ config TOUCHSCREEN_GT9XX
 
 source "drivers/input/touchscreen/gt9xx/Kconfig"
 
-config TOUCHSCREEN_IT7260_I2C
-	tristate "IT7260 Touchscreen Driver"
-	depends on I2C
-	help
-	  Say Y here if you have a IT7260 Touchscreen Driver
-	  connected to your system.
-
-	  If unsure, say N.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called it7258_ts_i2c.
-
 endif
+

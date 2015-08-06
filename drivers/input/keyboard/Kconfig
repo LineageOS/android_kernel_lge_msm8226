@@ -615,4 +615,10 @@ config KEYBOARD_W90P910
 	  To compile this driver as a module, choose M here: the
 	  module will be called w90p910_keypad.
 
+config KEYBOARD_PP2106
+	tristate "PP2106 keyboard support"
+	default n
+	help
+	  Say Y here if you want to enable the PP2106 keyboard driver.
+
 endif

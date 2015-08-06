@@ -1,0 +1,102 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_tovis_vid_dsv>;
+};
+
+&dsi_tovis_vid_dsv{
+	qcom,cont-splash-enabled;
+	qcom,enable-gpio = <&msmgpio 111 0>;
+	qcom,mdss-dsi-h-pulse-width = <44>;
+	qcom,mdss-dsi-h-back-porch = <44>;
+	qcom,mdss-dsi-h-front-porch = <42>;
+	qcom,mdss-dsi-v-pulse-width = <2>;
+	qcom,mdss-dsi-v-back-porch = <15>;
+	qcom,mdss-dsi-v-front-porch = <13>;
+	qcom,mdss-dsi-panel-timings = [7A 25 1D 00 37 33 22 27 31 03 04 00]; /*Mipi clock 238MHz*/
+	qcom,mdss-dsi-t-clk-post = <0x20>;
+	qcom,mdss-dsi-t-clk-pre = <0x2d>;
+	qcom,mdss-dsi-on-command = [39 01 00 00 00 00 04 /* set EXTC */
+	B9 FF 83 89
+	39 01 00 00 00 00 08			/* set MIPI */
+	BA 41 93 00 16 A4 00 18
+	39 01 00 00 00 00 14			/* set Power */
+	B1 00 00 07 E4 50 10 11 71 F1 25 2D 1F 1F 42 01 5A F7 00 E6
+	39 01 00 00 00 00 08	   /* set Display */
+	B2 00 00 78 0E 0C 3F 80
+	39 01 00 00 00 00 20			/* set CYC */
+	B4 80 0C 00 32 10 06 54 13 D4 32 10 00 37 35 36 08 37 01 40 02 58 58 02 00
+	40 00 40 14 46 50 0A
+	39 01 00 00 00 00 33	   /*set GIP */
+	D5 00 00 00 00 01 00 00 00 3C 08 88 88 01 01 23 45 67 AA BB 45 88 88 67 88
+	88 88 88 88 88 88 88 54 32 10 76 54 AA BB 10 88 88 76 88 88 88 88 88 88 3C 03
+	39 01 00 00 00 00 23	   /* set GAMMA */
+	E0 00 0B 10 32 39 3F 20 48 06 0B 0F 12 14 12 13 1F 1F 00 0B 11 33
+	39 3F 21 48 07 0C 0E 12 14 12 13 1F 1F
+	39 01 00 00 00 00 80	   /* set DGC */
+	C1 01 00 12 21 2C 36 3E 47 4F 57 5F 65 6D 74 7A 81 87 8D 94
+	9A A0 A6 AC B2 B9 BF C6 CB CF D6 DF E5 F1 F9 01 79 ED B7 C3
+	99 F3 EE 00 00 0C 1C 28 31 39 42 4A 53 5B 61 68 6F 76 7D 83
+	89 8F 96 9C A2 A9 B0 B7 BE C7 CB D1 D8 E1 E6 F3 FA 24 40 4D
+	A6 D3 FF EF AD 00 03 1C 25 2E 39 43 4B 53 5B 64 6B 71 79 7F
+	86 8B 91 98 9F A6 AD B3 BB C4 C9 CD D3 DC E3 EC F5 FB FF 2F
+	9B 41 87 D5 BD EA 82 C0
+	39 01 00 00 00 00 02	   /* set Panel */
+	CC 0E
+	39 01 00 00 00 00 05	   /* set VCOM */
+	B6 00 A1 00 A1
+	15 01 00 00 00 00 02 51 FF /* CABC - set DBV value */
+	15 01 00 00 00 00 02 53 24 /* CABC - Turn on backlight control */
+	15 01 00 00 05 00 02 55 01 /* CABC - set CABC mode */
+	39 01 00 00 00 00 0A	   /* CABC - 20kHz bandwidth */
+	C9 0F 00 1E 02 00 80 00 01 3E
+	15 01 00 00 00 00 02	   /* set color enhancement */
+	E6 00
+	15 01 00 00 00 00 02	   /* Turn on static mode for CE/ BE/ SE */
+	E3 01
+	39 01 00 00 00 00 13	   /* set Global Gain and Local Gain */
+	E5 00 0C 15 07 04 00 80 20 00 10 00 00 08 06 04 00 80 0E
+	39 01 00 00 00 00 12		/* set Hue Gain */
+	E2 40 00 00 05 05 10 10 10 04 04 08 10 10 10 10 10 10
+	39 01 00 00 00 00 05 /* OSC enable */
+	B0 00 01 00 0C
+	39 01 00 00 00 00 04 /* Soft-start pump enable */
+	CF 00 1D 03
+	39 01 00 00 0A 00 05 /* VGH_EN=1 */
+	B0 00 01 08 0C
+	39 01 00 00 19 00 05 /*VGL_EN=1 */
+	B0 00 01 18 0C
+	39 01 00 00 05 00 05 /*VCL_EN=1 */
+	B0 00 01 1C 0C
+	39 01 00 00 05 00 04 /* VGH, VGL Strong pump */
+	CF 00 15 03
+	39 01 00 00 00 00 04 /* Soft-start function disable */
+	CF 00 01 03
+	39 01 00 00 00 00 05 /* VSP_EN=1, waiting for external VSP */
+	B0 00 01 3C 0C
+	39 01 00 00 00 00 05 /* VSN_EN=1, waiting for external VSN */
+	B0 00 01 7C 0C];
+};
+
+&dsi_lgd_vid_dsv{
+	qcom,enable-gpio = <&msmgpio 111 0>;
+	qcom,mdss-dsi-h-pulse-width = <44>;
+	qcom,mdss-dsi-h-back-porch = <44>;
+	qcom,mdss-dsi-h-front-porch = <42>;
+	qcom,mdss-dsi-v-pulse-width = <2>;
+	qcom,mdss-dsi-v-back-porch = <9>;
+	qcom,mdss-dsi-v-front-porch = <19>;
+	qcom,mdss-dsi-panel-timings = [7A 25 1D 00 37 33 22 27 31 03 04 00]; /*Mipi clock 238MHz*/
+	qcom,mdss-dsi-t-clk-post = <0x20>;
+	qcom,mdss-dsi-t-clk-pre = <0x2d>;
+};

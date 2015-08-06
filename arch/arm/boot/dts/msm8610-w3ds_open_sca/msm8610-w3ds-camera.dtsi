@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+ &i2c {
+	qcom,camera_revA@40 {
+		compatible = "qcom,hi351";
+		reg = <0x40>;
+		revision = "rev_0...rev_a";
+		qcom,slave-id = <0x40 0x4 0xA4>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,mount-angle = <90>;
+		qcom,sensor-name = "hi351";
+		cam_vdig-supply = <&pm8110_l7>;             /* Dummy VDIG Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26 */
+		cam_vana-supply = <&pm8110_l7>;            /* Dummy VANA Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26  */
+		cam_vio-supply = <&pm8110_l7>;               /* LDO7 is for VIO Setting */
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";
+		qcom,cam-vreg-type = <0 0 0>;
+		qcom,cam-vreg-min-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-max-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-op-mode = <200000 8000 80000>;
+		qcom,sensor-type = <1>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 13 0>,
+			<&msmgpio 21 0>,
+			<&msmgpio 20 0>,
+                     <&msmgpio 91 0>;                               /* instead of using LDO7, we enable 2 ex-LDO for power by GPIO 91st. Port, youngwook.song@lge.com, 2013.08.26  */
+		qcom,gpio-reset = <1>;
+		qcom,gpio-standby = <2>;
+		qcom,gpio-vdig = <3>;
+		qcom,gpio-req-tbl-num = <0 1 2 3>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK",
+			"CAM_RESET1",
+			"CAM_STANDBY",
+			"CAM_VDIG";                                       /* VDIG GPIO Enalbing Option shall enable VDIG and VANA at the same time., youngwook.song@lge.com, 2013.08.26  */
+		qcom,csi-lane-assign = <0xe4>;
+		qcom,csi-lane-mask = <0x3>;
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <0>;
+		qcom,cci-master = <0>;
+	};
+/* LGE_CHANGE_E, Code modifying by revision for revB, youngwook.song@lge.com 2013-09-21 */
+	qcom,camera_revB@40 {
+		compatible = "qcom,hi351";
+		reg = <0x40>;
+		revision = "rev_b...";
+		qcom,slave-id = <0x40 0x4 0xA4>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,mount-angle = <90>;
+		qcom,sensor-name = "hi351";
+		cam_vdig-supply = <&pm8110_l7>;             /* Dummy VDIG Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26 */
+		cam_vana-supply = <&pm8110_l7>;            /* Dummy VANA Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26  */
+		cam_vio-supply = <&pm8110_l7>;               /* LDO7 is for VIO Setting */
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";
+		qcom,cam-vreg-type = <0 0 0>;
+		qcom,cam-vreg-min-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-max-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-op-mode = <200000 8000 80000>;
+		qcom,sensor-type = <1>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 13 0>,
+			<&msmgpio 21 0>,
+			<&msmgpio 20 0>,
+                     <&msmgpio 85 0>;                               /* instead of using LDO7, we enable 2 ex-LDO for power by GPIO 91st. Port, youngwook.song@lge.com, 2013.08.26  */
+		qcom,gpio-reset = <1>;
+		qcom,gpio-standby = <2>;
+		qcom,gpio-vdig = <3>;
+		qcom,gpio-req-tbl-num = <0 1 2 3>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK",
+			"CAM_RESET1",
+			"CAM_STANDBY",
+			"CAM_VDIG";                                       /* VDIG GPIO Enalbing Option shall enable VDIG and VANA at the same time., youngwook.song@lge.com, 2013.08.26  */
+		qcom,csi-lane-assign = <0xe4>;
+		qcom,csi-lane-mask = <0x3>;
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <0>;
+		qcom,cci-master = <0>;
+	};
+/* LGE_CHANGE_X, Code modifying by revision for revB, youngwook.song@lge.com 2013-09-21 */
+};

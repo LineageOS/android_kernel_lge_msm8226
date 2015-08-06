@@ -14,6 +14,10 @@
 
 #include "ci13xxx_udc.c"
 
+#ifdef CONFIG_USB_G_LGE_ANDROID
+#include <linux/wakelock.h>
+#endif
+
 #define MSM_USB_BASE	(udc->regs)
 
 #define CI13XXX_MSM_MAX_LOG2_ITC	7
@@ -24,9 +28,51 @@ struct ci13xxx_udc_context {
 	int wake_gpio;
 	int wake_irq;
 	bool wake_irq_state;
+#ifdef CONFIG_USB_G_LGE_ANDROID
+    struct wake_lock wlock;
+    struct delayed_work wunlock_w;
+#endif
 };
 
 static struct ci13xxx_udc_context _udc_ctxt;
+
+#ifdef CONFIG_USB_G_LGE_ANDROID
+#define UNLOCK_DELAY   msecs_to_jiffies(1000)
+static void wunlock_w(struct work_struct *w)
+{
+    wake_unlock(&_udc_ctxt.wlock);
+}
+#endif
+
+#ifdef CONFIG_LGE_PM_VZW_FAST_CHG
+int lge_usb_config_finish = 0;
+bool usb_connecting_flag = false;
+bool usb_connected_flag = false;
+bool usb_configured_flag = false;
+struct delayed_work usb_detect_w;
+
+extern void set_vzw_usb_charging_state(int state);
+extern int get_vzw_usb_charging_state(void);
+
+#define USB_DETECT_DELAY msecs_to_jiffies(50000)
+static void usb_detect_work(struct work_struct *w)
+{
+    if (!usb_connected_flag) {
+        set_vzw_usb_charging_state(0 /* IS_OPEN_TA */);
+        pr_info("%s: OPEN TA is connected!!\n", __func__);
+    } else if (usb_configured_flag) {
+        lge_usb_config_finish = 1;
+        set_vzw_usb_charging_state(2 /* IS_USB_DRIVER_INSTALLED */);
+        pr_info("%s: USB DRIVER_INSTALLED\n", __func__);
+    } else {
+        set_vzw_usb_charging_state(1 /* IS_USB_DRIVER_UNINSTALLED */);
+        pr_info("%s: USB DRIVER_UNINSTALLED\n", __func__);
+    }
+    usb_connecting_flag = false;
+    usb_connected_flag = false;
+    usb_configured_flag = false;
+}
+#endif
 
 static irqreturn_t msm_udc_irq(int irq, void *data)
 {
@@ -173,11 +219,18 @@ static void ci13xxx_msm_notify_event(struct ci13xxx *udc, unsigned event)
 	case CI13XXX_CONTROLLER_RESET_EVENT:
 		dev_info(dev, "CI13XXX_CONTROLLER_RESET_EVENT received\n");
 		ci13xxx_msm_reset();
+#ifdef CONFIG_USB_G_LGE_ANDROID
+        cancel_delayed_work_sync(&_udc_ctxt.wunlock_w);
+        wake_lock(&_udc_ctxt.wlock);
+#endif
 		break;
 	case CI13XXX_CONTROLLER_DISCONNECT_EVENT:
 		dev_info(dev, "CI13XXX_CONTROLLER_DISCONNECT_EVENT received\n");
 		ci13xxx_msm_disconnect();
 		ci13xxx_msm_resume();
+#ifdef CONFIG_USB_G_LGE_ANDROID
+        schedule_delayed_work(&_udc_ctxt.wunlock_w, UNLOCK_DELAY);
+#endif
 		break;
 	case CI13XXX_CONTROLLER_CONNECT_EVENT:
 		dev_info(dev, "CI13XXX_CONTROLLER_CONNECT_EVENT received\n");
@@ -196,6 +249,33 @@ static void ci13xxx_msm_notify_event(struct ci13xxx *udc, unsigned event)
 		dev_dbg(dev, "unknown ci13xxx_udc event\n");
 		break;
 	}
+
+#ifdef CONFIG_LGE_PM_VZW_FAST_CHG
+    switch (event) {
+        case CI13XXX_CONTROLLER_CONNECT_EVENT:
+        case CI13XXX_CONTROLLER_RESUME_EVENT:
+            pr_info("%s: [USB_DRV] CONNECTING\n", __func__);
+            if (usb_connecting_flag) {
+                cancel_delayed_work_sync(&usb_detect_w);
+            } else {
+                usb_connecting_flag = true;
+            }
+            usb_connected_flag = false;
+            usb_configured_flag = false;
+            lge_usb_config_finish = 0;
+            schedule_delayed_work(&usb_detect_w, USB_DETECT_DELAY);
+            break;
+        case CI13XXX_CONTROLLER_DISCONNECT_EVENT:
+            cancel_delayed_work_sync(&usb_detect_w);
+            lge_usb_config_finish = 0;
+            usb_connecting_flag = false;
+            usb_connected_flag = false;
+            usb_configured_flag = false;
+            break;
+        default:
+            break;
+    }
+#endif
 }
 
 static irqreturn_t ci13xxx_msm_resume_irq(int irq, void *data)
@@ -335,6 +415,14 @@ static int ci13xxx_msm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "request_irq failed\n");
 		goto gpio_uninstall;
 	}
+
+#ifdef CONFIG_USB_G_LGE_ANDROID
+    wake_lock_init(&_udc_ctxt.wlock, WAKE_LOCK_SUSPEND, "usb_bus_active");
+    INIT_DELAYED_WORK(&_udc_ctxt.wunlock_w, wunlock_w);
+#endif
+#ifdef CONFIG_LGE_PM_VZW_FAST_CHG
+    INIT_DELAYED_WORK(&usb_detect_w, usb_detect_work);
+#endif
 
 	pm_runtime_no_callbacks(&pdev->dev);
 	pm_runtime_enable(&pdev->dev);

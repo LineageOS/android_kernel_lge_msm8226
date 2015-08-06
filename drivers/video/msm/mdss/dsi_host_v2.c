@@ -28,6 +28,10 @@
 #include "mdss_debug.h"
 #include "mdp3.h"
 
+#if defined(CONFIG_LGE_LCD_DYNAMIC_LOG)
+#include "lge_lcd_debug_log.h"
+#endif
+
 #define DSI_POLL_SLEEP_US 1000
 #define DSI_POLL_TIMEOUT_US 16000
 #define DSI_ESC_CLK_RATE 19200000
@@ -50,6 +54,10 @@ struct dsi_host_v2_private {
 
 static struct dsi_host_v2_private *dsi_host_private;
 static int msm_dsi_clk_ctrl(struct mdss_panel_data *pdata, int enable);
+
+#if defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W65)
+extern int lge_lcd_id;
+#endif
 
 int msm_dsi_init(void)
 {
@@ -574,6 +582,10 @@ void msm_dsi_op_mode_config(int mode, struct mdss_panel_data *pdata)
 {
 	u32 dsi_ctrl;
 	unsigned char *ctrl_base = dsi_host_private->dsi_base;
+#if defined(CONFIG_MACH_MSM8X10_L70P)
+	struct mipi_panel_info *pinfo;
+	pinfo = &pdata->panel_info.mipi;
+#endif
 
 	pr_debug("msm_dsi_op_mode_config\n");
 
@@ -592,6 +604,13 @@ void msm_dsi_op_mode_config(int mode, struct mdss_panel_data *pdata)
 		if (pdata->panel_info.type == MIPI_VIDEO_PANEL)
 			dsi_ctrl |= DSI_VIDEO_MODE_EN;
 	}
+
+#if defined(CONFIG_MACH_MSM8X10_L70P)
+	/*If Video enabled, Keep Video and Cmd mode ON */
+	if (pinfo->mode == DSI_VIDEO_MODE) {
+		dsi_ctrl |= 0x02;
+	}
+#endif
 
 	pr_debug("%s: dsi_ctrl=%x\n", __func__, dsi_ctrl);
 
@@ -1107,7 +1126,13 @@ static int msm_dsi_cal_clk_rate(struct mdss_panel_data *pdata,
 
 	*bitclk_rate = (width + hbp + hfp + hspw) * (height + vbp + vfp + vspw);
 	*bitclk_rate *= mipi->frame_rate;
-	*bitclk_rate *= pdata->panel_info.bpp;
+
+	if (pdata->panel_info.bpp == 18) {
+		*bitclk_rate *= 24;
+	} else{
+		*bitclk_rate *= pdata->panel_info.bpp;
+	}
+
 	*bitclk_rate /= lanes;
 
 	*byteclk_rate = *bitclk_rate / 8;
@@ -1121,7 +1146,7 @@ static int msm_dsi_cal_clk_rate(struct mdss_panel_data *pdata,
 
 static int msm_dsi_on(struct mdss_panel_data *pdata)
 {
-	int ret = 0, i;
+	int ret = 0;
 	u32 clk_rate;
 	struct mdss_panel_info *pinfo;
 	struct mipi_panel_info *mipi;
@@ -1132,7 +1157,7 @@ static int msm_dsi_on(struct mdss_panel_data *pdata)
 	unsigned char *ctrl_base = dsi_host_private->dsi_base;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 
-	pr_debug("msm_dsi_on\n");
+	pr_info("msm_dsi_on++\n");
 
 	pinfo = &pdata->panel_info;
 
@@ -1142,17 +1167,16 @@ static int msm_dsi_on(struct mdss_panel_data *pdata)
 	mutex_lock(&ctrl_pdata->mutex);
 
 	if (!pdata->panel_info.dynamic_switch_pending) {
-		for (i = 0; !ret && (i < DSI_MAX_PM); i++) {
-			ret = msm_dss_enable_vreg(
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, 1);
+		ret = msm_dss_enable_vreg(
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 1);
 		if (ret) {
-			pr_err("%s: failed to enable vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-			goto error_vreg;
-			}
+			pr_err("%s: DSI power on failed\n", __func__);
+			mutex_unlock(&ctrl_pdata->mutex);
+			return ret;
 		}
 	}
+
 	msm_dsi_ahb_ctrl(1);
 	msm_dsi_phy_sw_reset(dsi_host_private->dsi_base);
 	msm_dsi_phy_init(dsi_host_private->dsi_base, pdata);
@@ -1225,6 +1249,51 @@ static int msm_dsi_on(struct mdss_panel_data *pdata)
 	msm_dsi_sw_reset();
 	msm_dsi_host_init(mipi);
 
+#if defined(CONFIG_MACH_MSM8X10_W5)
+#if !defined(CONFIG_MACH_MSM8X10_W55)
+	if (lge_lcd_id == 0) {								/* W5 LGD LG4577 */
+		u32 tmp;
+		tmp = MIPI_INP(ctrl_base + DSI_LANE_CTRL);
+		tmp &= ~(1<<28);
+		MIPI_OUTP(ctrl_base + DSI_LANE_CTRL, tmp);
+		wmb();
+
+		msleep(10);
+		dsi_ctrl_gpio_request(ctrl_pdata);
+		mdss_dsi_panel_reset(pdata, 1);
+		mipi->force_clk_lane_hs = 1;
+	}
+#else													/* W55 */
+	{
+		u32 tmp;
+		tmp = MIPI_INP(ctrl_base + DSI_LANE_CTRL);
+		tmp &= ~(1<<28);
+		MIPI_OUTP(ctrl_base + DSI_LANE_CTRL, tmp);
+		wmb();
+	}
+
+	msleep(10);
+	dsi_ctrl_gpio_request(ctrl_pdata);
+	mdss_dsi_panel_reset(pdata, 1);
+	mipi->force_clk_lane_hs = 1;
+#endif
+#endif
+#if defined(CONFIG_MACH_MSM8X10_W6)
+#if !defined(CONFIG_MACH_MSM8X10_W65)
+	{
+		u32 tmp;
+		tmp = MIPI_INP(ctrl_base + DSI_LANE_CTRL);
+		tmp &= ~(1<<28);
+		MIPI_OUTP(ctrl_base + DSI_LANE_CTRL, tmp);
+		wmb();
+	}
+
+	msleep(10);
+	dsi_ctrl_gpio_request(ctrl_pdata);
+	mdss_dsi_panel_reset(pdata, 1);
+	mipi->force_clk_lane_hs = 1;
+#endif
+#endif
 	if (mipi->force_clk_lane_hs) {
 		u32 tmp;
 
@@ -1239,22 +1308,14 @@ static int msm_dsi_on(struct mdss_panel_data *pdata)
 	msm_dsi_set_irq(ctrl_pdata, DSI_INTR_ERROR_MASK);
 	dsi_host_private->clk_count = 1;
 	dsi_host_private->dsi_on = 1;
-
-error_vreg:
-	if (ret) {
-		for (; i >= 0; i--)
-			msm_dss_enable_vreg(
-				ctrl_pdata->power_data[i].vreg_config,
-				ctrl_pdata->power_data[i].num_vreg, 0);
-	}
-
 	mutex_unlock(&ctrl_pdata->mutex);
+
 	return ret;
 }
 
 static int msm_dsi_off(struct mdss_panel_data *pdata)
 {
-	int ret = 0, i;
+	int ret = 0;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 
 	if (pdata == NULL) {
@@ -1277,13 +1338,11 @@ static int msm_dsi_off(struct mdss_panel_data *pdata)
 	msm_dsi_ahb_ctrl(0);
 
 	if (!pdata->panel_info.dynamic_switch_pending) {
-		for (i = DSI_MAX_PM - 1; i >= 0; i--) {
-			ret = msm_dss_enable_vreg(
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, 0);
-		if (ret)
-			pr_err("%s: failed to disable vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
+		ret = msm_dss_enable_vreg(
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 0);
+		if (ret) {
+			pr_err("%s: Panel power off failed\n", __func__);
 		}
 	}
 	dsi_host_private->clk_count = 0;
@@ -1291,13 +1350,14 @@ static int msm_dsi_off(struct mdss_panel_data *pdata)
 
 	mutex_unlock(&ctrl_pdata->mutex);
 
+	pr_info("msm_dsi_off--\n");
 	return ret;
 }
 
 static int msm_dsi_cont_on(struct mdss_panel_data *pdata)
 {
 	struct mdss_panel_info *pinfo;
-	int ret = 0, i;
+	int ret = 0;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 
 	if (pdata == NULL) {
@@ -1314,17 +1374,15 @@ static int msm_dsi_cont_on(struct mdss_panel_data *pdata)
 
 	pinfo = &pdata->panel_info;
 	mutex_lock(&ctrl_pdata->mutex);
-	for (i = 0; !ret && (i < DSI_MAX_PM); i++) {
-		ret = msm_dss_enable_vreg(
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, 1);
-		if (ret) {
-			pr_err("%s: failed to enable vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-			goto error_vreg;
-		}
+	ret = msm_dss_enable_vreg(
+		ctrl_pdata->power_data.vreg_config,
+		ctrl_pdata->power_data.num_vreg, 1);
+	if (ret) {
+		pr_err("%s: DSI power on failed\n", __func__);
+		mutex_unlock(&ctrl_pdata->mutex);
+		return ret;
 	}
-	pinfo->panel_power_state = MDSS_PANEL_POWER_ON;
+	pinfo->panel_power_on = 1;
 	ret = mdss_dsi_panel_reset(pdata, 1);
 	if (ret) {
 		pr_err("%s: Panel reset failed\n", __func__);
@@ -1339,16 +1397,18 @@ static int msm_dsi_cont_on(struct mdss_panel_data *pdata)
 	dsi_host_private->clk_count = 1;
 	dsi_host_private->dsi_on = 1;
 
-error_vreg:
-	if (ret) {
-		for (; i >= 0; i--)
-			msm_dss_enable_vreg(
-				ctrl_pdata->power_data[i].vreg_config,
-				ctrl_pdata->power_data[i].num_vreg, 0);
+#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT_PANEL)
+    if (gpio_is_valid(ctrl_pdata->disp_te_gpio)) {
+		ret = gpio_request(ctrl_pdata->disp_te_gpio, "disp_te");
+		if (ret)
+			pr_err("gpio request failed %d\n", ret);
+
+		ctrl_pdata->disp_te_gpio_requested = 1;
 	}
+#endif
 
 	mutex_unlock(&ctrl_pdata->mutex);
-	return ret;
+	return 0;
 }
 
 static int msm_dsi_read_status(struct mdss_dsi_ctrl_pdata *ctrl)
@@ -1519,10 +1579,25 @@ static struct device_node *dsi_pref_prim_panel(
 {
 	struct device_node *dsi_pan_node = NULL;
 
+#if defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W65)
+	pr_debug("%s:%d: lcd id :lge_lcd_id : %d \n", __func__, __LINE__, lge_lcd_id);
+
+	if (lge_lcd_id == 0) { /* primary ID */
+		pr_debug("%s:%d: Primary panel \n", __func__, __LINE__);
+		dsi_pan_node = of_parse_phandle(
+										pdev->dev.of_node, "qcom,dsi-pref-prim-pan", 0);
+	} else{ /* for safe secondary */
+		pr_debug("%s:%d: Secondary panel \n", __func__, __LINE__);
+		dsi_pan_node = of_parse_phandle(
+										pdev->dev.of_node, "qcom,dsi-pref-secondary-pan", 0);
+	}
+#else   /* qct original */
 	pr_debug("%s:%d: Select primary panel from dt\n",
 					__func__, __LINE__);
 	dsi_pan_node = of_parse_phandle(pdev->dev.of_node,
 					"qcom,dsi-pref-prim-pan", 0);
+#endif
+
 	if (!dsi_pan_node)
 		pr_err("%s:can't find panel phandle\n", __func__);
 
@@ -1666,7 +1741,6 @@ static int __devinit msm_dsi_probe(struct platform_device *pdev)
 	struct device_node *dsi_pan_node = NULL;
 	bool cmd_cfg_cont_splash = false;
 	struct resource *mdss_dsi_mres;
-	int i;
 
 	pr_debug("%s\n", __func__);
 
@@ -1756,13 +1830,11 @@ static int __devinit msm_dsi_probe(struct platform_device *pdev)
 		goto error_pan_node;
 	}
 
-	for (i = 0;  i < DSI_MAX_PM; i++) {
-		rc = msm_dsi_io_init(pdev, &(ctrl_pdata->power_data[i]));
-		if (rc) {
-			dev_err(&pdev->dev, "%s: failed to init IO for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-			goto error_io_init;
-		}
+	rc = msm_dsi_io_init(pdev, &(ctrl_pdata->power_data));
+	if (rc) {
+		dev_err(&pdev->dev, "%s: failed to init DSI IO, rc=%d\n",
+								__func__, rc);
+		goto error_io_init;
 	}
 
 	pr_debug("%s: Dsi Ctrl->0 initialized\n", __func__);
@@ -1797,8 +1869,7 @@ static int __devinit msm_dsi_probe(struct platform_device *pdev)
 	pr_debug("%s success\n", __func__);
 	return 0;
 error_device_register:
-	for (i = DSI_MAX_PM - 1; i >= 0; i--)
-		msm_dsi_io_deinit(pdev, &(ctrl_pdata->power_data[i]));
+	msm_dsi_io_deinit(pdev, &(ctrl_pdata->power_data));
 error_io_init:
 	dsi_ctrl_config_deinit(pdev, ctrl_pdata);
 error_pan_node:
@@ -1820,8 +1891,6 @@ error_no_mem:
 
 static int __devexit msm_dsi_remove(struct platform_device *pdev)
 {
-	int i;
-
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = platform_get_drvdata(pdev);
 	if (!ctrl_pdata) {
 		pr_err("%s: no driver data\n", __func__);
@@ -1829,8 +1898,7 @@ static int __devexit msm_dsi_remove(struct platform_device *pdev)
 	}
 
 	msm_dsi_clear_irq(ctrl_pdata, ctrl_pdata->dsi_irq_mask);
-	for (i = DSI_MAX_PM - 1; i >= 0; i--)
-		msm_dsi_io_deinit(pdev, &(ctrl_pdata->power_data[i]));
+	msm_dsi_io_deinit(pdev, &(ctrl_pdata->power_data));
 	dsi_ctrl_config_deinit(pdev, ctrl_pdata);
 	iounmap(dsi_host_private->dsi_base);
 	dsi_host_private->dsi_base = NULL;

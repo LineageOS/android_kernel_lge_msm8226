@@ -1,0 +1,199 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/include/ "msm8226-g2m-panel.dtsi"
+/include/ "msm8226-g2m-sensor.dtsi"
+/include/ "msm8226-g2m-hdmi.dtsi"
+/include/ "msm8226-g2m-usb.dtsi"
+/include/ "msm8226-g2m-misc.dtsi"
+/include/ "msm8226-g2m-pm.dtsi"
+/include/ "msm8226-g2m-camera.dtsi"
+/include/ "msm8226-g2m-input.dtsi"
+/include/ "msm8226-g2m-nfc.dtsi"  /* LGE_CHANGE, [NFC][garam.kim@lge.com], NFC Bring up */
+
+&soc {
+	serial@f991f000 {
+		status = "disabled";
+	};
+
+	syncoam_sm100_rev_0 {
+		compatible = "syncoam,sm100";
+		status = "ok";
+		revision = "rev_0";
+
+		vdd_ana-supply = <&pm8226_l23>;
+		syncoam,vpwr-on = <0>;
+		syncoam,haptic-pwr-gpio = <&msmgpio 53 0x00>;
+		syncoam,motor-pwm-gpio = <&msmgpio 34 0x00>;
+		syncoam,n-value = <92>;    //G2 final
+		syncoam,clk-rate = <29813>;//G2 final
+	};
+
+	syncoam_sm100_rev_a {
+		compatible = "syncoam,sm100";
+		status = "ok";
+		revision = "rev_a...";
+
+		vdd_ana-supply = <&pm8226_l19>;
+		syncoam,vpwr-on = <0>;
+		syncoam,haptic-pwr-gpio = <&msmgpio 53 0x00>;
+		syncoam,motor-pwm-gpio = <&msmgpio 34 0x00>;
+		syncoam,n-value = <92>;    //G2 final
+		syncoam,clk-rate = <29813>;//G2 final
+	};
+
+	/*  LGE_CHANGE_S, [NFC][garam.kim@lge.com], NFC Bring up */
+	i2c@f9925000 {
+		pn547@28 {
+			status = "ok";
+		};
+		lp5521@32 {
+			status = "ok";
+		};
+	};
+	/*  LGE_CHANGE_E, [NFC][garam.kim@lge.com], NFC Bring up */
+
+};
+
+&sdcc1 {
+	vdd-supply = <&pm8226_l17>;
+	qcom,vdd-always-on;
+	qcom,vdd-lpm-sup;
+	qcom,vdd-voltage-level = <2950000 2950000>;
+	qcom,vdd-current-level = <800 500000>;
+
+	vdd-io-supply = <&pm8226_l6>;
+	qcom,vdd-io-always-on;
+	qcom,vdd-io-voltage-level = <1800000 1800000>;
+	qcom,vdd-io-current-level = <250 154000>;
+
+	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+	qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+	qcom,sup-voltages = <2950 2950>;
+
+	qcom,bus-speed-mode = "HS200_1p8v", "DDR_1p8v";
+	qcom,nonremovable;
+
+   status = "disabled";
+};
+
+&sdhc_1 {
+   vdd-supply = <&pm8226_l17>;
+   qcom,vdd-always-on;
+   qcom,vdd-lpm-sup;
+   qcom,vdd-voltage-level = <2950000 2950000>;
+   qcom,vdd-current-level = <800 500000>;
+
+   vdd-io-supply = <&pm8226_l6>;
+   qcom,vdd-io-always-on;
+   qcom,vdd-io-voltage-level = <1800000 1800000>;
+   qcom,vdd-io-current-level = <250 154000>;
+
+   qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+   qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+   qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+   qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+   qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+   qcom,bus-speed-mode = "HS200_1p8v", "DDR_1p8v";
+   qcom,nonremovable;
+
+	status = "ok";
+};
+
+&sdcc2 {
+	vdd-supply = <&pm8226_l18>;
+	qcom,vdd-voltage-level = <2950000 2950000>;
+	qcom,vdd-current-level = <9000 800000>;
+
+	vdd-io-supply = <&pm8226_l21>;
+	qcom,vdd-io-always-on;
+	qcom,vdd-io-lpm-sup;
+	qcom,vdd-io-voltage-level = <1800000 2950000>;
+	qcom,vdd-io-current-level = <6 22000>;
+
+	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+	qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+	qcom,sup-voltages = <2950 2950>;
+
+	qcom,xpc;
+	qcom,bus-speed-mode = "SDR12", "SDR25", "SDR50", "DDR50", "SDR104";
+	qcom,current-limit = <600>; #address-cells = <0>; interrupt-parent = <&sdcc2>;
+	interrupts = <0 1 2>;
+	#interrupt-cells = <1>;
+	interrupt-map-mask = <0xffffffff>;
+	interrupt-map = <0 &intc 0 125 0
+			1 &intc 0 220 0
+			2 &msmgpio 38 0x3>;
+	interrupt-names = "core_irq", "bam_irq", "status_irq";
+	cd-gpios = <&msmgpio 38 0x0>; /* card detect 1:Low-Active, 0:High-Active */
+
+   status = "disabled";
+};
+
+&sdhc_2 {
+   vdd-supply = <&pm8226_l18>;
+   qcom,vdd-voltage-level = <2950000 2950000>;
+   qcom,vdd-current-level = <9000 800000>;
+
+   vdd-io-supply = <&pm8226_l21>;
+   qcom,vdd-io-always-off;
+   qcom,vdd-io-lpm-sup;
+   qcom,vdd-io-voltage-level = <1800000 2950000>;
+   qcom,vdd-io-current-level = <6 22000>;
+
+   qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+   qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+   qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+   qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+   qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+
+   #address-cells = <0>;
+   interrupt-parent = <&sdhc_2>;
+   interrupts = <0 1 2>;
+   #interrupt-cells = <1>;
+   interrupt-map-mask = <0xffffffff>;
+   interrupt-map = <0 &intc 0 125 0
+           1 &intc 0 221 0
+           2 &msmgpio 37 0x3>;
+   interrupt-names = "hc_irq", "pwr_irq", "status_irq";
+   cd-gpios = <&msmgpio 37 0x1>; /* card detect 1:Low-Active, 0:High-Active  */
+
+   status = "ok";
+};
+
+&pm8226_bms {
+	status = "ok";
+    qcom,enable-fcc-learning;
+    qcom,min-fcc-learning-soc = <20>;
+    qcom,min-fcc-ocv-pc = <30>;
+    qcom,min-fcc-learning-samples = <5>;
+    qcom,fcc-resolution = <10>;
+};
+
+&slim_msm {
+    tapan_codec {
+        qcom,cdc-micbias1-ext-cap;
+	};
+    };
+&mdss_fb0 {
+	qcom,memory-reservation-size = <0x400000>; /* LGE chagne to decrease buffer size. QCT original -> 0x800000 */
+};

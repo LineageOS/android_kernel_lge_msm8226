@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -493,11 +493,7 @@ static void voip_process_ul_pkt(uint8_t *voc_pkt,
 		pr_debug("%s: pkt_len =%d, frame.pktlen=%d, timestamp=%d\n",
 			 __func__, pkt_len, buf_node->frame.pktlen, timestamp);
 
-		if (prtd->mode == MODE_PCM)
-			prtd->pcm_capture_irq_pos += buf_node->frame.pktlen;
-		else
-			prtd->pcm_capture_irq_pos += prtd->pcm_capture_count;
-
+		prtd->pcm_capture_irq_pos += prtd->pcm_capture_count;
 		spin_unlock_irqrestore(&prtd->dsp_ul_lock, dsp_flags);
 		snd_pcm_period_elapsed(prtd->capture_substream);
 	} else {
@@ -658,11 +654,7 @@ static void voip_process_dl_pkt(uint8_t *voc_pkt, void *private_data)
 		}
 		pr_debug("%s: frame.pktlen=%d\n", __func__, buf_node->frame.pktlen);
 
-		if (prtd->mode == MODE_PCM)
-			prtd->pcm_playback_irq_pos += buf_node->frame.pktlen;
-		else
-			prtd->pcm_playback_irq_pos += prtd->pcm_count;
-
+		prtd->pcm_playback_irq_pos += prtd->pcm_count;
 		spin_unlock_irqrestore(&prtd->dsp_lock, dsp_flags);
 		snd_pcm_period_elapsed(prtd->playback_substream);
 	} else {
@@ -1157,8 +1149,11 @@ static int voip_config_vocoder(struct snd_pcm_substream *substream)
 		pr_debug("%s: Invalid rate playback %d, capture %d\n",
 			 __func__, prtd->play_samp_rate,
 			 prtd->cap_samp_rate);
-
+#if defined(CONFIG_MACH_LGE) 
+		ret = -ENOEXEC;
+#else		
 		ret = -EINVAL;
+#endif 
 	}
 done:
 
@@ -1181,6 +1176,15 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 	if (prtd->playback_instance && prtd->capture_instance
 	    && (prtd->state != VOIP_STARTED)) {
 		ret = voip_config_vocoder(substream);
+#if defined(CONFIG_MACH_LGE) 
+		if ( ret == -ENOEXEC ) {
+		    pr_err("ENOEXEC rate playback %d, capture %d\n",
+		    		prtd->play_samp_rate, prtd->cap_samp_rate);
+		    ret = 0;
+		    goto done;
+			
+		} else 
+#endif  
 		if (ret < 0) {
 			pr_err("%s(): fail at configuring vocoder for voip, ret=%d\n",
 				__func__, ret);

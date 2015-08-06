@@ -1,0 +1,188 @@
+/*
+ * Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@0 {
+		led_flash0: qcom,led-flash@39 {
+			compatible = "qcom,led-flash";
+			status = "ok";
+			reg = <0x39>;
+			rt8542,lcd_bl_en = <&msmgpio 60 0x00>;
+			rt8542,max_current = <0x0C>;
+			rt8542,min_brightness = <0x04>;
+			rt8542,default_brightness = <0x65>;
+			rt8542,max_brightness = <0x7D>;
+			rt8542,enable_pwm = <0>;
+			rt8542,blmap_size = <127>;
+			rt8542,blmap = <
+				5 5 5 5 5 5 5 5 5 5 				//9
+				5 5 5 6 6 6 6 6 6 6 				//19
+				6 6 6 6 6 6 7 7 7 7 				//29
+				7 7 7 8 8 8 8 9 9 9 				//39
+				10 10 10 11 11 11 12 12 12 12 	//49
+				13 13 14 14 14 14 15 15 15 16 	//59
+				17 18 19 20 20 21 22 23 23 24	//69
+				24 25 25 25 26 26 26 27 27 27 	//79
+				27 28 29 30 31 32 33 34 35 36 	//89
+				37 38 38 39 40 41 42 43 44 45     //99
+				46 47 48 49 50 52 53 54 55 56	//109
+				57 58 59 60 61 63 64 65 67 68	//119
+				70 71 73 75 77 79 80>;
+
+			cell-index = <0>;
+			qcom,flash-name = "rt8542";
+			qcom,slave-id = <0x39 0x00 0x0011>;
+			qcom,flash-type = <1>;
+			qcom,gpio-no-mux = <0>;
+			gpios = <&msmgpio 18 0>;
+			qcom,gpio-flash-en = <0>;
+			qcom,gpio-req-tbl-num = <0>;
+			qcom,gpio-req-tbl-flags = <0>;
+			qcom,gpio-req-tbl-label = "FLASH_EN";
+
+		};
+	};
+};
+
+&i2c {
+
+/* IMX111(8M) actuator */
+	actuator1: qcom,actuator@18 {
+		cell-index = <1>;	//Use Af_main_0 of dw9714 with IMX111(8M)
+		reg = <0x18 0x0>;
+		compatible = "qcom,actuator";
+		status = "okay";
+	};
+/* IMX111(8M) eeprom */
+	eeprom1: msm_eeprom_imx111@50 { //EEPROM READ
+		cell-index = <0>;
+		reg = <0x50 0x0>;
+		qcom,eeprom-name = "imx111_eeprom";
+		compatible = "msm_eeprom";
+		qcom,slave-addr = <0x50>;
+
+		qcom,num-blocks = <4>;
+		qcom,page0 = <0 0x0 1 0x0 1 20>; // valid size, addr, addr_t, data, data_t, delay
+		qcom,poll0 = <0 0x0 1 0x0 1 20>;
+		qcom,mem0  = <0x100 0x00 1 0 1 0>; //EEPROM READ
+
+		qcom,page1 = <0 0x0 1 0x0 1 20>;
+		qcom,poll1 = <0 0x0 1 0x0 1 20>;
+		qcom,mem1  = <0x100 0x00 1 0 1 0>;
+
+		qcom,page2 = <0 0x0 1 0x0 1 20>;
+		qcom,poll2 = <0 0x0 1 0x0 1 20>;
+		qcom,mem2  = <0x100 0x00 1 0 1 0>;
+
+		qcom,page3 = <0 0x0 1 0x0 1 20>;
+		qcom,poll3 = <0 0x0 1 0x0 1 20>;
+		qcom,mem3  = <0xC6 0x00 1 0 1 0>;
+
+		cam_vio-supply = <&pm8110_l7>;
+		qcom,cam-vreg-name = "cam_vio";
+		qcom,cam-vreg-type = <0>;
+		qcom,cam-vreg-min-voltage = <1800000>;
+		qcom,cam-vreg-max-voltage = <1800000>;
+		qcom,cam-vreg-op-mode = <80000>;
+
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 20 0>;		//2.8V VCM
+		qcom,gpio-standby = <0>;		//CAM_STANDBY
+		qcom,gpio-req-tbl-num = <0>;
+		qcom,gpio-req-tbl-flags = <0>;
+		qcom,gpio-req-tbl-label = "CAM_STANDBY";
+
+		qcom,cam-power-seq-type = "sensor_vreg","sensor_gpio";
+		qcom,cam-power-seq-val = "cam_vio","sensor_gpio_standby";
+		qcom,cam-power-seq-cfg-val = <1 1>;
+		qcom,cam-power-seq-delay = <1 1>;
+	};
+
+
+	hi707: qcom,camera_rev_a@60 {
+		compatible = "qcom,hi707";
+		reg = <0x60>;
+		qcom,slave-id = <0x60 0x4 0xB8>;
+		qcom,csiphy-sd-index = <1>;
+		qcom,csid-sd-index = <1>;
+		qcom,mount-angle = <270>;
+		qcom,sensor-name = "hi707";
+
+		cam_vdig-supply = <&pm8110_l7>;             /* Dummy VDIG Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26 */
+		cam_vio-supply = <&pm8110_l7>;
+		cam_vana-supply = <&pm8110_l7>;            /* Dummy VANA Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26  */
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";
+		qcom,cam-vreg-type = <0 0 0>;
+		qcom,cam-vreg-min-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-max-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-op-mode = <200000 80000 80000>;
+		qcom,sensor-type = <1>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 14 0>,
+			<&msmgpio 15 0>,		//VT_CAM_RESET_N, GPIO 15
+			<&msmgpio 67 0>,		//VT_CAM_PWDN, GPIO=67
+                        <&msmgpio 85 0>;
+		qcom,gpio-reset = <1>;
+		qcom,gpio-standby = <2>;
+		qcom,gpio-vana = <3>;
+		qcom,gpio-req-tbl-num = <0 1 2 3>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK2", "CAM_RESET2", "CAM_STANDBY2", "MAIN_VANA_EN2";
+		qcom,csi-lane-assign = <0xe4>;
+		qcom,csi-lane-mask = <0x3>;
+		qcom,sensor-position = <1>;
+		qcom,sensor-mode = <1>;
+		status = "okay";
+		revision = "rev_a...";
+	};
+/* imx111 Rev A ~ */
+	imx111: qcom,camera_rev_a@34 {
+		compatible = "qcom,imx111";
+		reg = <0x34 0x0>;
+		qcom,slave-id = <0x34 0x0 0x111>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,actuator-src = <&actuator1>;
+		qcom,led-flash-src = <&led_flash0>;
+		qcom,eeprom-src = <&eeprom1>;
+		qcom,mount-angle = <90>;
+		qcom,sensor-name = "imx111";
+		cam_vdig-supply = <&pm8110_l7>;             /* Dummy VDIG Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26 */
+		cam_vio-supply = <&pm8110_l7>;
+		cam_vana-supply = <&pm8110_l7>;            /* Dummy VANA Setting, We never use this LDO7 for DIG, youngwook.song@lge.com, 2013.08.26  */
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";
+		qcom,cam-vreg-type = <0 0 0>;
+		qcom,cam-vreg-min-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-max-voltage = <1300000 1800000 2850000>;
+		qcom,cam-vreg-op-mode = <200000 8000 80000>;
+
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 13 0>,
+			<&msmgpio 21 0>,
+			<&msmgpio 20 0>,
+                        <&msmgpio 85 0>;
+		qcom,gpio-reset = <1>;
+		qcom,gpio-standby = <2>;
+		qcom,gpio-vana = <3>;
+		qcom,gpio-req-tbl-num = <0 1 2 3>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK", "CAM_RESET1", "CAM_STANDBY", "MAIN_VANA_EN";
+		qcom,csi-lane-assign = <0xe4>;
+		qcom,csi-lane-mask = <0x7>;
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <0>;
+		status = "okay";
+		revision = "rev_a...";
+	};
+
+};

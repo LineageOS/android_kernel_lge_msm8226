@@ -27,6 +27,24 @@ config MMC_PERF_PROFILING
 	  If you say Y here, support will be added for collecting
 	  performance numbers at the MMC Queue and Host layers.
 
+# LGE_CHANGE_S : bohyun.jung@lge.com 
+config LGE_MMC_DYNAMIC_LOG
+	bool "MMC debugging - enable logs through adb"
+	default n
+	help
+		If you say Y here, developers can enable/disable mmc logs through adb
+		by accessing /sys/module/mmc_core/parameters/debug_level 
+		ex. echo {debug_level} > /sys/module/mmc_core/parameters/debug_level
+# LGE_CHANGE_E : bohyun.jung@lge.com
+
+# LGE_CHANGE_S : ws.yang@lge.com
+config MACH_MSM8926_MMC_ABORT_RESCAN_IN_SUSPEND
+	bool "MMC abort rescan if suspend is triggered"
+	default n
+	help
+		If you say Y here, abort rescan if suspend is triggered
+# LGE_CHANGE_E : ws.yang@lge.com
+
 if MMC
 
 source "drivers/mmc/core/Kconfig"

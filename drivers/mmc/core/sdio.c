@@ -607,6 +607,8 @@ static int mmc_sdio_init_card(struct mmc_host *host, u32 ocr,
 	BUG_ON(!host);
 	WARN_ON(!host->claimed);
 
+	pr_debug("%s: %s\n", mmc_hostname(host), __func__);
+
 	/*
 	 * Inform the card of the voltage
 	 */
@@ -880,7 +882,7 @@ static int mmc_sdio_alive(struct mmc_host *host)
 /*
  * Card detection callback from host.
  */
-static void mmc_sdio_detect(struct mmc_host *host)
+static int mmc_sdio_detect(struct mmc_host *host)
 {
 	int err;
 
@@ -926,6 +928,7 @@ out:
 		mmc_power_off(host);
 		mmc_release_host(host);
 	}
+	return 0;
 }
 
 /*
@@ -973,6 +976,8 @@ static int mmc_sdio_resume(struct mmc_host *host)
 
 	BUG_ON(!host);
 	BUG_ON(!host->card);
+
+	pr_debug("%s: %s\n", mmc_hostname(host), __func__);
 
 	/* Basic card reinitialization. */
 	mmc_claim_host(host);
@@ -1027,6 +1032,8 @@ static int mmc_sdio_power_restore(struct mmc_host *host)
 
 	BUG_ON(!host);
 	BUG_ON(!host->card);
+
+	pr_debug("%s: %s\n", mmc_hostname(host), __func__);
 
 	mmc_claim_host(host);
 

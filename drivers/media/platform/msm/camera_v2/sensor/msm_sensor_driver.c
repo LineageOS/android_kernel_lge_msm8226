@@ -350,14 +350,15 @@ int32_t msm_sensor_driver_probe(void *setting)
 	}
 
 	/* Print slave info */
+	CDBG("cam sensor name %s", slave_info->sensor_name);
 	CDBG("camera id %d", slave_info->camera_id);
-	CDBG("slave_addr %x", slave_info->slave_addr);
-	CDBG("addr_type %d", slave_info->addr_type);
-	CDBG("sensor_id_reg_addr %x",
+	CDBG("cam slave_addr %x", slave_info->slave_addr);
+	CDBG("cam addr_type %d", slave_info->addr_type);
+	CDBG("cam sensor_id_reg_addr %x",
 		slave_info->sensor_id_info.sensor_id_reg_addr);
-	CDBG("sensor_id %x", slave_info->sensor_id_info.sensor_id);
-	CDBG("size %d", slave_info->power_setting_array.size);
-	CDBG("size down %d", slave_info->power_setting_array.size_down);
+	CDBG("cam sensor_id %x", slave_info->sensor_id_info.sensor_id);
+	CDBG("cam powersetting size %d", slave_info->power_setting_array.size);
+	CDBG("cam powersettinsize down %d", slave_info->power_setting_array.size_down);
 
 	if (slave_info->is_init_params_valid) {
 		CDBG("position %d",

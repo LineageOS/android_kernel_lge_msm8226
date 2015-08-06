@@ -1,0 +1,99 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_lgit_vid_dsv>;
+};
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_tovis_lm570hn1a_vid>;
+};
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_tovis_lm570hn1a_vid_rev_b>;
+	qcom,platform-lcd_dsv_enp_gpio = <&msmgpio 56 0>;
+};
+
+&dsi_lgit_vid_dsv {
+	qcom,cont-splash-enabled;
+	revision = "rev_0";
+};
+&dsi_tovis_lm570hn1a_vid {
+	qcom,cont-splash-enabled;
+	revision = "rev_a";
+};
+&dsi_tovis_lm570hn1a_vid_rev_b{
+	qcom,cont-splash-enabled;
+	revision = "rev_b...";
+};
+
+&soc {
+	qcom,mdss_dsi_lh470wx1_720p_video {
+		status = "ok";
+		revision = "rev_0";
+	};
+	qcom,mdss_dsi_tovis_lm570hn1a_video_dsv {
+		status = "ok";
+		revision = "rev_a";
+	};
+	qcom,mdss_dsi_tovis_lm570hn1a_video_dsv {
+		status = "ok";
+		revision = "rev_b...";
+	};
+
+	i2c@f9925000 { /* BLSP1 QUP3 */
+		lm3630@38 {
+			compatible = "backlight,lm3630";
+			status = "ok";
+			reg = <0x38>;
+			lm3630,lcd_bl_en = <&msmgpio 60 0x00>;
+			lm3630,max_current = <0x17>;
+			lm3630,min_brightness = <0x05>;
+			lm3630,default_brightness = <0x9C>;
+			lm3630,max_brightness = <0xFF>;
+			lm3630,enable_pwm = <0>;
+			lm3630,blmap_size = <256>;
+			lm3630,blmap = <
+				2 2 2 2 2 2 2 2 2 2
+				/*0% (10th)*/
+				4 4 4 4 4	4 4 4 5 5
+				5 5 5 5 5 5 6 6 6 6
+				6 6 6 6 7 7 7 7 7 7
+				7 7 8 8 8	8 8 8 9 9
+				9 9 9 9 9 9 10 10 10 10
+				/*20%(60th) */
+				10 10 10 10 11 11 11 12 12 12
+				13 13 13 14 14 14 15 15 16 16
+				17 17 18 18 19 19 20 20 21 21
+				22 22 23	23 24 24 25 25 26 26
+				27 27 27	28 28 28 29 29
+				/*40%(108th)*/
+				29 29
+				29 29 29 29 32 32 32 33 34 35
+				37 38 39 40 41 41 42 43 46 46
+				46 48 51 52 53 54 50 50 51 52
+				53 53 54 55 55 56 57 57 58 59
+				59 60 61 62 64 64 64 64 64
+				/*60% (159th)*/
+				64 64 64 65 66 67 67 67 67 69 71
+				73 74 75 76 77 78 79 80 81 82
+				83 84 85 86 87 88 89 90 91 92
+				94 96 98 100 102 104 106 108 110 112
+				114 116 117 118 119 120 120
+				/*80% (207th)*/
+				120 120 120
+				120 124 126 128 131 134 137 139 140 142
+				144 146 148 150 152 154 156 158 159 160
+				162 164 166 167 169 171 173 175 177 178
+				180 181 183 185 186 187 188 190 192 193
+				195 197 196 198 200 200>;
+		};
+	};
+};

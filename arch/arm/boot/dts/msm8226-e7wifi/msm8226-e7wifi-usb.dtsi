@@ -1,0 +1,40 @@
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+&usb_otg {
+	#address-cells = <0>;
+	interrupt-parent = <&usb_otg>;
+	interrupts = <0 1>;
+	#interrupt-cells = <1>;
+	interrupt-map-mask = <0xffffffff>;
+	interrupt-map = <0 &intc 0 134 0
+			1 &intc 0 140 0>;
+	interrupt-names = "core_irq", "async_irq";
+
+	qcom,hsusb-otg-mode = <3>;
+	vbus_otg-supply = <&pm8226_chg_otg>;
+	qcom,msm_otg-adc_tm = <&pm8226_adc_tm>;
+	lge,factory-cable-reset;
+	lge,hsusb-otg-adc-low-threshold = <100>;
+	lge,hsusb-otg-adc-high-threshold = <110>;
+
+	qcom,hsusb-otg-phy-init-seq =
+                        <0x44 0x80 0x67 0x81 0x37 0x82 0x13 0x83 0xffffffff>;
+	qcom,hsusb-otg-phy-init-host-seq =
+                        <0x44 0x80 0x68 0x81 0x24 0x82 0x13 0x83 0xffffffff>;
+};
+
+&android_usb {
+        qcom,streaming-func = "ecm", "mtp";
+	lge,factory-cable-reset;
+};

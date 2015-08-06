@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,33 +21,61 @@
 #include <linux/gpio.h>
 #include <linux/err.h>
 #include <linux/regulator/consumer.h>
+#include <mach/board_lge.h>
 
 #include "mdss.h"
 #include "mdss_panel.h"
 #include "mdss_dsi.h"
 #include "mdss_debug.h"
 
-struct device_node *of_get_child_by_name(const struct device_node *node,
-				const char *name)
+#ifdef CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL
+#if defined(CONFIG_MACH_MSM8926_X10_VZW) || defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR)
+#define DSV_VEE_EN 111
+#define DSV_VDD_EN 56	/* for Rev.B... */
+#endif
+#endif
+#if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+int has_dsv_f;
+#endif
+
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+int has_dsv_f;
+#if defined(CONFIG_LGE_LCD_DSV_CTRL)
+int dsv_control_enable = 0;
+#endif
+int dual_panel;
+#endif
+
+#if defined(CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+int mdss_dsi_lane_config(struct mdss_panel_data *pdata, int enable)
 {
-	struct device_node *child;
-
-	for_each_child_of_node(node, child)
-		if (child->name && (of_node_cmp(child->name, name) == 0))
-			break;
-	return child;
+	u32 tmp;
+	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+	if (pdata == NULL) {
+		pr_err("%s: Invalid input data\n", __func__);
+		return -EINVAL;
+	}
+	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata, panel_data);
+	tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
+	pr_info("%s+: dsi_lane_ctrl=0x%x\n", __func__, tmp);
+	if (enable) {
+		tmp |= DSI_LANE_CTRL_HS_MASK;
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+		wmb();
+	} else {
+		tmp &= DSI_LANE_CTRL_LP_MASK;
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+		wmb();
+	}
+	pr_info("%s-: current mode=%s dsi_lane_ctrl=0x%x\n", __func__, (enable ? "hs" : "lp"), tmp);
+	return 0;
 }
-EXPORT_SYMBOL(of_get_child_by_name);
-
-static int mdss_dsi_pinctrl_set_state(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
-					bool active);
+EXPORT_SYMBOL(mdss_dsi_lane_config);
+#endif
 
 static int mdss_dsi_regulator_init(struct platform_device *pdev)
 {
-	int rc = 0;
-
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-	int i = 0;
 
 	if (!pdev) {
 		pr_err("%s: invalid input\n", __func__);
@@ -60,243 +88,293 @@ static int mdss_dsi_regulator_init(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	for (i = 0; !rc && (i < DSI_MAX_PM); i++) {
-		rc = msm_dss_config_vreg(&pdev->dev,
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, 1);
-		if (rc)
-			pr_err("%s: failed to init vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-	}
-
-	return rc;
+	return msm_dss_config_vreg(&pdev->dev,
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 1);
 }
 
-static int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
+#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+#if defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+extern int is_shutdown;
+#endif
+static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 {
-	int ret = 0;
+	int ret;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-	int i = 0;
+
+	hw_rev_type hw_rev;
+	hw_rev = lge_get_board_revno();
 
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
 		ret = -EINVAL;
-		goto end;
+		goto error;
 	}
 
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
+	pr_info("%s: enable=%d\n", __func__, enable);
 
-	ret = mdss_dsi_panel_reset(pdata, 0);
-	if (ret) {
-		pr_warn("%s: Panel reset failed. rc=%d\n", __func__, ret);
-		ret = 0;
-	}
-
-	if (mdss_dsi_pinctrl_set_state(ctrl_pdata, false))
-		pr_debug("reset disable: pinctrl not enabled\n");
-
-	for (i = DSI_MAX_PM - 1; i >= 0; i--) {
-		/*
-		 * Core power module will be disabled when the
-		 * clocks are disabled
-		 */
-		if (DSI_CORE_PM == i)
-			continue;
-		ret = msm_dss_enable_vreg(
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, 0);
-		if (ret)
-			pr_err("%s: failed to disable vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-	}
-
-end:
-	return ret;
-}
-
-static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
-{
-	int ret = 0;
-	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-	int i = 0;
-
-	if (pdata == NULL) {
-		pr_err("%s: Invalid input data\n", __func__);
-		return -EINVAL;
-	}
-
-	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
-				panel_data);
-
-	for (i = 0; i < DSI_MAX_PM; i++) {
-		/*
-		 * Core power module will be enabled when the
-		 * clocks are enabled
-		 */
-		if (DSI_CORE_PM == i)
-			continue;
-		ret = msm_dss_enable_vreg(
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, 1);
-		if (ret) {
-			pr_err("%s: failed to enable vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-			goto error;
-		}
-	}
-
-	i--;
-
-	/*
-	 * If continuous splash screen feature is enabled, then we need to
-	 * request all the GPIOs that have already been configured in the
-	 * bootloader. This needs to be done irresepective of whether
-	 * the lp11_init flag is set or not.
-	 */
-	if (pdata->panel_info.cont_splash_enabled ||
-		!pdata->panel_info.mipi.lp11_init) {
-		if (mdss_dsi_pinctrl_set_state(ctrl_pdata, true))
-			pr_debug("reset enable: pinctrl not enabled\n");
-
-		ret = mdss_dsi_panel_reset(pdata, 1);
-		if (ret)
-			pr_err("%s: Panel reset failed. rc=%d\n",
-					__func__, ret);
-	}
-
-error:
-	if (ret) {
-		for (; i >= 0; i--)
-			msm_dss_enable_vreg(
-				ctrl_pdata->power_data[i].vreg_config,
-				ctrl_pdata->power_data[i].num_vreg, 0);
-	}
-	return ret;
-}
-
-static int mdss_dsi_panel_power_lp(struct mdss_panel_data *pdata, int enable)
-{
-	/* Panel power control when entering/exiting lp mode */
-	return 0;
-}
-
-static int mdss_dsi_panel_power_ulp(struct mdss_panel_data *pdata,
-	int enable)
-{
-	int ret = 0, i;
-	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-	u32 mode = enable ? DSS_REG_MODE_ULP : DSS_REG_MODE_ENABLE;
-
-	pr_debug("%s: +\n", __func__);
-	if (pdata == NULL) {
-		pr_err("%s: Invalid input data\n", __func__);
-		return -EINVAL;
-	}
-
-	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
-				panel_data);
-
-	for (i = 0; i < DSI_MAX_PM; i++) {
-		/*
-		 * Core power module need to be controlled along with
-		 * DSI core clocks.
-		 */
-		if (DSI_CORE_PM == i)
-			continue;
-		ret = msm_dss_config_vreg_opt_mode(
-			ctrl_pdata->power_data[i].vreg_config,
-			ctrl_pdata->power_data[i].num_vreg, mode);
-		if (ret) {
-			pr_err("%s: failed to config lp opt mode for %s.rc=%d\n",
-				__func__, __mdss_dsi_pm_name(i), ret);
-			goto error;
-		}
-	}
-
-error:
-	if (ret) {
-		mode = enable ? DSS_REG_MODE_ENABLE : DSS_REG_MODE_ULP;
-		for (; i >= 0; i--)
-			msm_dss_config_vreg_opt_mode(
-				ctrl_pdata->power_data[i].vreg_config,
-				ctrl_pdata->power_data[i].num_vreg, mode);
-	}
-	pr_debug("%s: -\n", __func__);
-	return ret;
-}
-
-int mdss_dsi_panel_power_ctrl(struct mdss_panel_data *pdata, int power_state)
-{
-	int ret;
-	struct mdss_panel_info *pinfo;
-	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-
-	if (pdata == NULL) {
-		pr_err("%s: Invalid input data\n", __func__);
-		return -EINVAL;
-	}
-
-	pinfo = &pdata->panel_info;
-	pr_debug("%pS-->%s: cur_power_state=%d req_power_state=%d\n",
-		__builtin_return_address(0), __func__,
-		pinfo->panel_power_state, power_state);
-
-	if (pinfo->panel_power_state == power_state) {
-		pr_debug("%s: no change needed\n", __func__);
-		return 0;
-	}
-
-	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
-				panel_data);
-
-	/*
-	 * If a dynamic mode switch is pending, the regulators should not
-	 * be turned off or on.
-	 */
 	if (pdata->panel_info.dynamic_switch_pending)
 		return 0;
 
-	switch (power_state) {
-	case MDSS_PANEL_POWER_OFF:
-		ret = mdss_dsi_panel_power_off(pdata);
-		break;
-	case MDSS_PANEL_POWER_ON:
-		if (mdss_dsi_is_panel_on_ulp(pdata))
-			ret = mdss_dsi_panel_power_ulp(pdata, false);
-		else if (mdss_dsi_is_panel_on_lp(pdata))
-			ret = mdss_dsi_panel_power_lp(pdata, false);
-		else
-			ret = mdss_dsi_panel_power_on(pdata);
-		break;
-	case MDSS_PANEL_POWER_LP1:
-		if (mdss_dsi_is_panel_on_ulp(pdata))
-			ret = mdss_dsi_panel_power_ulp(pdata, false);
-		else
-			ret = mdss_dsi_panel_power_lp(pdata, true);
-		/*
-		 * temp workaround until framework issues pertaining to LP2
-		 * power state transitions are fixed. For now, we internally
-		 * transition to LP2 state whenever core power is turned off
-		 * in LP1 state
-		 */
-	case MDSS_PANEL_POWER_LP2:
-		if (!ctrl_pdata->core_power) {
-			power_state = MDSS_PANEL_POWER_LP2;
-			ret = mdss_dsi_panel_power_ulp(pdata, true);
+	if (enable) {
+		ret = msm_dss_enable_vreg(
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 1);
+		if (ret) {
+			pr_err("%s:Failed to enable vregs.rc=%d\n",
+				__func__, ret);
+			goto error;
 		}
-		break;
-	default:
-		pr_err("%s: unknown panel power state requested (%d)\n",
-			__func__, power_state);
-		ret = -EINVAL;
+
+		if (pdata->panel_info.panel_power_on == 0) {
+			if (!pdata->panel_info.mipi.lp11_init) {
+				ret = mdss_dsi_panel_reset(pdata, 1);
+				if (ret) {
+					pr_err("%s: Panel reset failed. rc=%d\n",
+							__func__, ret);
+					if (msm_dss_enable_vreg(
+					ctrl_pdata->power_data.vreg_config,
+					ctrl_pdata->power_data.num_vreg, 0))
+						pr_err("Disable vregs failed\n");
+					goto error;
+				}
+			}
+		}
+	} else {
+		if (!has_dsv_f) { /* LGE Change */
+			ret = mdss_dsi_panel_reset(pdata, 0);
+			if (ret) {
+				pr_err("%s: Panel reset failed. rc=%d\n",
+						__func__, ret);
+				goto error;
+			}
+		}
+
+		/*Disable DSV (VDD, VEE)*/
+		#if defined(CONFIG_MACH_MSM8926_X10_VZW) || defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR)
+		mdelay(5);
+		if(lge_get_board_revno() >= HW_REV_B)
+		{
+			if (gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
+				gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
+				pr_info("DSV_VEE off(lcd_dsv_en_gpio). \n");
+			} else{
+				pr_err("%s:%d, lcd_dsv_en_gpio gpio not specified\n",
+							__func__, __LINE__);
+			}
+			mdelay(10);
+		}
+		if (gpio_is_valid(ctrl_pdata->lcd_dsv_enp_gpio)) {
+			gpio_set_value((ctrl_pdata->lcd_dsv_enp_gpio), 0);
+			pr_info("DSV_VDD off(disp_enp_gpio). \n");
+		} else{
+			pr_err("%s:%d, disp_enp_gpio gpio not specified\n",
+							__func__, __LINE__);
+		}
+		#endif
+
+		mdelay(10);
+		ret = msm_dss_enable_vreg(
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 0);
+		if (ret) {
+			pr_err("%s: Failed to disable vregs.rc=%d\n",
+				__func__, ret);
+		}
 	}
 
-	if (!ret)
-		pinfo->panel_power_state = power_state;
-
+error:
 	return ret;
 }
+#else
+static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
+{
+	int ret;
+	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+
+	hw_rev_type hw_rev;
+	hw_rev = lge_get_board_revno();
+
+	if (pdata == NULL) {
+		pr_err("%s: Invalid input data\n", __func__);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
+				panel_data);
+	pr_info("%s: enable=%d\n", __func__, enable);
+
+	if (pdata->panel_info.dynamic_switch_pending)
+		return 0;
+
+	if (enable) {
+#ifdef CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL
+#if defined(CONFIG_MACH_MSM8926_X10_VZW) || defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR) || defined(CONFIG_MACH_MSM8926_JAGN_KR) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_JAG3GSS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_JAG3GDS_GLOBAL_COM)
+	if (HW_REV_0 == hw_rev)
+#endif
+	{
+		if (!has_dsv_f && pdata->panel_info.panel_power_on == 0) { /* LGE Change */
+			if (gpio_get_value(ctrl_pdata->rst_gpio)) {
+				printk("mdss_dsi_panel_reset called \n");
+				mdss_dsi_panel_reset(pdata, 0);
+				mdelay(10);
+			}
+		}
+	}
+#endif
+
+#ifdef CONFIG_MACH_MSM8926_E9LTE
+		lge_lvds_1v8_power(pdata, 1);
+#endif
+
+		printk("power_data.num_gpio=%x,power_data.num_vreg=%x\n",ctrl_pdata->power_data.num_gpio, ctrl_pdata->power_data.num_vreg);
+		ret = msm_dss_enable_vreg(
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 1);
+
+		if (ret) {
+			pr_err("%s:Failed to enable vregs.rc=%d\n",
+				__func__, ret);
+			goto error;
+		}
+
+#if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL)
+		if (!has_dsv_f && !pdata->panel_info.mipi.lp11_init) {/* LGE Change */
+			ret = mdss_dsi_panel_reset(pdata, 1);
+			if (ret) {
+				pr_err("%s: Panel reset failed. rc=%d\n",
+						__func__, ret);
+				if (msm_dss_enable_vreg(
+				ctrl_pdata->power_data.vreg_config,
+				ctrl_pdata->power_data.num_vreg, 0))
+				pr_err("Disable vregs failed\n");
+				goto error;
+			}
+		}
+#elif defined(CONFIG_LGE_MIPI_DSI_LGD_NT35521_WXGA)
+		if (!pdata->panel_info.mipi.lp11_init) {
+			nt35521_panel_power(pdata, 1);
+			ret = mdss_dsi_panel_reset(pdata, 1);
+			if (ret) {
+				pr_err("%s: Panel reset failed. rc=%d\n",
+						__func__, ret);
+				if (msm_dss_enable_vreg(
+				ctrl_pdata->power_data.vreg_config,
+				ctrl_pdata->power_data.num_vreg, 0))
+					pr_err("Disable vregs failed\n");
+				goto error;
+			}
+		}
+#elif defined(CONFIG_LGE_MIPI_DSI_LGD_LVDS_WXGA)
+		if (!pdata->panel_info.mipi.lp11_init) {
+			lge_lvds_panel_power(pdata, 1);
+			ret = mdss_dsi_panel_reset(pdata, 1);
+			if (ret) {
+				pr_err("%s: Panel reset failed. rc=%d\n",
+						__func__, ret);
+				if (msm_dss_enable_vreg(
+				ctrl_pdata->power_data.vreg_config,
+				ctrl_pdata->power_data.num_vreg, 0))
+					pr_err("Disable vregs failed\n");
+				goto error;
+			}
+		}
+#elif defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+		if (!has_dsv_f && !pdata->panel_info.mipi.lp11_init) {
+			ret = mdss_dsi_panel_reset(pdata, 1);
+			if (ret) {
+				pr_err("%s: Panel reset failed. rc=%d\n",
+						__func__, ret);
+				if (msm_dss_enable_vreg(
+				ctrl_pdata->power_data.vreg_config,
+				ctrl_pdata->power_data.num_vreg, 0))
+					pr_err("Disable vregs failed\n");
+				goto error;
+			}
+		}
+#else
+#if defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+		if (pdata->panel_info.panel_power_on == 0) /* qct original */
+			mdss_dsi_panel_reset(pdata, 1);
+#else
+		if (!pdata->panel_info.mipi.lp11_init) {
+			ret = mdss_dsi_panel_reset(pdata, 1);
+			if (ret) {
+				pr_err("%s: Panel reset failed. rc=%d\n",
+						__func__, ret);
+				if (msm_dss_enable_vreg(
+				ctrl_pdata->power_data.vreg_config,
+				ctrl_pdata->power_data.num_vreg, 0))
+					pr_err("Disable vregs failed\n");
+				goto error;
+			}
+		}
+#endif
+#endif
+
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+		pr_info("%s: DSV FD Enable", __func__);
+		gpio_direction_output((ctrl_pdata->disp_fd_gpio), 1);
+		gpio_set_value((ctrl_pdata->disp_fd_gpio), 1);
+
+		pr_info("%s: LCD IOVCC Enable", __func__);
+		gpio_direction_output((ctrl_pdata->disp_iovcc_gpio), 1);
+		gpio_set_value((ctrl_pdata->disp_iovcc_gpio), 1);
+#endif
+	} else {
+#if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
+		if (!has_dsv_f) /* LGE Change */
+			mdss_dsi_panel_reset(pdata, 0);
+#elif defined(CONFIG_LGE_MIPI_DSI_LGD_NT35521_WXGA)
+		mdelay(120);
+		mdss_dsi_panel_reset(pdata, 0);
+		nt35521_panel_power(pdata, 0);
+#elif defined CONFIG_LGE_MIPI_DSI_LGD_LVDS_WXGA				/* E10Wifi */
+		mdelay(20);
+		mdss_dsi_panel_reset(pdata, 0);
+		if (lge_lvds_panel_power(pdata, 0)) {
+			pr_err("%s:Failed to disable lge_lvds_panel_power!\n", __func__);
+				return 0;
+		}
+#elif defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+		if (!has_dsv_f) /* LGE Change */
+			mdss_dsi_panel_reset(pdata, 0);
+#else
+#if !defined(CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL)
+		ret = mdss_dsi_panel_reset(pdata, 0);
+		if (ret) {
+			pr_err("%s: Panel reset failed. rc=%d\n",
+					__func__, ret);
+			goto error;
+		}
+#endif
+#endif
+		ret = msm_dss_enable_vreg(
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 0);
+
+#ifdef CONFIG_MACH_MSM8926_E9LTE
+		lge_lvds_1v8_power(pdata, 0);
+#endif
+
+		if (ret) {
+			pr_err("%s: Failed to disable vregs.rc=%d\n",
+				__func__, ret);
+		}
+
+#if defined(CONFIG_LGE_MIPI_DSI_LGD_NT35521_WXGA)
+		mdelay(1);
+#endif
+
+	}
+
+error:
+	return ret;
+}
+#endif
 
 static void mdss_dsi_put_dt_vreg_data(struct device *dev,
 	struct dss_module_power *module_power)
@@ -314,13 +392,11 @@ static void mdss_dsi_put_dt_vreg_data(struct device *dev,
 }
 
 static int mdss_dsi_get_dt_vreg_data(struct device *dev,
-	struct dss_module_power *mp, enum dsi_pm_type module)
+	struct dss_module_power *mp)
 {
 	int i = 0, rc = 0;
 	u32 tmp = 0;
 	struct device_node *of_node = NULL, *supply_node = NULL;
-	const char *pm_supply_name = NULL;
-	struct device_node *supply_root_node = NULL;
 
 	if (!dev || !mp) {
 		pr_err("%s: invalid input\n", __func__);
@@ -331,17 +407,11 @@ static int mdss_dsi_get_dt_vreg_data(struct device *dev,
 	of_node = dev->of_node;
 
 	mp->num_vreg = 0;
-	pm_supply_name = __mdss_dsi_pm_supply_node_name(module);
-	supply_root_node = of_get_child_by_name(of_node, pm_supply_name);
-	if (!supply_root_node) {
-		pr_err("no supply entry present\n");
-		goto novreg;
+	for_each_child_of_node(of_node, supply_node) {
+		if (!strncmp(supply_node->name, "qcom,platform-supply-entry",
+						26))
+			++mp->num_vreg;
 	}
-
-	for_each_child_of_node(supply_root_node, supply_node) {
-		mp->num_vreg++;
-	}
-
 	if (mp->num_vreg == 0) {
 		pr_debug("%s: no vreg\n", __func__);
 		goto novreg;
@@ -357,126 +427,109 @@ static int mdss_dsi_get_dt_vreg_data(struct device *dev,
 		goto error;
 	}
 
-	for_each_child_of_node(supply_root_node, supply_node) {
-		const char *st = NULL;
-		/* vreg-name */
-		rc = of_property_read_string(supply_node,
-			"qcom,supply-name", &st);
-		if (rc) {
-			pr_err("%s: error reading name. rc=%d\n",
-				__func__, rc);
-			goto error;
-		}
-		snprintf(mp->vreg_config[i].vreg_name,
-			ARRAY_SIZE((mp->vreg_config[i].vreg_name)), "%s", st);
-		/* vreg-min-voltage */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-min-voltage", &tmp);
-		if (rc) {
-			pr_err("%s: error reading min volt. rc=%d\n",
-				__func__, rc);
-			goto error;
-		}
-		mp->vreg_config[i].min_voltage = tmp;
+	for_each_child_of_node(of_node, supply_node) {
+		if (!strncmp(supply_node->name, "qcom,platform-supply-entry",
+						26)) {
+			const char *st = NULL;
+			/* vreg-name */
+			rc = of_property_read_string(supply_node,
+				"qcom,supply-name", &st);
+			if (rc) {
+				pr_err("%s: error reading name. rc=%d\n",
+					__func__, rc);
+				goto error;
+			}
+			snprintf(mp->vreg_config[i].vreg_name,
+				ARRAY_SIZE((mp->vreg_config[i].vreg_name)),
+				"%s", st);
+			/* vreg-min-voltage */
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-min-voltage", &tmp);
+			if (rc) {
+				pr_err("%s: error reading min volt. rc=%d\n",
+					__func__, rc);
+				goto error;
+			}
+			mp->vreg_config[i].min_voltage = tmp;
 
-		/* vreg-max-voltage */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-max-voltage", &tmp);
-		if (rc) {
-			pr_err("%s: error reading max volt. rc=%d\n",
-				__func__, rc);
-			goto error;
-		}
-		mp->vreg_config[i].max_voltage = tmp;
+			/* vreg-max-voltage */
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-max-voltage", &tmp);
+			if (rc) {
+				pr_err("%s: error reading max volt. rc=%d\n",
+					__func__, rc);
+				goto error;
+			}
+			mp->vreg_config[i].max_voltage = tmp;
 
-		/* enable-load */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-enable-load", &tmp);
-		if (rc) {
-			pr_err("%s: error reading enable load. rc=%d\n",
-				__func__, rc);
-			goto error;
-		}
-		mp->vreg_config[i].load[DSS_REG_MODE_ENABLE] = tmp;
+			/* enable-load */
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-enable-load", &tmp);
+			if (rc) {
+				pr_err("%s: error reading enable load. rc=%d\n",
+					__func__, rc);
+				goto error;
+			}
+			mp->vreg_config[i].enable_load = tmp;
 
-		/* disable-load */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-disable-load", &tmp);
-		if (rc) {
-			pr_err("%s: error reading disable load. rc=%d\n",
-				__func__, rc);
-			goto error;
-		}
-		mp->vreg_config[i].load[DSS_REG_MODE_DISABLE] = tmp;
+			/* disable-load */
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-disable-load", &tmp);
+			if (rc) {
+				pr_err("%s: error reading disable load. rc=%d\n",
+					__func__, rc);
+				goto error;
+			}
+			mp->vreg_config[i].disable_load = tmp;
 
-		/* ulp-load */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-ulp-load", &tmp);
-		if (rc) {
-			pr_debug("%s: error reading disable load. rc=%d\n",
-				__func__, rc);
-			rc = 0;
-		} else {
-			pr_debug("%s: ulp_load for %s=%d\n", __func__,
-				mp->vreg_config[i].vreg_name, tmp);
-			mp->vreg_config[i].load[DSS_REG_MODE_ULP] = tmp;
-		}
+			/* pre-sleep */
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-pre-on-sleep", &tmp);
+			if (rc) {
+				pr_debug("%s: error reading supply pre sleep value. rc=%d\n",
+					__func__, rc);
+			}
+			mp->vreg_config[i].pre_on_sleep = (!rc ? tmp : 0);
 
-		/* pre-sleep */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-pre-on-sleep", &tmp);
-		if (rc) {
-			pr_debug("%s: error reading supply pre sleep value. rc=%d\n",
-				__func__, rc);
-			rc = 0;
-		} else {
-			mp->vreg_config[i].pre_on_sleep = tmp;
-		}
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-pre-off-sleep", &tmp);
+			if (rc) {
+				pr_debug("%s: error reading supply pre sleep value. rc=%d\n",
+					__func__, rc);
+			}
+			mp->vreg_config[i].pre_off_sleep = (!rc ? tmp : 0);
 
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-pre-off-sleep", &tmp);
-		if (rc) {
-			pr_debug("%s: error reading supply pre sleep value. rc=%d\n",
-				__func__, rc);
-			rc = 0;
-		} else {
-			mp->vreg_config[i].pre_off_sleep = tmp;
-		}
+			/* post-sleep */
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-post-on-sleep", &tmp);
+			if (rc) {
+				pr_debug("%s: error reading supply post sleep value. rc=%d\n",
+					__func__, rc);
+			}
+			mp->vreg_config[i].post_on_sleep = (!rc ? tmp : 0);
 
-		/* post-sleep */
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-post-on-sleep", &tmp);
-		if (rc) {
-			pr_debug("%s: error reading supply post sleep value. rc=%d\n",
-				__func__, rc);
-			rc = 0;
-		} else {
-			mp->vreg_config[i].post_on_sleep = tmp;
-		}
+			rc = of_property_read_u32(supply_node,
+				"qcom,supply-post-off-sleep", &tmp);
+			if (rc) {
+				pr_debug("%s: error reading supply post sleep value. rc=%d\n",
+					__func__, rc);
+			}
+			mp->vreg_config[i].post_off_sleep = (!rc ? tmp : 0);
 
-		rc = of_property_read_u32(supply_node,
-			"qcom,supply-post-off-sleep", &tmp);
-		if (rc) {
-			pr_debug("%s: error reading supply post sleep value. rc=%d\n",
-				__func__, rc);
-			rc = 0;
-		} else {
-			mp->vreg_config[i].post_off_sleep = tmp;
+			pr_debug("%s: %s min=%d, max=%d, enable=%d, disable=%d, preonsleep=%d, postonsleep=%d, preoffsleep=%d, postoffsleep=%d\n",
+				__func__,
+				mp->vreg_config[i].vreg_name,
+				mp->vreg_config[i].min_voltage,
+				mp->vreg_config[i].max_voltage,
+				mp->vreg_config[i].enable_load,
+				mp->vreg_config[i].disable_load,
+				mp->vreg_config[i].pre_on_sleep,
+				mp->vreg_config[i].post_on_sleep,
+				mp->vreg_config[i].pre_off_sleep,
+				mp->vreg_config[i].post_off_sleep
+				);
+			++i;
 		}
-
-		pr_debug("%s: %s min=%d, max=%d, enable=%d, disable=%d, preonsleep=%d, postonsleep=%d, preoffsleep=%d, postoffsleep=%d\n",
-			__func__,
-			mp->vreg_config[i].vreg_name,
-			mp->vreg_config[i].min_voltage,
-			mp->vreg_config[i].max_voltage,
-			mp->vreg_config[i].load[DSS_REG_MODE_ENABLE],
-			mp->vreg_config[i].load[DSS_REG_MODE_DISABLE],
-			mp->vreg_config[i].pre_on_sleep,
-			mp->vreg_config[i].post_on_sleep,
-			mp->vreg_config[i].pre_off_sleep,
-			mp->vreg_config[i].post_off_sleep
-			);
-		++i;
 	}
 
 	return rc;
@@ -515,7 +568,7 @@ static int mdss_dsi_get_panel_cfg(char *panel_cfg)
 	return rc;
 }
 
-static int mdss_dsi_off(struct mdss_panel_data *pdata, int power_state)
+static int mdss_dsi_off(struct mdss_panel_data *pdata)
 {
 	int ret = 0;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
@@ -526,25 +579,20 @@ static int mdss_dsi_off(struct mdss_panel_data *pdata, int power_state)
 		return -EINVAL;
 	}
 
+	if (!pdata->panel_info.panel_power_on) {
+		pr_warn("%s:%d Panel already off.\n", __func__, __LINE__);
+		return 0;
+	}
+
+	pdata->panel_info.panel_power_on = 0;
+
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
 	mutex_lock(&ctrl_pdata->mutex);
 	panel_info = &ctrl_pdata->panel_data.panel_info;
-
-	pr_debug("%s+: ctrl=%p ndx=%d power_state=%d\n",
-		__func__, ctrl_pdata, ctrl_pdata->ndx, power_state);
-
-	if (power_state == panel_info->panel_power_state) {
-		pr_debug("%s: No change in power state %d -> %d\n", __func__,
-			panel_info->panel_power_state, power_state);
-		goto end;
-	}
-
-	if (mdss_panel_is_power_on(power_state)) {
-		pr_debug("%s: dsi_off with panel always on\n", __func__);
-		goto panel_power_ctrl;
-	}
+	printk("%s+: ctrl=%p ndx=%d\n", __func__,
+				ctrl_pdata, ctrl_pdata->ndx);
 
 	if (pdata->panel_info.type == MIPI_CMD_PANEL)
 		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 1);
@@ -557,11 +605,11 @@ static int mdss_dsi_off(struct mdss_panel_data *pdata, int power_state)
 
 	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
 
-panel_power_ctrl:
-	ret = mdss_dsi_panel_power_ctrl(pdata, power_state);
+	ret = mdss_dsi_panel_power_on(pdata, 0);
 	if (ret) {
+		mutex_unlock(&ctrl_pdata->mutex);
 		pr_err("%s: Panel power off failed\n", __func__);
-		goto end;
+		return ret;
 	}
 
 	if (panel_info->dynamic_fps
@@ -569,10 +617,252 @@ panel_power_ctrl:
 	    && (panel_info->new_fps != panel_info->mipi.frame_rate))
 		panel_info->mipi.frame_rate = panel_info->new_fps;
 
-end:
 	mutex_unlock(&ctrl_pdata->mutex);
-	pr_debug("%s-:\n", __func__);
+	pr_info("%s-:\n", __func__);
 
+	return ret;
+}
+
+static void __mdss_dsi_ctrl_setup(struct mdss_panel_data *pdata)
+{
+	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+	struct mdss_panel_info *pinfo;
+	struct mipi_panel_info *mipi;
+	u32 clk_rate;
+	u32 hbp, hfp, vbp, vfp, hspw, vspw, width, height;
+	u32 ystride, bpp, data, dst_bpp;
+	u32 dummy_xres, dummy_yres;
+	u32 hsync_period, vsync_period;
+
+	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
+				panel_data);
+
+	pinfo = &pdata->panel_info;
+	clk_rate = pdata->panel_info.clk_rate;
+	clk_rate = min(clk_rate, pdata->panel_info.clk_max);
+
+	dst_bpp = pdata->panel_info.fbc.enabled ?
+		(pdata->panel_info.fbc.target_bpp) : (pinfo->bpp);
+
+	hbp = mult_frac(pdata->panel_info.lcdc.h_back_porch, dst_bpp,
+			pdata->panel_info.bpp);
+	hfp = mult_frac(pdata->panel_info.lcdc.h_front_porch, dst_bpp,
+			pdata->panel_info.bpp);
+	vbp = mult_frac(pdata->panel_info.lcdc.v_back_porch, dst_bpp,
+			pdata->panel_info.bpp);
+	vfp = mult_frac(pdata->panel_info.lcdc.v_front_porch, dst_bpp,
+			pdata->panel_info.bpp);
+	hspw = mult_frac(pdata->panel_info.lcdc.h_pulse_width, dst_bpp,
+			pdata->panel_info.bpp);
+	vspw = pdata->panel_info.lcdc.v_pulse_width;
+	width = mult_frac(pdata->panel_info.xres, dst_bpp,
+			pdata->panel_info.bpp);
+	height = pdata->panel_info.yres;
+
+	if (pdata->panel_info.type == MIPI_VIDEO_PANEL) {
+		dummy_xres = pdata->panel_info.lcdc.xres_pad;
+		dummy_yres = pdata->panel_info.lcdc.yres_pad;
+	}
+
+	vsync_period = vspw + vbp + height + dummy_yres + vfp;
+	hsync_period = hspw + hbp + width + dummy_xres + hfp;
+
+	mipi = &pdata->panel_info.mipi;
+	if (pdata->panel_info.type == MIPI_VIDEO_PANEL) {
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x24,
+			((hspw + hbp + width + dummy_xres) << 16 |
+			(hspw + hbp)));
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x28,
+			((vspw + vbp + height + dummy_yres) << 16 |
+			(vspw + vbp)));
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x2C,
+				((vsync_period - 1) << 16)
+				| (hsync_period - 1));
+
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x30, (hspw << 16));
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x34, 0);
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x38, (vspw << 16));
+
+	} else {		/* command mode */
+		if (mipi->dst_format == DSI_CMD_DST_FORMAT_RGB888)
+			bpp = 3;
+		else if (mipi->dst_format == DSI_CMD_DST_FORMAT_RGB666)
+			bpp = 3;
+		else if (mipi->dst_format == DSI_CMD_DST_FORMAT_RGB565)
+			bpp = 2;
+		else
+			bpp = 3;	/* Default format set to RGB888 */
+
+		ystride = width * bpp + 1;
+
+		/* DSI_COMMAND_MODE_MDP_STREAM_CTRL */
+		data = (ystride << 16) | (mipi->vc << 8) | DTYPE_DCS_LWRITE;
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x60, data);
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x58, data);
+
+		/* DSI_COMMAND_MODE_MDP_STREAM_TOTAL */
+		data = height << 16 | width;
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x64, data);
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x5C, data);
+	}
+}
+
+static inline bool __mdss_dsi_ulps_feature_enabled(
+	struct mdss_panel_data *pdata)
+{
+	return pdata->panel_info.ulps_feature_enabled;
+}
+
+static int mdss_dsi_ulps_config_sub(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
+	int enable)
+{
+	int ret = 0;
+	struct mdss_panel_data *pdata = NULL;
+	struct mipi_panel_info *pinfo = NULL;
+	u32 lane_status = 0;
+	u32 active_lanes = 0;
+
+	if (!ctrl_pdata) {
+		pr_err("%s: invalid input\n", __func__);
+		return -EINVAL;
+	}
+
+	pdata = &ctrl_pdata->panel_data;
+	if (!pdata) {
+		pr_err("%s: Invalid panel data\n", __func__);
+		return -EINVAL;
+	}
+	pinfo = &pdata->panel_info.mipi;
+
+	if (!__mdss_dsi_ulps_feature_enabled(pdata)) {
+		pr_debug("%s: ULPS feature not supported. enable=%d\n",
+			__func__, enable);
+		return -ENOTSUPP;
+	}
+
+	if (enable && !ctrl_pdata->ulps) {
+		/* No need to configure ULPS mode when entering suspend state */
+		if (!pdata->panel_info.panel_power_on) {
+			pr_err("%s: panel off. returning\n", __func__);
+			goto error;
+		}
+
+		if (__mdss_dsi_clk_enabled(ctrl_pdata, DSI_LINK_CLKS)) {
+			pr_err("%s: cannot enter ulps mode if dsi clocks are on\n",
+				__func__);
+			ret = -EPERM;
+			goto error;
+		}
+
+		ret = mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 1);
+		if (ret) {
+			pr_err("%s: Failed to enable clocks. rc=%d\n",
+				__func__, ret);
+			goto error;
+		}
+
+		/*
+		 * ULPS Entry Request.
+		 * Wait for a short duration to ensure that the lanes
+		 * enter ULP state.
+		 */
+		MIPI_OUTP(ctrl_pdata->ctrl_base + 0x0AC, 0x01F);
+		usleep(100);
+
+		/* Check to make sure that all active data lanes are in ULPS */
+		if (pinfo->data_lane3)
+			active_lanes |= BIT(11);
+		if (pinfo->data_lane2)
+			active_lanes |= BIT(10);
+		if (pinfo->data_lane1)
+			active_lanes |= BIT(9);
+		if (pinfo->data_lane0)
+			active_lanes |= BIT(8);
+		active_lanes |= BIT(12); /* clock lane */
+		lane_status = MIPI_INP(ctrl_pdata->ctrl_base + 0xA8);
+		if (lane_status & active_lanes) {
+			pr_err("%s: ULPS entry req failed. Lane status=0x%08x\n",
+				__func__, lane_status);
+			ret = -EINVAL;
+			mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
+			goto error;
+		}
+
+		/* Enable MMSS DSI Clamps */
+		MIPI_OUTP(ctrl_pdata->mmss_misc_io.base + 0x14, 0x3FF);
+		MIPI_OUTP(ctrl_pdata->mmss_misc_io.base + 0x14, 0x83FF);
+
+		wmb();
+
+		MIPI_OUTP(ctrl_pdata->mmss_misc_io.base + 0x108, 0x1);
+		/* disable DSI controller */
+		mdss_dsi_controller_cfg(0, pdata);
+
+		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
+		ctrl_pdata->ulps = true;
+	} else if (ctrl_pdata->ulps) {
+		ret = mdss_dsi_clk_ctrl(ctrl_pdata, DSI_BUS_CLKS, 1);
+		if (ret) {
+			pr_err("%s: Failed to enable bus clocks. rc=%d\n",
+				__func__, ret);
+			goto error;
+		}
+
+		MIPI_OUTP(ctrl_pdata->mmss_misc_io.base + 0x108, 0x0);
+		mdss_dsi_phy_init(pdata);
+
+		__mdss_dsi_ctrl_setup(pdata);
+		mdss_dsi_sw_reset(pdata);
+		mdss_dsi_host_init(pdata);
+		mdss_dsi_op_mode_config(pdata->panel_info.mipi.mode,
+			pdata);
+
+		/*
+		 * ULPS Entry Request. This is needed because, after power
+		 * collapse and reset, the DSI controller resets back to
+		 * idle state and not ULPS.
+		 * Wait for a short duration to ensure that the lanes
+		 * enter ULP state.
+		 */
+		MIPI_OUTP(ctrl_pdata->ctrl_base + 0x0AC, 0x01F);
+		usleep(100);
+
+		/* Disable MMSS DSI Clamps */
+		MIPI_OUTP(ctrl_pdata->mmss_misc_io.base + 0x14, 0x3FF);
+		MIPI_OUTP(ctrl_pdata->mmss_misc_io.base + 0x14, 0x0);
+
+		ret = mdss_dsi_clk_ctrl(ctrl_pdata, DSI_LINK_CLKS, 1);
+		if (ret) {
+			pr_err("%s: Failed to enable link clocks. rc=%d\n",
+				__func__, ret);
+			mdss_dsi_clk_ctrl(ctrl_pdata, DSI_BUS_CLKS, 0);
+			goto error;
+		}
+
+		/*
+		 * ULPS Exit Request
+		 * Hardware requirement is to wait for at least 1ms
+		 */
+		MIPI_OUTP(ctrl_pdata->ctrl_base + 0x0AC, 0x1F00);
+		usleep(1000);
+		MIPI_OUTP(ctrl_pdata->ctrl_base + 0x0AC, 0x0);
+
+		/*
+		 * Wait for a short duration before enabling
+		 * data transmission
+		 */
+		usleep(100);
+
+		lane_status = MIPI_INP(ctrl_pdata->ctrl_base + 0xA8);
+		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_LINK_CLKS, 0);
+		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_BUS_CLKS, 0);
+		ctrl_pdata->ulps = false;
+	}
+
+	pr_debug("%s: DSI lane status = 0x%08x. Ulps %s\n", __func__,
+		lane_status, enable ? "enabled" : "disabled");
+
+error:
 	return ret;
 }
 
@@ -601,6 +891,37 @@ static int mdss_dsi_update_panel_config(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 
 	return ret;
 }
+static int mdss_dsi_ulps_config(struct mdss_dsi_ctrl_pdata *ctrl,
+	int enable)
+{
+	int rc;
+	struct mdss_dsi_ctrl_pdata *mctrl = NULL;
+
+	if (&ctrl->mmss_misc_io == NULL) {
+		pr_err("%s: mmss_misc_io is NULL. ULPS not valid\n", __func__);
+		return -EINVAL;
+	}
+
+	if (mdss_dsi_is_slave_ctrl(ctrl)) {
+		mctrl = mdss_dsi_get_master_ctrl();
+		if (!mctrl) {
+			pr_err("%s: Unable to get master control\n", __func__);
+			return -EINVAL;
+		}
+	}
+
+	if (mctrl) {
+		pr_debug("%s: configuring ulps (%s) for master ctrl%d\n",
+			__func__, (enable ? "on" : "off"), ctrl->ndx);
+		rc = mdss_dsi_ulps_config_sub(mctrl, enable);
+		if (rc)
+			return rc;
+	}
+
+	pr_debug("%s: configuring ulps (%s) for ctrl%d\n",
+		__func__, (enable ? "on" : "off"), ctrl->ndx);
+	return mdss_dsi_ulps_config_sub(ctrl, enable);
+}
 
 int mdss_dsi_on(struct mdss_panel_data *pdata)
 {
@@ -608,136 +929,264 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 	struct mdss_panel_info *pinfo;
 	struct mipi_panel_info *mipi;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-	int cur_power_state;
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+	int rc = 0;
+#endif
 
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
 
+	if (pdata->panel_info.panel_power_on) {
+		pr_warn("%s:%d Panel already on.\n", __func__, __LINE__);
+		return 0;
+	}
+
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
-	cur_power_state = pdata->panel_info.panel_power_state;
-	pr_debug("%s+: ctrl=%p ndx=%d cur_power_state=%d\n", __func__,
-		ctrl_pdata, ctrl_pdata->ndx, cur_power_state);
+	pr_info("%s+: ctrl=%p ndx=%d\n",
+				__func__, ctrl_pdata, ctrl_pdata->ndx);
 
 	pinfo = &pdata->panel_info;
 	mipi = &pdata->panel_info.mipi;
 
-	if (mdss_dsi_is_panel_on_interactive(pdata)) {
-		pr_debug("%s: panel already on\n", __func__);
-		goto end;
-	}
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+#if defined(CONFIG_LGE_LCD_DSV_CTRL)
+	{
+		/* dsv_control_enable FLAG is for BLOCKING the DSV GPIO Control except Display	*/
+		/* After LCD On, DSV control is NOT available like "is_available_dsv_control = 0"  */
+		dsv_control_enable = 0;
+		pr_info("%s : dsv_control is not allowed after this time. dsv_control_enable = [%d]\n", __func__, dsv_control_enable);
 
-	ret = mdss_dsi_panel_power_ctrl(pdata, MDSS_PANEL_POWER_ON);
+		/* set dsv status to be off in order to reconfirm dsv status is off */
+#if defined(CONFIG_MACH_MSM8926_E2_MPCS_US) || defined(CONFIG_MACH_MSM8926_E2_VTR_CA) || defined(CONFIG_MACH_MSM8926_E2_SPR_US)
+		/* 1. set GPIO (60) and (64) to be LOW as DSV Enable GPIO (OFF). */
+		/* 2. do not use P-Mode GPIO (64) */
+		rc = gpio_tlmm_config(GPIO_CFG((ctrl_pdata->disp_en_1st_gpio),
+									0,
+									GPIO_CFG_OUTPUT,
+									GPIO_CFG_PULL_DOWN,
+									GPIO_CFG_2MA),
+									GPIO_CFG_ENABLE);
+		if (rc) {
+			pr_err("%s: unable to config tlmm = %d\n",
+					__func__, (ctrl_pdata->disp_en_1st_gpio));
+		}
+		pr_info("%s: gpio_tlmm_config(%d), rc = %d\n", __func__, (ctrl_pdata->disp_en_1st_gpio), rc);
+
+		gpio_set_value((ctrl_pdata->disp_en_1st_gpio), 0);
+		pr_info("%s: dsv(%d) off", __func__, (ctrl_pdata->disp_en_1st_gpio));
+		gpio_set_value((ctrl_pdata->disp_en_2nd_gpio), 0);
+		pr_info("%s: dsv(%d) off", __func__, (ctrl_pdata->disp_en_2nd_gpio));
+#elif defined(CONFIG_MACH_MSM8926_E2_VZW)
+		/* 1. set GPIO (64) to be LOW as DSV Enable GPIO (OFF). */
+		/* 2. do not use P-Mode GPIO (64) */
+		gpio_set_value((ctrl_pdata->disp_en_2nd_gpio), 0);
+		pr_info("%s: dsv(%d) off", __func__, (ctrl_pdata->disp_en_2nd_gpio));
+#else
+		gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
+		pr_info("%s: dsv(%d) off", __func__, (ctrl_pdata->disp_en_gpio));
+#endif
+		msleep(5);
+	}
+#endif
+#endif
+
+#if defined (CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	mdss_dsi_panel_reset(pdata, 0);
+	pr_info("mdss_dsi_panel_reset is LOW\n");
+#endif
+
+#if !defined (CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	ret = mdss_dsi_panel_power_on(pdata, 1);
 	if (ret) {
 		pr_err("%s:Panel power on failed. rc=%d\n", __func__, ret);
 		return ret;
 	}
+#endif
+#if defined (CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	ret = msm_dss_enable_vreg(ctrl_pdata->power_data.vreg_config,
+				ctrl_pdata->power_data.num_vreg, 1);
 
-	if (cur_power_state != MDSS_PANEL_POWER_OFF) {
-		pr_debug("%s: dsi_on from panel low power state\n", __func__);
-		goto end;
+	if (ret) {
+		pr_err("%s:Failed to enable vregs. rc=%d\n", __func__, ret);
+		return ret;
 	}
+#endif
 
-	/*
-	 * Enable DSI clocks.
-	 * This is also enable the DSI core power block and reset/setup
-	 * DSI phy
-	 */
+
+	ret = mdss_dsi_clk_ctrl(ctrl_pdata, DSI_BUS_CLKS, 1);
+	if (ret) {
+		pr_err("%s: failed to enable bus clocks. rc=%d\n", __func__,
+			ret);
+		ret = mdss_dsi_panel_power_on(pdata, 0);
+		if (ret) {
+			pr_err("%s: Panel reset failed. rc=%d\n",
+					__func__, ret);
+			return ret;
+		}
+		pdata->panel_info.panel_power_on = 0;
+		return ret;
+	}
+	pdata->panel_info.panel_power_on = 1;
+
+	mdss_dsi_phy_sw_reset((ctrl_pdata->ctrl_base));
+	mdss_dsi_phy_init(pdata);
+	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_BUS_CLKS, 0);
+
 	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 1);
-	mdss_dsi_sw_reset(ctrl_pdata, true);
 
+	__mdss_dsi_ctrl_setup(pdata);
+	mdss_dsi_sw_reset(pdata);
+	mdss_dsi_host_init(pdata);
+
+#if defined CONFIG_LGE_MIPI_DSI_LGD_LVDS_WXGA		/* E10Wifi */
+{
+	u32 tmp;
+	if (lge_lvds_panel_power(pdata, 1)) {
+		pr_err("%s:Failed to Enable Panel_Power!\n", __func__);
+		return 0;
+	}
+	mipi->force_clk_lane_hs = 1;
+
+	tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
+	tmp &= ~(1<<28);
+	MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+	wmb();
+
+	mdelay(10);
+}
+#elif defined CONFIG_LGE_MIPI_DSI_LGD_NT35521_WXGA	/* E7Wifi & E7LTE */
+{
+	u32 tmp;
+	if (nt35521_panel_power(pdata, 1)) {
+		pr_err("%s:Failed to disable lge_asus_panel_power.rc\n", __func__);
+		return 0;
+	}
+	mipi->force_clk_lane_hs = 1;
+
+	mdelay(5);
+
+	tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
+	tmp &= ~(1<<28);
+	MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+	wmb();
+}
+#endif
 	/*
 	 * Issue hardware reset line after enabling the DSI clocks and data
 	 * data lanes for LP11 init
 	 */
-	if (mipi->lp11_init) {
-		if (mdss_dsi_pinctrl_set_state(ctrl_pdata, true))
-			pr_debug("reset enable: pinctrl not enabled\n");
+#if defined(CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL)
+	if (pdata->panel_info.mipi.lp11_init) {
 		mdss_dsi_panel_reset(pdata, 1);
+		pr_info("mdss_dsi_panel_reset is HIGH\n");
 	}
-
+	mdelay(5);
+	mipi->force_clk_lane_hs = 1;
+#elif !defined (CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	if (pdata->panel_info.mipi.lp11_init)
+		mdss_dsi_panel_reset(pdata, 1);
+#else
+#if !defined (CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	if (mipi->lp11_init)
+		mdss_dsi_panel_reset(pdata, 1);
+#endif
+#endif
 	if (mipi->init_delay)
 		usleep(mipi->init_delay);
 
+#if defined(CONFIG_MACH_MSM8226_E8WIFI) || defined(CONFIG_MACH_MSM8926_E8LTE) || defined(CONFIG_MACH_MSM8926_E7LTE_ATT_US) || defined(CONFIG_MACH_MSM8926_E7LTE_VZW_US) || defined(CONFIG_MACH_MSM8926_E7LTE_USC_US) || defined(CONFIG_MACH_MSM8926_T8LTE)
 	if (mipi->force_clk_lane_hs) {
 		u32 tmp;
-
+		tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0x2c);
+		tmp |= (1<<28);
+		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0x2c, tmp);  /* To HS Clock gating for clock source (non-continuous mode) */
+		wmb();
+	}
+#else
+	if (mipi->force_clk_lane_hs) {
+		u32 tmp;
 		tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
 		tmp |= (1<<28);
 		MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
 		wmb();
 	}
+#endif
+
+#if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL)
+	if (has_dsv_f) {
+	  u32 tmp;
+	  tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
+	  tmp &= ~(1<<28);
+	  MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+	  wmb();
+	  mdss_dsi_panel_reset(pdata, 1);
+	  pr_info(" panel reset after mipi stop state. lane_ctrl value = %x\n", tmp);
+	}
+	#endif
+
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+	if (has_dsv_f) {
+	  u32 tmp;
+	  tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
+	  tmp &= ~(1<<28);
+	  MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+	  wmb();
+	  mdss_dsi_panel_reset(pdata, 1);
+	  pr_info(" panel reset after mipi stop state. lane_ctrl value = %x\n", tmp);
+	}
+#endif
 
 	if (pdata->panel_info.type == MIPI_CMD_PANEL)
 		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
-
-end:
-	pr_debug("%s-:\n", __func__);
-	return 0;
-}
-
-static int mdss_dsi_pinctrl_set_state(
-	struct mdss_dsi_ctrl_pdata *ctrl_pdata,	
-		bool active)
-{
-	struct pinctrl_state *pin_state;
-	int rc = -EFAULT;
-
-	if (IS_ERR_OR_NULL(ctrl_pdata->pin_res.pinctrl))
-		return PTR_ERR(ctrl_pdata->pin_res.pinctrl);
-
-	pin_state = active ? ctrl_pdata->pin_res.gpio_state_active
-			: ctrl_pdata->pin_res.gpio_state_suspend;
-	if (!IS_ERR_OR_NULL(pin_state)) {
-		rc = pinctrl_select_state(ctrl_pdata->pin_res.pinctrl,
-				pin_state);
-		if (rc)
-			pr_err("%s: can not set %s pins\n", __func__,
-			 	active ? MDSS_PINCTRL_STATE_DEFAULT
-			 	: MDSS_PINCTRL_STATE_SLEEP);
-	} else {
-	pr_err("%s: invalid '%s' pinstate\n", __func__,
-		active ? MDSS_PINCTRL_STATE_DEFAULT
-		: MDSS_PINCTRL_STATE_SLEEP);
-}
-return rc;
-}
-
-static int mdss_dsi_pinctrl_init(struct platform_device *pdev)
-{
-	struct mdss_dsi_ctrl_pdata *ctrl_pdata;	
-
-	ctrl_pdata = platform_get_drvdata(pdev);
-	ctrl_pdata->pin_res.pinctrl = devm_pinctrl_get(&pdev->dev);
-	if (IS_ERR_OR_NULL(ctrl_pdata->pin_res.pinctrl)) {
-		pr_err("%s: failed to get pinctrl\n", __func__);
-		return PTR_ERR(ctrl_pdata->pin_res.pinctrl);
+	#if defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	#if defined(CONFIG_MACH_MSM8926_X10_VZW) || defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR) || defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+	/*Enable DSV (VDD, VEE)*/
+	mdelay(5);
+#if !defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+	if (lge_get_board_revno() >= HW_REV_B)
+#endif
+	{
+#if defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	    /* set mipi lane to LP11 as LCD power on spec. */
+	    mdss_dsi_lane_config(pdata, 0);
+#endif
+		if (gpio_is_valid(ctrl_pdata->lcd_dsv_enp_gpio)) {
+			gpio_set_value((ctrl_pdata->lcd_dsv_enp_gpio), 1);
+			pr_info("DSV_VDD(56) ON(lcd_dsv_enp_gpio). \n");
+			udelay(50);
+		} else{
+			pr_err("%s:%d, lcd_dsv_enp_gpio gpio not specified\n",
+							__func__, __LINE__);
+		}
 	}
-
-	ctrl_pdata->pin_res.gpio_state_active
-		= pinctrl_lookup_state(ctrl_pdata->pin_res.pinctrl,
-				MDSS_PINCTRL_STATE_DEFAULT);
-	if (IS_ERR_OR_NULL(ctrl_pdata->pin_res.gpio_state_active))
-		pr_warn("%s: can not get default pinstate\n", __func__);
-
-	ctrl_pdata->pin_res.gpio_state_suspend
-		= pinctrl_lookup_state(ctrl_pdata->pin_res.pinctrl,
-			MDSS_PINCTRL_STATE_SLEEP);
-	if (IS_ERR_OR_NULL(ctrl_pdata->pin_res.gpio_state_suspend))
-		pr_warn("%s: can not get sleep pinstate\n", __func__);
-
+	if (gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
+		gpio_set_value((ctrl_pdata->disp_en_gpio), 1);
+		pr_err("DSV_VEE ON(disp_en_gpio). \n");
+	} else{
+		pr_err("%s:%d, disp_en_gpio gpio not specified\n",
+						__func__, __LINE__);
+	}
+	#endif
+	#endif
+#if defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	if (pdata->panel_info.mipi.lp11_init)
+	    mdss_dsi_panel_reset(pdata, 1);
+#endif
+	pr_info("%s-:\n", __func__);
 	return 0;
 }
-
 
 static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 {
 	int ret = 0;
 	struct mipi_panel_info *mipi;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+
+	pr_debug("%s+:\n", __func__);
 
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
@@ -748,25 +1197,13 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 				panel_data);
 	mipi  = &pdata->panel_info.mipi;
 
-	pr_debug("%s+: ctrl=%p ndx=%d cur_blank_state=%d\n", __func__,
-		ctrl_pdata, ctrl_pdata->ndx, pdata->panel_info.blank_state);
-
-	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 1);
-
-	if (pdata->panel_info.blank_state == MDSS_PANEL_BLANK_LOW_POWER) {
-		pr_debug("%s: dsi_unblank with panel always on\n", __func__);
-		if (ctrl_pdata->low_power_config)
-			ret = ctrl_pdata->low_power_config(pdata, false);
-		goto error;
-	}
-
 	if (!(ctrl_pdata->ctrl_state & CTRL_STATE_PANEL_INIT)) {
 		if (!pdata->panel_info.dynamic_switch_pending) {
 			ret = ctrl_pdata->on(pdata);
 			if (ret) {
 				pr_err("%s: unable to initialize the panel\n",
 							__func__);
-				goto error;
+				return ret;
 			}
 		}
 		ctrl_pdata->ctrl_state |= CTRL_STATE_PANEL_INIT;
@@ -779,18 +1216,18 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 		}
 	}
 
-error:
-	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
 	pr_debug("%s-:\n", __func__);
 
 	return ret;
 }
 
-static int mdss_dsi_blank(struct mdss_panel_data *pdata, int power_state)
+static int mdss_dsi_blank(struct mdss_panel_data *pdata)
 {
 	int ret = 0;
 	struct mipi_panel_info *mipi;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+
+	printk("%s+:\n", __func__);
 
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
@@ -801,21 +1238,20 @@ static int mdss_dsi_blank(struct mdss_panel_data *pdata, int power_state)
 				panel_data);
 	mipi = &pdata->panel_info.mipi;
 
-	pr_debug("%s+: ctrl=%p ndx=%d power_state=%d\n",
-		__func__, ctrl_pdata, ctrl_pdata->ndx, power_state);
-
-	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 1);
-
-	if (mdss_panel_is_power_on_lp(power_state)) {
-		pr_debug("%s: low power state requested\n", __func__);
-		if (ctrl_pdata->low_power_config)
-			ret = ctrl_pdata->low_power_config(pdata, true);
-		goto error;
+	if (__mdss_dsi_ulps_feature_enabled(pdata) &&
+		(ctrl_pdata->ulps)) {
+		/* Disable ULPS mode before blanking the panel */
+		ret = mdss_dsi_ulps_config(ctrl_pdata, 0);
+		if (ret) {
+			pr_err("%s: failed to exit ULPS mode. rc=%d\n",
+				__func__, ret);
+			return ret;
+		}
 	}
 
 	if (pdata->panel_info.type == MIPI_VIDEO_PANEL &&
 			ctrl_pdata->off_cmds.link_state == DSI_LP_MODE) {
-		mdss_dsi_sw_reset(ctrl_pdata, false);
+		mdss_dsi_sw_reset(pdata);
 		mdss_dsi_host_init(pdata);
 	}
 
@@ -844,15 +1280,12 @@ static int mdss_dsi_blank(struct mdss_panel_data *pdata, int power_state)
 			ret = ctrl_pdata->off(pdata);
 			if (ret) {
 				pr_err("%s: Panel OFF failed\n", __func__);
-				goto error;
+				return ret;
 			}
 		}
 		ctrl_pdata->ctrl_state &= ~CTRL_STATE_PANEL_INIT;
 	}
-error:
-	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
-
-	pr_debug("%s-:End\n", __func__);
+	printk("%s-:End\n", __func__);
 	return ret;
 }
 
@@ -880,8 +1313,9 @@ int mdss_dsi_cont_splash_on(struct mdss_panel_data *pdata)
 	WARN((ctrl_pdata->ctrl_state & CTRL_STATE_PANEL_INIT),
 		"Incorrect Ctrl state=0x%x\n", ctrl_pdata->ctrl_state);
 
-	mdss_dsi_ctrl_setup(ctrl_pdata);
-	mdss_dsi_sw_reset(ctrl_pdata, true);
+	mdss_dsi_sw_reset(pdata);
+	mdss_dsi_host_init(pdata);
+	mdss_dsi_op_mode_config(mipi->mode, pdata);
 	pr_debug("%s-:End\n", __func__);
 	return ret;
 }
@@ -917,7 +1351,7 @@ static int mdss_dsi_dfps_config(struct mdss_panel_data *pdata, int new_fps)
 			vsync_period =
 				mdss_panel_get_vtotal(&pdata->panel_info);
 			hsync_period =
-				mdss_panel_get_htotal(&pdata->panel_info, true);
+				mdss_panel_get_htotal(&pdata->panel_info);
 			current_dsi_v_total =
 				MIPI_INP((ctrl_pdata->ctrl_base) + 0x2C);
 			new_dsi_v_total =
@@ -1016,12 +1450,14 @@ int mdss_dsi_register_recovery_handler(struct mdss_dsi_ctrl_pdata *ctrl,
 	return 0;
 }
 
+#ifdef CONFIG_LGE_SUPPORT_TYPE_A_USB_NOTIFY
+extern void notify_lcd_state_to_usb(int on);
+#endif
 static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 				  int event, void *arg)
 {
 	int rc = 0;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-	int power_state;
 
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
@@ -1029,13 +1465,16 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	}
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
-	pr_debug("%s+:event=%d\n", __func__, event);
-
+	if (event != MDSS_EVENT_DSI_CMDLIST_KOFF)
+		printk("%s+:event=%d\n", __func__, event);
 	MDSS_XLOG(event, arg, ctrl_pdata->ndx, 0x3333);
 
 	switch (event) {
 	case MDSS_EVENT_UNBLANK:
 		rc = mdss_dsi_on(pdata);
+#ifdef CONFIG_LGE_SUPPORT_TYPE_A_USB_NOTIFY
+		notify_lcd_state_to_usb(1);
+#endif
 		mdss_dsi_op_mode_config(pdata->panel_info.mipi.mode,
 							pdata);
 		if (ctrl_pdata->on_cmds.link_state == DSI_LP_MODE)
@@ -1047,20 +1486,21 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 			rc = mdss_dsi_unblank(pdata);
 		break;
 	case MDSS_EVENT_BLANK:
-		power_state = (int) (unsigned long) arg;
 		if (ctrl_pdata->off_cmds.link_state == DSI_HS_MODE)
-			rc = mdss_dsi_blank(pdata, power_state);
+			rc = mdss_dsi_blank(pdata);
 		break;
 	case MDSS_EVENT_PANEL_OFF:
-		power_state = (int) (unsigned long) arg;
 		ctrl_pdata->ctrl_state &= ~CTRL_STATE_MDP_ACTIVE;
 		if (ctrl_pdata->off_cmds.link_state == DSI_LP_MODE)
-			rc = mdss_dsi_blank(pdata, power_state);
-		rc = mdss_dsi_off(pdata, power_state);
+			rc = mdss_dsi_blank(pdata);
+		rc = mdss_dsi_off(pdata);
+#ifdef CONFIG_LGE_SUPPORT_TYPE_A_USB_NOTIFY
+		notify_lcd_state_to_usb(0);
+#endif
 		break;
 	case MDSS_EVENT_CONT_SPLASH_FINISH:
 		if (ctrl_pdata->off_cmds.link_state == DSI_LP_MODE)
-			rc = mdss_dsi_blank(pdata, MDSS_PANEL_POWER_OFF);
+			rc = mdss_dsi_blank(pdata);
 		ctrl_pdata->ctrl_state &= ~CTRL_STATE_MDP_ACTIVE;
 		rc = mdss_dsi_cont_splash_on(pdata);
 		break;
@@ -1080,11 +1520,14 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	case MDSS_EVENT_CONT_SPLASH_BEGIN:
 		if (ctrl_pdata->off_cmds.link_state == DSI_HS_MODE) {
 			/* Panel is Enabled in Bootloader */
-			rc = mdss_dsi_blank(pdata, MDSS_PANEL_POWER_OFF);
+			rc = mdss_dsi_blank(pdata);
 		}
 		break;
 	case MDSS_EVENT_ENABLE_PARTIAL_UPDATE:
 		rc = mdss_dsi_ctl_partial_update(pdata);
+		break;
+	case MDSS_EVENT_DSI_ULPS_CTRL:
+		rc = mdss_dsi_ulps_config(ctrl_pdata, (int)arg);
 		break;
 	case MDSS_EVENT_REGISTER_RECOVERY_HANDLER:
 		rc = mdss_dsi_register_recovery_handler(ctrl_pdata,
@@ -1095,10 +1538,11 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 					(int)(unsigned long) arg);
 		break;
 	default:
-		pr_debug("%s: unhandled event=%d\n", __func__, event);
+		pr_info("%s: unhandled event=%d\n", __func__, event);
 		break;
 	}
-	pr_debug("%s-:event=%d, rc=%d\n", __func__, event, rc);
+	if (event != MDSS_EVENT_DSI_CMDLIST_KOFF)
+		pr_info("%s-:event=%d, rc=%d\n", __func__, event, rc);
 	return rc;
 }
 
@@ -1131,6 +1575,7 @@ static struct device_node *mdss_dsi_pref_prim_panel(
  *
  * returns pointer to panel node on success, NULL on error.
  */
+
 static struct device_node *mdss_dsi_find_panel_of_node(
 		struct platform_device *pdev, char *panel_cfg)
 {
@@ -1192,10 +1637,13 @@ end:
 
 	return dsi_pan_node;
 }
+#if defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+struct mdss_dsi_ctrl_pdata *ctrl_pdata_for_touch;
+#endif
 
 static int __devinit mdss_dsi_ctrl_probe(struct platform_device *pdev)
 {
-	int rc = 0, i = 0;
+	int rc = 0;
 	u32 index;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 	struct device_node *dsi_pan_node = NULL;
@@ -1226,6 +1674,9 @@ static int __devinit mdss_dsi_ctrl_probe(struct platform_device *pdev)
 		}
 		platform_set_drvdata(pdev, ctrl_pdata);
 	}
+#if defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	ctrl_pdata_for_touch = ctrl_pdata;
+#endif
 
 	ctrl_name = of_get_property(pdev->dev.of_node, "label", NULL);
 	if (!ctrl_name)
@@ -1258,19 +1709,13 @@ static int __devinit mdss_dsi_ctrl_probe(struct platform_device *pdev)
 		goto error_no_mem;
 	}
 
-	rc = mdss_dsi_pinctrl_init(pdev);
-	if (rc)
-		pr_warn("%s: failed to get pin resources\n", __func__); 
-
 	/* Parse the regulator information */
-	for (i = 0; i < DSI_MAX_PM; i++) {
-		rc = mdss_dsi_get_dt_vreg_data(&pdev->dev,
-			&ctrl_pdata->power_data[i], i);
-		if (rc) {
-			DEV_ERR("%s: '%s' get_dt_vreg_data failed.rc=%d\n",
-				__func__, __mdss_dsi_pm_name(i), rc);
-			goto error_vreg;
-		}
+	rc = mdss_dsi_get_dt_vreg_data(&pdev->dev,
+				       &ctrl_pdata->power_data);
+	if (rc) {
+		pr_err("%s: failed to get vreg data from dt. rc=%d\n",
+		       __func__, rc);
+		goto error_vreg;
 	}
 
 	/* DSI panels can be different between controllers */
@@ -1307,9 +1752,7 @@ static int __devinit mdss_dsi_ctrl_probe(struct platform_device *pdev)
 error_pan_node:
 	of_node_put(dsi_pan_node);
 error_vreg:
-	for (; i >= 0; i--)
-		mdss_dsi_put_dt_vreg_data(&pdev->dev,
-			&ctrl_pdata->power_data[i]);
+	mdss_dsi_put_dt_vreg_data(&pdev->dev, &ctrl_pdata->power_data);
 error_no_mem:
 	devm_kfree(&pdev->dev, ctrl_pdata);
 
@@ -1320,23 +1763,17 @@ static int __devexit mdss_dsi_ctrl_remove(struct platform_device *pdev)
 {
 	struct msm_fb_data_type *mfd;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = platform_get_drvdata(pdev);
-	int i = 0;
 
 	if (!ctrl_pdata) {
 		pr_err("%s: no driver data\n", __func__);
 		return -ENODEV;
 	}
 
-	for (i = DSI_MAX_PM - 1; i >= 0; i--) {
-		if (msm_dss_config_vreg(&pdev->dev,
-				ctrl_pdata->power_data[i].vreg_config,
-				ctrl_pdata->power_data[i].num_vreg, 1) < 0)
-			pr_err("%s: failed to de-init vregs for %s\n",
-				__func__, __mdss_dsi_pm_name(i));
-		mdss_dsi_put_dt_vreg_data(&pdev->dev,
-			&ctrl_pdata->power_data[i]);
-	}
-
+	if (msm_dss_config_vreg(&pdev->dev,
+			ctrl_pdata->power_data.vreg_config,
+			ctrl_pdata->power_data.num_vreg, 1) < 0)
+		pr_err("%s: failed to de-init vregs\n", __func__);
+	mdss_dsi_put_dt_vreg_data(&pdev->dev, &ctrl_pdata->power_data);
 	mfd = platform_get_drvdata(pdev);
 	msm_dss_iounmap(&ctrl_pdata->mmss_misc_io);
 	msm_dss_iounmap(&ctrl_pdata->phy_io);
@@ -1416,8 +1853,11 @@ int dsi_panel_device_register(struct device_node *pan_node,
 	int rc, i, len;
 	struct device_node *dsi_ctrl_np = NULL;
 	struct platform_device *ctrl_pdev = NULL;
+	bool dynamic_fps;
 	const char *data;
 	struct mdss_panel_info *pinfo = &(ctrl_pdata->panel_data.panel_info);
+
+	pr_info("%s+: \n", __func__);
 
 	mipi  = &(pinfo->mipi);
 
@@ -1457,9 +1897,6 @@ int dsi_panel_device_register(struct device_node *pan_node,
 	pinfo->mipi.dsi_phy_db.strength[0] = data[0];
 	pinfo->mipi.dsi_phy_db.strength[1] = data[1];
 
-	pinfo->mipi.dsi_phy_db.reg_ldo_mode = of_property_read_bool(
-		ctrl_pdev->dev.of_node, "qcom,regulator-ldo-mode");
-
 	data = of_get_property(ctrl_pdev->dev.of_node,
 		"qcom,platform-regulator-settings", &len);
 	if ((!data) || (len != 7)) {
@@ -1496,31 +1933,195 @@ int dsi_panel_device_register(struct device_node *pan_node,
 			data[i];
 	}
 
-	rc = of_property_read_u32(ctrl_pdev->dev.of_node,
-			"qcom,mmss-ulp-clamp-ctrl-offset",
-			&ctrl_pdata->ulps_clamp_ctrl_off);
-	if (!rc) {
-		rc = of_property_read_u32(ctrl_pdev->dev.of_node,
-				"qcom,mmss-phyreset-ctrl-offset",
-				&ctrl_pdata->ulps_phyrst_ctrl_off);
-	}
-	if (rc && pinfo->ulps_feature_enabled) {
-		pr_err("%s: dsi ulps clamp register settings missing\n",
-				__func__);
-		return -EINVAL;
-	}
-
 	ctrl_pdata->shared_pdata.broadcast_enable = of_property_read_bool(
 		pan_node, "qcom,mdss-dsi-panel-broadcast-mode");
 
+	dynamic_fps = of_property_read_bool(pan_node,
+					  "qcom,mdss-dsi-pan-enable-dynamic-fps");
+	if (dynamic_fps) {
+		pinfo->dynamic_fps = true;
+		data = of_get_property(pan_node,
+					  "qcom,mdss-dsi-pan-fps-update", NULL);
+		if (data) {
+			if (!strcmp(data, "dfps_suspend_resume_mode")) {
+				pinfo->dfps_update =
+						DFPS_SUSPEND_RESUME_MODE;
+				pr_debug("%s: dfps mode: suspend/resume\n",
+								__func__);
+			} else if (!strcmp(data,
+					    "dfps_immediate_clk_mode")) {
+				pinfo->dfps_update =
+						DFPS_IMMEDIATE_CLK_UPDATE_MODE;
+				pr_debug("%s: dfps mode: Immediate clk\n",
+								__func__);
+			} else if (!strcmp(data,
+					    "dfps_immediate_porch_mode")) {
+				pinfo->dfps_update =
+					DFPS_IMMEDIATE_PORCH_UPDATE_MODE;
+				pr_debug("%s: dfps mode: Immediate porch\n",
+								__func__);
+			} else {
+				pr_debug("%s: dfps to default mode\n",
+								__func__);
+				pinfo->dfps_update =
+						DFPS_SUSPEND_RESUME_MODE;
+				pr_debug("%s: dfps mode: suspend/resume\n",
+								__func__);
+			}
+		} else {
+			pr_debug("%s: dfps update mode not configured\n",
+								__func__);
+				pinfo->dynamic_fps =
+								false;
+				pr_debug("%s: dynamic FPS disabled\n",
+								__func__);
+		}
+		pinfo->new_fps = pinfo->mipi.frame_rate;
+	}
+
 	pinfo->panel_max_fps = mdss_panel_get_framerate(pinfo);
 	pinfo->panel_max_vtotal = mdss_panel_get_vtotal(pinfo);
+#if !defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
 	ctrl_pdata->disp_en_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
 		"qcom,platform-enable-gpio", 0);
+	printk("ctrl_pdata->disp_en_gpio = %d\n",ctrl_pdata->disp_en_gpio);
+#endif
 
+#ifndef CONFIG_MACH_LGE
 	if (!gpio_is_valid(ctrl_pdata->disp_en_gpio))
 		pr_err("%s:%d, Disp_en gpio not specified\n",
 						__func__, __LINE__);
+#endif
+#if defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGC_SPR) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_JAGN_KR) || defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL) || defined(CONFIG_MACH_MSM8926_JAGC_SPR)
+	if (lge_get_board_revno() >= HW_REV_B)
+		ctrl_pdata->disp_en_gpio = 60;/* for just safe rev B SMT */
+	else
+		ctrl_pdata->disp_en_gpio = 111;/* for just safe rev B SMT */
+#endif
+#ifdef CONFIG_MACH_LGE
+#if !defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+	if (!gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
+		pr_err("%s:%d, Disp_en gpio not specified\n",
+						__func__, __LINE__);
+	} else{
+		if (pinfo->cont_splash_enabled) {
+			rc = gpio_request(ctrl_pdata->disp_en_gpio, "disp_enable");
+			if (rc) {
+				pr_err("request disp_en gpio failed, rc=%d\n", rc);
+				return -ENODEV;
+			}
+		}
+		gpio_direction_output(ctrl_pdata->disp_en_gpio, 1);
+	}
+#endif
+#endif
+
+#if defined(CONFIG_MACH_MSM8926_JAGDSNM_CN)
+	if (lge_get_board_revno() >= HW_REV_C)
+		ctrl_pdata->disp_en_gpio = 60;
+	else
+		ctrl_pdata->disp_en_gpio = 111;
+#endif
+
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+#if defined(CONFIG_MACH_MSM8926_E2_MPCS_US) || defined(CONFIG_MACH_MSM8926_E2_VTR_CA) || defined(CONFIG_MACH_MSM8926_E2_SPR_US)
+	ctrl_pdata->disp_en_1st_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,"qcom,platform-enable-1st-gpio", 0);
+	pr_info("%s: ctrl_pdata->disp_en_1st_gpio (%d)", __func__, (ctrl_pdata->disp_en_1st_gpio));
+	if (!gpio_is_valid(ctrl_pdata->disp_en_1st_gpio)) {
+		 pr_err("%s:%d, disp_en_1st_gpio not specified\n",__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_en_1st_gpio, "disp_en_1st_gpio");
+		if (rc) {
+			pr_err("request disp_en_1st_gpio gpio failed, rc=%d\n", rc);
+			gpio_free(ctrl_pdata->disp_en_1st_gpio);
+			return -ENODEV;
+		}
+	}
+
+	ctrl_pdata->disp_en_2nd_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,"qcom,platform-enable-2nd-gpio", 0);
+	pr_info("%s: ctrl_pdata->disp_en_2nd_gpio (%d)", __func__, (ctrl_pdata->disp_en_2nd_gpio));
+	if (!gpio_is_valid(ctrl_pdata->disp_en_2nd_gpio)) {
+		 pr_err("%s:%d, disp_en_2nd_gpio not specified\n",__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_en_2nd_gpio, "disp_en_2nd_gpio");
+		if (rc) {
+			pr_err("request disp_en_2nd_gpio gpio failed, rc=%d\n", rc);
+			gpio_free(ctrl_pdata->disp_en_2nd_gpio);
+			return -ENODEV;
+		}
+	}
+#elif defined(CONFIG_MACH_MSM8926_E2_VZW)
+	ctrl_pdata->disp_en_2nd_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,"qcom,platform-enable-2nd-gpio", 0);
+	pr_info("%s: ctrl_pdata->disp_en_2nd_gpio (%d)", __func__, (ctrl_pdata->disp_en_2nd_gpio));
+	if (!gpio_is_valid(ctrl_pdata->disp_en_2nd_gpio)) {
+		 pr_err("%s:%d, disp_en_2nd_gpio not specified\n",__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_en_2nd_gpio, "disp_en_2nd_gpio");
+		if (rc) {
+			pr_err("request disp_en_2nd_gpio gpio failed, rc=%d\n", rc);
+			gpio_free(ctrl_pdata->disp_en_2nd_gpio);
+			return -ENODEV;
+		}
+	}
+#endif
+
+	ctrl_pdata->disp_fd_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,"qcom,platform-fd-gpio", 0);
+	pr_info("%s: ctrl_pdata->disp_fd_gpio (%d)", __func__, (ctrl_pdata->disp_fd_gpio));
+	if (!gpio_is_valid(ctrl_pdata->disp_fd_gpio)) {
+		 pr_err("%s:%d, disp_fd_gpio not specified\n",__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_fd_gpio, "disp_fd_gpio");
+		if (rc) {
+			pr_err("request disp_fd_gpio gpio failed, rc=%d\n", rc);
+			gpio_free(ctrl_pdata->disp_fd_gpio);
+			return -ENODEV;
+		}
+	}
+
+	ctrl_pdata->disp_iovcc_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node, "qcom,platform-iovcc-gpio", 0);
+	pr_info("%s: ctrl_pdata->disp_iovcc_gpio (%d)", __func__, (ctrl_pdata->disp_iovcc_gpio));
+	if (!gpio_is_valid(ctrl_pdata->disp_iovcc_gpio)) {
+		 pr_err("%s:%d, disp_iovcc_gpio not specified\n",__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->disp_iovcc_gpio, "disp_iovcc_gpio");
+		if (rc) {
+			pr_err("request disp_iovcc_gpio gpio failed, rc=%d\n", rc);
+			gpio_free(ctrl_pdata->disp_iovcc_gpio);
+			return -ENODEV;
+		}
+	}
+
+	dual_panel = of_property_read_bool(pan_node,
+			"lge,dual-panel");
+
+	if(dual_panel)
+		pr_info("[mdss] dual panel is detected\n");
+	else
+		pr_info("[mdss] original panel is detected\n");
+#endif
+
+	#if defined (CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+#if !defined(CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	if (lge_get_board_revno() >= HW_REV_B)
+#endif
+	{
+		ctrl_pdata->lcd_dsv_enp_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
+			"qcom,platform-lcd_dsv_enp_gpio", 0);
+		pr_info("%s  platform-lcd_dsv_enp_gpio : %d \n", __func__, ctrl_pdata->lcd_dsv_enp_gpio);
+		if (!gpio_is_valid(ctrl_pdata->lcd_dsv_enp_gpio)) {
+			pr_err("%s:%d, lcd_dsv_enp_gpio gpio not specified\n",
+							__func__, __LINE__);
+		} else {
+			rc = gpio_request(ctrl_pdata->lcd_dsv_enp_gpio, "lcd_dsv_enp_gpio");
+			if (rc) {
+				pr_err("request reset gpio failed, rc=%d\n",
+				       rc);
+				gpio_free(ctrl_pdata->lcd_dsv_enp_gpio);
+				return -ENODEV;
+			}
+		}
+	}
+	#endif
 
 	if (pinfo->type == MIPI_CMD_PANEL) {
 		ctrl_pdata->disp_te_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
@@ -1569,6 +2170,28 @@ int dsi_panel_device_register(struct device_node *pan_node,
 	if (!gpio_is_valid(ctrl_pdata->rst_gpio))
 		pr_err("%s:%d, reset gpio not specified\n",
 						__func__, __LINE__);
+#ifdef CONFIG_MACH_LGE
+	else{
+		if (pinfo->cont_splash_enabled) {
+			rc = gpio_request(ctrl_pdata->rst_gpio, "disp_rst_n");
+			if (rc) {
+				pr_err("request reset gpio failed, rc=%d\n", rc);
+				gpio_free(ctrl_pdata->rst_gpio);
+				if (gpio_is_valid(ctrl_pdata->disp_en_gpio))
+					gpio_free(ctrl_pdata->disp_en_gpio);
+				return -ENODEV;
+			}
+		}
+		gpio_direction_output(ctrl_pdata->rst_gpio, 1);
+	}
+#endif
+
+#ifdef CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL
+	if (lge_get_board_revno() >= HW_REV_B) {
+		if (gpio_is_valid(ctrl_pdata->lcd_dsv_enp_gpio))
+			gpio_free(ctrl_pdata->lcd_dsv_enp_gpio);
+	}
+#endif
 
 	if (pinfo->mode_gpio_state != MODE_GPIO_NOT_VALID) {
 
@@ -1580,6 +2203,23 @@ int dsi_panel_device_register(struct device_node *pan_node,
 							__func__, __LINE__);
 	} else {
 		ctrl_pdata->mode_gpio = -EINVAL;
+#ifdef CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL
+			if (lge_get_board_revno() >= HW_REV_B) {
+				if (gpio_is_valid(ctrl_pdata->lcd_dsv_enp_gpio))
+					gpio_free(ctrl_pdata->lcd_dsv_enp_gpio);
+			}
+#endif
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+#if defined(CONFIG_MACH_MSM8926_E2_MPCS_US) || defined(CONFIG_MACH_MSM8926_E2_VTR_CA) || defined(CONFIG_MACH_MSM8926_E2_SPR_US)
+			if(gpio_is_valid(ctrl_pdata->disp_en_1st_gpio))
+				gpio_free(ctrl_pdata->disp_en_1st_gpio);
+			if(gpio_is_valid(ctrl_pdata->disp_en_2nd_gpio))
+				gpio_free(ctrl_pdata->disp_en_2nd_gpio);
+#elif defined(CONFIG_MACH_MSM8926_E2_VZW)
+			if(gpio_is_valid(ctrl_pdata->disp_en_2nd_gpio))
+				gpio_free(ctrl_pdata->disp_en_2nd_gpio);
+#endif
+#endif
 	}
 
 	if (mdss_dsi_clk_init(ctrl_pdev, ctrl_pdata)) {
@@ -1620,25 +2260,54 @@ int dsi_panel_device_register(struct device_node *pan_node,
 
 	ctrl_pdata->ctrl_state = CTRL_STATE_UNKNOWN;
 
+#if defined(CONFIG_LGE_MIPI_TOVIS_VIDEO_540P_PANEL) || defined(CONFIG_FB_MSM_MIPI_TIANMA_VIDEO_QHD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGIT_LH470WX1_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL) || defined(CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL) || defined (CONFIG_FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL)
+	has_dsv_f = of_property_read_bool(pan_node,
+			"lge,has-dsv");
+#endif
+
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+	has_dsv_f = of_property_read_bool(pan_node,
+			"lge,has-dsv");
+#endif
+
+
+	pr_info("%s-: pinfo->cont_splash_enabled : %d\n", __func__, pinfo->cont_splash_enabled);
 	if (pinfo->cont_splash_enabled) {
-		rc = mdss_dsi_panel_power_ctrl(&(ctrl_pdata->panel_data),
-			MDSS_PANEL_POWER_ON);
+		pinfo->panel_power_on = 1;
+		pr_info("%s-: mdss_dsi_panel_power_on enable\n", __func__);
+		rc = mdss_dsi_panel_power_on(&(ctrl_pdata->panel_data), 1);
 		if (rc) {
 			pr_err("%s: Panel power on failed\n", __func__);
 			return rc;
 		}
 
-		pinfo->blank_state = MDSS_PANEL_BLANK_UNBLANK;
 		mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 1);
 		ctrl_pdata->ctrl_state |=
 			(CTRL_STATE_PANEL_INIT | CTRL_STATE_MDP_ACTIVE);
 	} else {
-		pinfo->panel_power_state = MDSS_PANEL_POWER_OFF;
+		pinfo->panel_power_on = 0;
 	}
 
 	rc = mdss_register_panel(ctrl_pdev, &(ctrl_pdata->panel_data));
 	if (rc) {
 		pr_err("%s: unable to register MIPI DSI panel\n", __func__);
+#ifdef CONFIG_FB_MSM_MIPI_TOVIS_LM570HN1A_VIDEO_HD_PT_PANEL
+		if (lge_get_board_revno() >= HW_REV_B) {
+			if (gpio_is_valid(ctrl_pdata->lcd_dsv_enp_gpio))
+				gpio_free(ctrl_pdata->lcd_dsv_enp_gpio);
+		}
+#endif
+#if defined(CONFIG_FB_MSM_MIPI_LGD_VIDEO_WVGA_PT_INCELL_PANEL)
+#if defined(CONFIG_MACH_MSM8926_E2_MPCS_US) || defined(CONFIG_MACH_MSM8926_E2_VTR_CA) || defined(CONFIG_MACH_MSM8926_E2_SPR_US)
+		if(gpio_is_valid(ctrl_pdata->disp_en_1st_gpio))
+			gpio_free(ctrl_pdata->disp_en_1st_gpio);
+		if(gpio_is_valid(ctrl_pdata->disp_en_2nd_gpio))
+			gpio_free(ctrl_pdata->disp_en_2nd_gpio);
+#elif defined(CONFIG_MACH_MSM8926_E2_VZW)
+		if(gpio_is_valid(ctrl_pdata->disp_en_2nd_gpio))
+			gpio_free(ctrl_pdata->disp_en_2nd_gpio);
+#endif
+#endif
 		return rc;
 	}
 

@@ -29,6 +29,10 @@
 #include <linux/completion.h>
 #include <linux/qpnp/qpnp-adc.h>
 #include <linux/platform_device.h>
+#ifdef CONFIG_LGE_PM_CHARGING_TEMP_SCENARIO
+#include <mach/board_lge.h>
+#endif
+
 
 /* Min ADC code represets 0V */
 #define QPNP_VADC_MIN_ADC_CODE			0x6000
@@ -44,11 +48,600 @@
    and provided to the battery driver in the units desired for
    their framework which is 0.1DegC. True resolution of 0.1DegC
    will result in the below table size to increase by 10 times */
+
+/* LGE_CHANGE_S; apply battery thermistor adc value for W7 */
+#ifdef CONFIG_LGE_PM_CHARGING_TEMP_SCENARIO
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold_for_rev0[] = {
+	{-300,	1668},
+	{-200,	1571},
+	{-100,	1431},
+	{0,	1255},
+	{10,	1236},
+	{20,	1217},
+	{30,	1197},
+	{40,	1177},
+	{50,	1159},
+	{60,	1139},
+	{70,	1120},
+	{80,	1100},
+	{90,	1080},
+	{100,	1061},
+	{110,	1042},
+	{120,	1023},
+	{130,	1003},
+	{140,	984},
+	{150,	966},
+	{160,	947},
+	{170,	928},
+	{180,	910},
+	{190,	892},
+	{200,	874},
+	{210,	857},
+	{220,	840},
+	{230,	823},
+	{240,	806},
+	{250,	790},
+	{260,	774},
+	{270,	758},
+	{280,	743},
+	{290,	728},
+	{300,	713},
+	{310,	699},
+	{320,	685},
+	{330,	671},
+	{340,	658},
+	{350,	645},
+	{360,	632},
+	{370,	620},
+	{380,	608},
+	{390,	597},
+	{400,	585},
+	{410,	574},
+	{420,	564},
+	{430,	554},
+	{440,	544},
+	{450,	533},
+	{460,	525},
+	{470,	516},
+	{480,	507},
+	{490,	499},
+	{500,	490},
+	{510,	482},
+	{520,	475},
+	{530,	467},
+	{540,	460},
+	{550,	453},
+	{560,	446},
+	{570,	440},
+	{580,	434},
+	{590,	428},
+	{600,	422},
+	{610,	416},
+	{620,	411},
+	{630,	405},
+	{640,	400},
+	{650,	395},
+	{660,	391},
+	{670,	386},
+	{680,	382},
+	{690,	378},
+	{700,	373},
+	{710,	369},
+	{720,	366},
+	{730,	362},
+	{740,	358},
+	{750,	355},
+	{760,	352},
+	{770,	348},
+	{780,	345},
+	{790,	342}
+};
+
+#ifdef CONFIG_MACH_MSM8926_X5_SPR
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
+	{-300, 1627},
+	{-200, 1507},
+	{-100, 1326},
+	{0, 1139},
+	{10, 1120},
+	{20, 1101},
+	{30, 1082},
+	{40, 1064},
+	{50, 1045},
+	{60, 1026},
+	{70, 1008},
+	{80, 989},
+	{90, 972},
+	{100, 963},
+	{110, 947},
+	{120, 930},
+	{130, 914},
+	{140, 898},
+	{150, 882},
+	{160, 865},
+	{170, 849},
+	{180, 833},
+	{190, 816},
+	{200, 800},
+	{210, 787},
+	{220, 774},
+	{230, 761},
+	{240, 748},
+	{250, 735},
+	{260, 721},
+	{270, 708},
+	{280, 695},
+	{290, 682},
+	{300, 669},
+	{310, 658},
+	{320, 646},
+	{330, 635},
+	{340, 624},
+	{350, 613},
+	{360, 603},
+	{370, 596},
+	{380, 587},
+	{390, 579},
+	{400, 570},
+	{410, 562},
+	{420, 555},
+	{430, 547},
+	{440, 540},
+	{450, 536},
+	{460, 530},
+	{470, 524},
+	{480, 518},
+	{490, 512},
+	{500, 506},
+	{510, 500},
+	{520, 494},
+	{530, 487},
+	{540, 481},
+	{550, 475},
+	{560, 472},
+	{570, 469},
+	{580, 461},
+	{590, 457},
+	{600, 453},
+	{610, 449},
+	{620, 446},
+	{630, 442},
+	{640, 439},
+	{650, 436},
+	{660, 433},
+	{670, 430},
+	{680, 427},
+	{690, 425},
+	{700, 422},
+	{710, 420},
+	{720, 417},
+	{730, 415},
+	{740, 413},
+	{750, 411},
+	{760, 409},
+	{770, 407},
+	{780, 405},
+	{790, 403}
+
+};
+#elif defined (CONFIG_MACH_MSM8926_X10_VZW) || defined (CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR)
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
+	{-300, 1544},
+	{-200, 1408},
+	{-100, 1218},
+	{0, 1045},
+	{10, 1025},
+	{20, 1010},
+	{30, 1000},
+	{40, 984},
+	{50, 968},
+	{60, 952},
+	{70, 934},
+	{80, 921},
+	{90, 906},
+	{100, 889},
+	{110, 874},
+	{120, 861},
+	{130, 846},
+	{140, 829},
+	{150, 814},
+	{160, 798},
+	{170, 784},
+	{180, 772},
+	{190, 755},
+	{200, 743},
+	{210, 729},
+	{220, 716},
+	{230, 705},
+	{240, 694},
+	{250, 680},
+	{260, 669},
+	{270, 660},
+	{280, 649},
+	{290, 639},
+	{300, 628},
+	{310, 618},
+	{320, 609},
+	{330, 601},
+	{340, 592},
+	{350, 581},
+	{360, 580},
+	{370, 578},
+	{380, 576},
+	{390, 574},
+	{400, 572},
+	{410, 565},
+	{420, 559},
+	{430, 551},
+	{440, 545},
+	{450, 537},
+	{460, 530},
+	{470, 523},
+	{480, 517},
+	{490, 510},
+	{500, 504},
+	{510, 499},
+	{520, 493},
+	{530, 488},
+	{540, 483},
+	{550, 478},
+	{560, 473},
+	{570, 469},
+	{580, 464},
+	{590, 460},
+	{600, 456},
+	{610, 452},
+	{620, 448},
+	{630, 445},
+	{640, 441},
+	{650, 438},
+	{660, 434},
+	{670, 431},
+	{680, 428},
+	{690, 425},
+	{700, 420},
+	{710, 417},
+	{720, 414},
+	{730, 412},
+	{740, 410},
+	{750, 408},
+	{760, 406},
+	{770, 404},
+	{780, 401},
+	{790, 400}
+
+};
+
+#elif defined (CONFIG_MACH_MSM8926_JAGC_SPR) || defined (CONFIG_MACH_MSM8926_JAGN_KR) || defined (CONFIG_MACH_MSM8926_VFP_KR) ||  defined (CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
+	{-400, 1710},
+	{-350, 1670},
+	{-300, 1630},
+	{-250, 1570},
+	{-200, 1510},
+	{-150, 1430},
+	{-100, 1350},
+	{-50, 1250},
+	{0, 1160},
+	{10, 1140},
+	{20, 1120},
+	{30, 1100},
+	{40, 1080},
+	{50, 1060},
+	{60, 1040},
+	{70, 1020},
+	{80, 1000},
+	{90, 980},
+	{100, 970},
+	{150, 890},
+	{200, 810},
+	{250, 740},
+	{300, 680},
+	{350, 620},
+	{400, 580},
+	{430, 560},
+	{450, 540},
+	{460, 530},
+	{500, 510},
+	{550, 480},
+	{570, 470},
+	{600, 460},
+	{620, 440},
+	{650, 430},
+	{700, 430},
+	{750, 420},
+	{800, 410},
+	{850, 400}
+};
+
+#elif defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) \
+	|| defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM8926_JAGNM_TLS) \
+	|| defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL)
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold_A[] = {
+	{-400,	1729},
+	{-350,	1600},
+	{-300,	1550},
+	{-250,	1500},
+	{-200,	1400},
+	{-150,	1300},
+	{-100,	1150},
+	{-50,	1100},
+	{0,	1000},
+	{10, 	980},
+	{20, 	960},
+	{30, 	940},
+	{40, 	920},
+	{50,	900},
+	{60, 	880},
+	{70, 	860},
+	{80, 	840},
+	{90, 	820},
+	{100,	800},
+	{150,	700},
+	{200,	600},
+	{250,	500},
+	{300,	450},
+	{350,	370},
+	{400,	310},
+	{420,	300},
+	{450,	280},
+	{500,	230},
+	{550,	200},
+	{570,	180},
+	{600,	170},
+	{650,	150},
+	{700,	118},
+	{750,	109},
+	{800,	90}
+};
+
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
+	{-400, 1710},
+	{-350, 1670},
+	{-300, 1630},
+	{-250, 1570},
+	{-200, 1510},
+	{-150, 1430},
+	{-100, 1350},
+	{-50, 1250},
+	{0, 1160},
+	{10, 1140},
+	{20, 1120},
+	{30, 1100},
+	{40, 1080},
+	{50, 1060},
+	{60, 1040},
+	{70, 1020},
+	{80, 1000},
+	{90, 980},
+	{100, 970},
+	{150, 890},
+	{200, 810},
+	{250, 740},
+	{300, 680},
+	{350, 620},
+	{400, 580},
+	{430, 560},
+	{450, 540},
+	{460, 530},
+	{500, 510},
+	{550, 480},
+	{570, 470},
+	{600, 460},
+	{620, 440},
+	{650, 430},
+	{700, 430},
+	{750, 420},
+	{800, 410},
+	{850, 400}
+};
+#elif defined (CONFIG_MACH_MSM8226_E7WIFI) || defined (CONFIG_MACH_MSM8226_E8WIFI) || defined (CONFIG_MACH_MSM8926_E8LTE) || defined (CONFIG_MACH_MSM8226_E9WIFI) || defined (CONFIG_MACH_MSM8926_E7LTE_ATT_US) || defined(CONFIG_MACH_MSM8226_E9WIFIN) || defined (CONFIG_MACH_MSM8926_E7LTE_VZW_US) || defined (CONFIG_MACH_MSM8926_E7LTE_USC_US) || defined (CONFIG_MACH_MSM8926_T8LTE) || defined (CONFIG_MACH_MSM8926_E9LTE_VZW_US)
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
+	{-300,	1673},
+	{-290,	1661},
+	{-280,	1649},
+	{-270,	1637},
+	{-260,	1625},
+	{-250,	1614},
+	{-240,	1607},
+	{-230,	1600},
+	{-220,	1593},
+	{-210,	1586},
+	{-200,	1579},
+	{-190,	1565},
+	{-180,	1552},
+	{-170,	1539},
+	{-160,	1526},
+	{-150,	1513},
+	{-140,	1493},
+	{-130,	1473},
+	{-120,	1454},
+	{-110,	1435},
+	{-100,	1416},
+	{-90,	1389},
+	{-80,	1382},
+	{-70,	1365},
+	{-60,	1349},
+	{-50,	1333},
+	{-40,	1314},
+	{-30,	1296},
+	{-20,	1278},
+	{-10,	1260},
+	{0,	1242},
+	{10,	1225},
+	{20,	1208},
+	{30,	1192},
+	{40,	1176},
+	{50,	1160},
+	{60,	1141},
+	{70,	1122},
+	{80,	1104},
+	{90,	1086},
+	{100,	1068},
+	{110,	1053},
+	{120,	1035},
+	{130,	1017},
+	{140,	997},
+	{150,	974},
+	{160,	956},
+	{170,	939},
+	{180,	921},
+	{190,	904},
+	{200,	887},
+	{210,	869},
+	{220,	851},
+	{230,	834},
+	{240,	817},
+	{250,	800},
+	{260,	784},
+	{270,	767},
+	{280,	752},
+	{290,	736},
+	{300,	721},
+	{310,	706},
+	{320,	692},
+	{330,	678},
+	{340,	664},
+	{350,	650},
+	{360,	637},
+	{370,	625},
+	{380,	612},
+	{390,	600},
+	{400,	588},
+	{410,	577},
+	{420,	566},
+	{430,	555},
+	{440,	544},
+	{450,	534},
+	{460,	525},
+	{470,	516},
+	{480,	507},
+	{490,	499},
+	{500,	491},
+	{510,	482},
+	{520,	473},
+	{530,	464},
+	{540,	455},
+	{550,	446},
+	{560,	439},
+	{570,	431},
+	{580,	425},
+	{590,	421},
+	{600,	415},
+	{610,	410},
+	{620,	405},
+	{630,	400},
+	{640,	394},
+	{650,	389},
+	{660,	384},
+	{670,	379},
+	{680,	375},
+	{690,	370},
+	{700,	366},
+	{710,	362},
+	{720,	357},
+	{730,	354},
+	{740,	350},
+	{750,	346},
+	{760,	343},
+	{770,	339},
+	{780,	336},
+	{790,	333}
+};
+
+#else
+static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
+	{-300,	1627},
+	{-200,	1507},
+	{-100,	1345},
+	{0,	1159},
+	{10,	1139},
+	{20,	1120},
+	{30,	1101},
+	{40,	1082},
+	{50,	1064},
+	{60,	1045},
+	{70,	1026},
+	{80,	1008},
+	{90,	989},
+	{100,	972},
+	{110,	954},
+	{120,	936},
+	{130,	919},
+	{140,	902},
+	{150,	885},
+	{160,	869},
+	{170,	853},
+	{180,	837},
+	{190,	822},
+	{200,	807},
+	{210,	792},
+	{220,	777},
+	{230,	763},
+	{240,	750},
+	{250,	737},
+	{260,	724},
+	{270,	711},
+	{280,	699},
+	{290,	687},
+	{300,	675},
+	{310,	664},
+	{320,	653},
+	{330,	643},
+	{340,	633},
+	{350,	623},
+	{360,	613},
+	{370,	604},
+	{380,	595},
+	{390,	586},
+	{400,	578},
+	{410,	570},
+	{420,	562},
+	{430,	555},
+	{440,	547},
+	{450,	540},
+	{460,	533},
+	{470,	527},
+	{480,	521},
+	{490,	515},
+	{500,	509},
+	{510,	503},
+	{520,	498},
+	{530,	492},
+	{540,	487},
+	{550,	482},
+	{560,	478},
+	{570,	473},
+	{580,	469},
+	{590,	465},
+	{600,	461},
+	{610,	457},
+	{620,	453},
+	{630,	449},
+	{640,	446},
+	{650,	442},
+	{660,	439},
+	{670,	436},
+	{680,	433},
+	{690,	430},
+	{700,	427},
+	{710,	425},
+	{720,	422},
+	{730,	420},
+	{740,	417},
+	{750,	415},
+	{760,	413},
+	{770,	411},
+	{780,	409},
+	{790,	407}
+};
+#endif
+#else
 static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
 	{-300,	1642},
 	{-200,	1544},
 	{-100,	1414},
-	{0,	1260},
+	{0, 1260},
 	{10,	1244},
 	{20,	1228},
 	{30,	1212},
@@ -129,6 +722,8 @@ static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
 	{780,	208},
 	{790,	203}
 };
+#endif
+/* LGE_CHANGE_E */
 
 static const struct qpnp_vadc_map_pt adcmap_qrd_btm_threshold[] = {
 	{-200,	1540},
@@ -620,9 +1215,22 @@ int32_t qpnp_adc_scale_batt_therm(struct qpnp_vadc_chip *chip,
 
 	bat_voltage = qpnp_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
-
 	return qpnp_adc_map_temp_voltage(
+#ifdef CONFIG_LGE_PM_CHARGING_TEMP_SCENARIO
+#if defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) \
+	|| defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM8926_JAGNM_TLS) \
+	|| defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL)
+			(lge_get_board_revno() == HW_REV_A) ? adcmap_btm_threshold_A : adcmap_btm_threshold,
+
+#elif defined (CONFIG_MACH_MSM8926_JAGC_SPR)
 			adcmap_btm_threshold,
+
+#else
+			(lge_get_board_revno() == HW_REV_0) ? adcmap_btm_threshold_for_rev0 : adcmap_btm_threshold,
+#endif
+#else
+			adcmap_btm_threshold,
+#endif
 			ARRAY_SIZE(adcmap_btm_threshold),
 			bat_voltage,
 			&adc_chan_result->physical);
@@ -836,6 +1444,13 @@ int32_t qpnp_adc_scale_default(struct qpnp_vadc_chip *vadc,
 			scale_voltage = -scale_voltage;
 			negative_rawfromoffset = 1;
 		} else {
+		#ifdef CONFIG_LGE_PM
+			pr_err("adc_result is negative! ->  %lld uV \n", scale_voltage);
+			pr_err("adc code = 0x%x, gnd = %lld, dx = %lld, dy = %lld \n",
+			   adc_code, chan_properties->adc_graph[CALIB_ABSOLUTE].adc_gnd,
+			   chan_properties->adc_graph[CALIB_ABSOLUTE].dx,
+			   chan_properties->adc_graph[CALIB_ABSOLUTE].dy);
+		#endif
 			scale_voltage = 0;
 		}
 	}
@@ -940,7 +1555,11 @@ int32_t qpnp_adc_btm_scaler(struct qpnp_vadc_chip *chip,
 	pr_debug("warm_temp:%d and cool_temp:%d\n", param->high_temp,
 				param->low_temp);
 	rc = qpnp_adc_map_voltage_temp(
+#ifdef CONFIG_LGE_PM_CHARGING_TEMP_SCENARIO
+		(lge_get_board_revno() == HW_REV_0) ? adcmap_btm_threshold_for_rev0 : adcmap_btm_threshold,
+#else
 		adcmap_btm_threshold,
+#endif
 		ARRAY_SIZE(adcmap_btm_threshold),
 		(param->low_temp),
 		&low_output);
@@ -955,7 +1574,11 @@ int32_t qpnp_adc_btm_scaler(struct qpnp_vadc_chip *chip,
 	low_output += btm_param.adc_gnd;
 
 	rc = qpnp_adc_map_voltage_temp(
+#ifdef CONFIG_LGE_PM_CHARGING_TEMP_SCENARIO
+		(lge_get_board_revno() == HW_REV_0) ? adcmap_btm_threshold_for_rev0 : adcmap_btm_threshold,
+#else
 		adcmap_btm_threshold,
+#endif
 		ARRAY_SIZE(adcmap_btm_threshold),
 		(param->high_temp),
 		&high_output);
@@ -990,6 +1613,102 @@ int32_t qpnp_vadc_check_result(int32_t *data)
 	return 0;
 }
 EXPORT_SYMBOL(qpnp_vadc_check_result);
+
+/*Qualcomm patch -BMS tuning eunho.yang@lge.com
+  *Issue : Battery soc didn't match battery voltage*/
+#if defined (CONFIG_MACH_MSM8226_E7WIFI) || defined (CONFIG_MACH_MSM8226_E8WIFI) || defined (CONFIG_MACH_MSM8926_E8LTE) || defined (CONFIG_MACH_MSM8226_E9WIFI) || defined (CONFIG_MACH_MSM8226_E9WIFIN) || defined (CONFIG_MACH_MSM8926_E7LTE_ATT_US) || defined (CONFIG_MACH_MSM8926_E7LTE_VZW_US) || defined (CONFIG_MACH_MSM8926_E7LTE_USC_US) || defined (CONFIG_MACH_MSM8926_T8LTE) || defined (CONFIG_MACH_MSM8926_E9LTE_VZW_US)
+int qpnp_adc_get_revid_version(struct device *dev)
+{
+	struct pmic_revid_data *revid_data;
+	struct device_node *revid_dev_node;
+
+	revid_dev_node = of_parse_phandle(dev->of_node,
+						"qcom,pmic-revid", 0);
+	if (!revid_dev_node) {
+		pr_debug("Missing qcom,pmic-revid property\n");
+		return -EINVAL;
+	}
+
+	revid_data = get_revid_data(revid_dev_node);
+	if (IS_ERR(revid_data)) {
+		pr_err("revid error rc = %ld\n", PTR_ERR(revid_data));
+		return -EINVAL;
+	}
+
+	if ((revid_data->rev1 == PM8941_V3P1_REV1) &&
+		(revid_data->rev2 == PM8941_V3P1_REV2) &&
+		(revid_data->rev3 == PM8941_V3P1_REV3) &&
+		(revid_data->rev4 == PM8941_V3P1_REV4) &&
+		(revid_data->pmic_type == PM8941_V3P1_TYPE) &&
+		(revid_data->pmic_subtype == PM8941_V3P1_SUBTYPE))
+			return QPNP_REV_ID_8941_3_1;
+#if defined (CONFIG_MACH_MSM8226_E7WIFI) || defined (CONFIG_MACH_MSM8226_E8WIFI) || defined (CONFIG_MACH_MSM8926_E8LTE) || defined (CONFIG_MACH_MSM8226_E9WIFI) || defined (CONFIG_MACH_MSM8226_E9WIFIN) || defined (CONFIG_MACH_MSM8926_E7LTE_ATT_US) || defined (CONFIG_MACH_MSM8926_E7LTE_VZW_US) || defined (CONFIG_MACH_MSM8926_E7LTE_USC_US) || defined (CONFIG_MACH_MSM8926_T8LTE) || defined (CONFIG_MACH_MSM8926_E9LTE_VZW_US)
+	else if ((revid_data->rev1 == PM8941_V3P0_REV1) &&
+		(revid_data->rev2 == PM8941_V3P0_REV2) &&
+		(revid_data->rev3 == PM8941_V3P0_REV3) &&
+		(revid_data->rev4 == PM8941_V3P0_REV4) &&
+		(revid_data->pmic_type == PM8941_V3P0_TYPE) &&
+		(revid_data->pmic_subtype == PM8941_V3P0_SUBTYPE))
+			return QPNP_REV_ID_8941_3_0;
+	else if ((revid_data->rev1 == PM8941_V2P0_REV1) &&
+		(revid_data->rev2 == PM8941_V2P0_REV2) &&
+		(revid_data->rev3 == PM8941_V2P0_REV3) &&
+		(revid_data->rev4 == PM8941_V2P0_REV4) &&
+		(revid_data->pmic_type == PM8941_V2P0_TYPE) &&
+		(revid_data->pmic_subtype == PM8941_V2P0_SUBTYPE))
+			return QPNP_REV_ID_8941_2_0;
+	else if ((revid_data->rev1 == PM8226_V2P2_REV1) &&
+		(revid_data->rev2 == PM8226_V2P2_REV2) &&
+		(revid_data->rev3 == PM8226_V2P2_REV3) &&
+		(revid_data->rev4 == PM8226_V2P2_REV4) &&
+		(revid_data->pmic_type == PM8226_V2P2_TYPE) &&
+		(revid_data->pmic_subtype == PM8226_V2P2_SUBTYPE))
+			return QPNP_REV_ID_8026_2_2;
+#endif
+	else if ((revid_data->rev1 == PM8226_V2P1_REV1) &&
+		(revid_data->rev2 == PM8226_V2P1_REV2) &&
+		(revid_data->rev3 == PM8226_V2P1_REV3) &&
+		(revid_data->rev4 == PM8226_V2P1_REV4) &&
+		(revid_data->pmic_type == PM8226_V2P1_TYPE) &&
+		(revid_data->pmic_subtype == PM8226_V2P1_SUBTYPE))
+			return QPNP_REV_ID_8026_2_1;
+	else if ((revid_data->rev1 == PM8226_V2P0_REV1) &&
+		(revid_data->rev2 == PM8226_V2P0_REV2) &&
+		(revid_data->rev3 == PM8226_V2P0_REV3) &&
+		(revid_data->rev4 == PM8226_V2P0_REV4) &&
+		(revid_data->pmic_type == PM8226_V2P0_TYPE) &&
+		(revid_data->pmic_subtype == PM8226_V2P0_SUBTYPE))
+			return QPNP_REV_ID_8026_2_0;
+	else if ((revid_data->rev1 == PM8226_V1P0_REV1) &&
+		(revid_data->rev2 == PM8226_V1P0_REV2) &&
+		(revid_data->rev3 == PM8226_V1P0_REV3) &&
+		(revid_data->rev4 == PM8226_V1P0_REV4) &&
+		(revid_data->pmic_type == PM8226_V1P0_TYPE) &&
+		(revid_data->pmic_subtype == PM8226_V1P0_SUBTYPE))
+			return QPNP_REV_ID_8026_1_0;
+	else if ((revid_data->rev1 == PM8110_V1P0_REV1) &&
+		(revid_data->rev2 == PM8110_V1P0_REV2) &&
+		(revid_data->rev3 == PM8110_V1P0_REV3) &&
+		(revid_data->rev4 == PM8110_V1P0_REV4) &&
+		(revid_data->pmic_type == PM8110_V1P0_TYPE) &&
+		(revid_data->pmic_subtype == PM8110_V1P0_SUBTYPE))
+			return QPNP_REV_ID_8110_1_0;
+/*Qualcomm patch -BMS tuning eunho.yang@lge.com
+  *Issue : Battery soc didn't match battery voltage*/
+#if defined (CONFIG_MACH_MSM8226_E7WIFI) || defined (CONFIG_MACH_MSM8226_E8WIFI) || defined (CONFIG_MACH_MSM8926_E8LTE) || defined (CONFIG_MACH_MSM8226_E9WIFI) || defined (CONFIG_MACH_MSM8226_E9WIFIN) || defined (CONFIG_MACH_MSM8926_E7LTE_ATT_US) || defined (CONFIG_MACH_MSM8926_E7LTE_VZW_US) || defined (CONFIG_MACH_MSM8926_E7LTE_USC_US) || defined (CONFIG_MACH_MSM8926_T8LTE) || defined (CONFIG_MACH_MSM8926_E9LTE_VZW_US)
+	else if ((revid_data->rev1 == PM8110_V2P0_REV1) &&
+		(revid_data->rev2 == PM8110_V2P0_REV2) &&
+		(revid_data->rev3 == PM8110_V2P0_REV3) &&
+		(revid_data->rev4 == PM8110_V2P0_REV4) &&
+		(revid_data->pmic_type == PM8110_V2P0_TYPE) &&
+		(revid_data->pmic_subtype == PM8110_V2P0_SUBTYPE))
+			return QPNP_REV_ID_8110_2_0;
+#endif
+	else
+		return -EINVAL;
+}
+EXPORT_SYMBOL(qpnp_adc_get_revid_version);
+#else
 
 int qpnp_adc_get_revid_version(struct device *dev)
 {
@@ -1076,6 +1795,7 @@ int qpnp_adc_get_revid_version(struct device *dev)
 		return -EINVAL;
 }
 EXPORT_SYMBOL(qpnp_adc_get_revid_version);
+#endif
 
 int32_t qpnp_adc_get_devicetree_data(struct spmi_device *spmi,
 			struct qpnp_adc_drv *adc_qpnp)

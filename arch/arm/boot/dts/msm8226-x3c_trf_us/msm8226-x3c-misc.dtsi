@@ -1,0 +1,78 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		lgd_melfas@34 {
+			compatible = "lgd_melfas,incell";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x2002>;
+			vdd-supply = <&pm8226_l19>;
+			vcc_i2c-supply = <&pm8226_lvs1>;
+			lgd_melfas,max_x = <480>;
+			lgd_melfas,max_y = <800>;
+			lgd_melfas,reset_gpio = <&msmgpio 16 0x00>;
+			lgd_melfas,irq_gpio = <&msmgpio 17 0x2002>;
+			lgd_melfas,button-map = <158 139>;
+			status = "ok";
+		};
+
+	};
+
+	i2c@f9924000 { /* BLSP1 QUP2 */
+		ags04@6A {
+			compatible = "ags04,touch_keypad";
+			status = "ok";
+			reg = <0x6A>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <13 0x2002>; /* IRQF_TRIGGER_ONESHOT | IRQF_TRIGGER_FALLING */
+			ags04,gpio_int = <13>;
+			ags04,button-map = <139 158>;
+			ags04,irq_gpio = <&msmgpio 13 0x08>;
+			vdd-supply = <&pm8226_lvs1>;
+			vcc_i2c-supply = <&pm8226_lvs1>;
+		};
+		ads_ags04@6A {
+			compatible = "ads,ags04_ts";
+			status = "disable";
+			reg = <0x6A>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <13 0x2002>;
+			vdd-supply = <&pm8226_lvs1>;
+			vcc_i2c-supply = <&pm8226_lvs1>;
+			ads,gpio-int = <13>;
+			ads,num-of-on-cmds = <9>;
+			ads,key_code = <139 158 0 0>;
+			ads,on-cmds = <
+				0x02 0x4d
+				0x0c 0x33
+				0x0d 0x33
+				0x0e 0x00
+				0x16 0x03
+				0x01 0x03 /* Channel Enable */
+				0x04 0x05 /* Sensitivity 1 */
+				0x05 0x05 /* Sensitivity 2 */
+				0x02 0x48
+			>;
+		};
+	};
+
+	i2c@f9925000 {
+		lp5521@32 {
+			compatible = "ti,lp5521";
+			status = "ok";
+			reg = <0x32>;
+			ti,led_en = <&msmgpio 112 0x0>;
+		};
+	};
+};

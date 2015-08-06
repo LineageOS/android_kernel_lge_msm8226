@@ -33,7 +33,12 @@ static LIST_HEAD(clk_list);
 static DEFINE_SPINLOCK(clk_list_lock);
 
 static struct dentry *debugfs_base;
+#if defined(CONFIG_MACH_MSM8926_X3N_KR) || defined(CONFIG_MACH_MSM8926_G2M_KR)|| defined(CONFIG_MACH_MSM8926_F70N_KR) || defined(CONFIG_LGE_ENABLE_PRINT_CLK_LOG)
+/*enable the debug mask to print Enabled CLK log*/
+static u32 debug_suspend = 1;
+#else
 static u32 debug_suspend;
+#endif
 
 struct clk_table {
 	struct list_head node;

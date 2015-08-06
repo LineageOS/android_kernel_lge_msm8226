@@ -1,0 +1,51 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/* LGE_CHANGE, [NFC][garam.kim@lge.com], NFC Bring up temp */
+&soc {
+
+	i2c@0 {
+		pn547@28 {
+			compatible = "nxp,pn547";
+			status = "ok";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <99 0x2>;
+			nxp,gpio_sda = <&msmgpio 4 0x00>;
+			nxp,gpio_scl = <&msmgpio 5 0x00>;
+			nxp,gpio_ven = <&msmgpio 71 0x00>;
+			nxp,gpio_mode = <&msmgpio 70 0x00>;
+			nxp,gpio_irq = <&msmgpio 99 0x00>;
+			nxp,i2c-pull-up = <1>;
+			revision = "rev_b";
+		};
+	};
+/* LGE_CHANGE, [NFC][taesik.kim@lge.com], NFC Bring up temp */	
+	i2c@f9926000 {
+		pn547@28 {
+			compatible = "nxp,pn547";
+			status = "ok";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <99 0x2>;
+			nxp,gpio_sda = <&msmgpio 88 0x00>;
+			nxp,gpio_scl = <&msmgpio 89 0x00>;
+			nxp,gpio_ven = <&msmgpio 71 0x00>;
+			nxp,gpio_mode = <&msmgpio 70 0x00>;
+			nxp,gpio_irq = <&msmgpio 99 0x00>;
+			nxp,i2c-pull-up = <1>;
+			revision = "rev_c...";
+		};
+	};
+	
+
+};

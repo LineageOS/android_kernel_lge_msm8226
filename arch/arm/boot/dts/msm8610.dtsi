@@ -28,7 +28,7 @@
 	aliases {
 		sdhc1 = &sdhc_1; /* SDC1 eMMC slot */
 		sdhc2 = &sdhc_2; /* SDC2 SD card slot */
-		spi4 = &spi_4;
+		/*spi4 = &spi_4;*/
 	};
 
 	soc: soc { };
@@ -255,7 +255,7 @@
 		compatible = "qcom,android-usb";
 		reg = <0xfe8050c8 0xc8>;
 		qcom,android-usb-swfi-latency = <1>;
-		qcom,streaming-func = "rndis";
+		qcom,streaming-func = "rndis", "ecm", "mtp";
 		qcom,android-usb-uicc-nluns = <1>;
 	};
 
@@ -463,7 +463,7 @@
 		compatible = "qcom,msm-watchdog";
 		reg = <0xf9017000 0x1000>;
 		interrupts = <0 3 0>, <0 4 0>;
-		qcom,bark-time = <11000>;
+		qcom,bark-time = <15000>;
 		qcom,pet-time = <10000>;
 		qcom,ipi-ping;
 	};
@@ -609,7 +609,7 @@
                 qcom,master-id = <86>;
 	};
 
-	spi_4: spi@f9926000 { /* BLSP1 QUP4 */
+/*	spi_4: spi@f9926000 { BLSP1 QUP4
 		compatible = "qcom,spi-qup-v2";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -647,7 +647,7 @@
 			lattice,config-done-gpio = <&msmgpio 94 0>;
 			lattice,vcc-en-gpio = <&msmgpio 96 0>;
 		};
-	};
+	};*/
 
 	qcom,pronto@fb21b000 {
 		compatible = "qcom,pil-pronto";

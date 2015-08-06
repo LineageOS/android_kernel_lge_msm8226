@@ -1,0 +1,63 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9923000{
+		mms100s@48 {
+			melfas,product = "T2S35A";
+			melfas,use_vdd = <1>;
+			melfas,use_vdd_int = <1>;
+			melfas,use_vdd_i2c = <1>;
+			melfas,fw-image-name = "melfas/w3c_vzw/w3c_vzw_rev_a_v107.mfsb";
+			melfas,panel-spec-name = "melfas/w3c_vzw/w3c_vzw_limit.txt";
+			status = "disable";
+			revision = "rev_0...rev_a";
+		};
+
+		mms100s_rev_b@48 {
+			melfas,product = "T2S35A";
+			melfas,use_vdd = <1>;
+			melfas,use_vdd_i2c = <1>;
+			vdd_int-supply = <&pm8110_l14>;
+			melfas,fw-image-name = "melfas/w3c_vzw/w3c_vzw_rev_a_v107.mfsb";
+			melfas,panel-spec-name = "melfas/w3c_vzw/w3c_vzw_limit.txt";
+			status = "disable";
+			revision = "rev_b...";
+		};
+
+		lge_touch@48 {
+			revision = "rev_0...rev_a";
+			status = "ok";
+			lge,product = "T2S35A";
+			lge,fw_image = "melfas/w3c_vzw/w3c_vzw_rev_a_v107.mfsb";
+			lge,panel_spec = "melfas/w3c_vzw/w3c_vzw_limit.txt";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+			vdd_type2 = <2>;
+			button_name = <158 139>;
+		};
+
+		lge_touch_rev_b@48 {
+			revision = "rev_b...";
+			status = "ok";
+			lge,product = "T2S35A";
+			lge,fw_image = "melfas/w3c_vzw/w3c_vzw_rev_a_v107.mfsb";
+			lge,panel_spec = "melfas/w3c_vzw/w3c_vzw_limit.txt";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+			vio_int-supply = <&pm8110_l14>;
+			button_name = <158 139>;
+			lge,id-gpio = <&msmgpio 76 0x00>;
+			lge,id2-gpio = <&msmgpio 77 0x00>;
+		};
+	};
+};

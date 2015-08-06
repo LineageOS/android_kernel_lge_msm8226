@@ -1,0 +1,171 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+	qcom,mdss_dsi@fd922800 {
+		revision = "...rev_b";
+		qcom,dsi-pref-prim-pan = <&dsi_lh500wx9_vid>;
+	};
+};
+
+&mdss_dsi0 {
+	qcom,mdss_dsi@fd922800 {
+		revision = "rev_c...";
+		qcom,dsi-pref-prim-pan = <&dsi_lh500wx9_vid_b>;
+	};
+};
+
+&dsi_lh500wx9_vid{
+		qcom,cont-splash-enabled;
+		status= "ok";
+
+		qcom,mdss-dsi-on-command = [
+		15 00 00 00 00 00 02
+		36 02
+		39 00 00 00 00 00 06/* dsi config */
+		B0 43 00 80 00 00
+		39 00 00 00 00 00 03/* panel character */
+		B3 2A 9F
+		15 00 00 00 00 00 02/* set inversion */
+		B4 00
+		39 00 00 00 00 00 06   /*display ctrl 1 */
+		B5 40 20 40 00 20
+		39 00 00 00 00 00 08   /*display ctrl 2 */
+		B6 00 14 0F 16 13 05 30
+		39 00 00 00 00 00 0A /*Positive Gamma Curve for Red*/
+		D0 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Negative Gamma Curve for Red*/
+		D1 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Positive Gamma Curve for Green*/
+		D2 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Negative Gamma Curve for Green*/
+		D3 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Positive Gamma Curve for Blue*/
+		D4 00 04 76 03 00 00 44 22 04
+		39 00 00 00 00 00 0A /*Negative Gamma Curve for Blue*/
+		D5 00 04 76 03 00 00 44 22 04
+
+		39 00 00 00 00 00 04 /* osc setting */
+		C0 00 0A 10
+		39 00 00 00 00 00 0D /* power setting 3 */
+		C3 00 88 13 05 00 11 FA
+		33 02 38 38 00
+		39 00 00 00 00 00 06 /* power setting 4 */
+		C4 22 24 0C 0C 54
+		39 00 00 00 00 00 04 /* power setting 5 */
+		C5 3B 3B 03
+		39 00 00 00 00 00 04 /* power setting 7 */
+		C7 00 00 14
+
+		15 00 00 00 00 00 02 /* write display brightness */
+		51 FF
+		15 00 00 00 00 00 02 /* write control display */
+		53 24
+		15 00 00 00 00 00 02 /* white content adaptive brightness control */
+		55 01
+		15 00 00 00 00 00 02 /* write CABC min brightness */
+		5E 80
+		39 00 00 00 00 00 06 /* backlight control */
+		C8 44 44 44 37 80
+		39 00 00 00 00 00 03 /* Sync disable */
+		F5 22 16
+		05 01 00 00 00 00 01 /* Display ON*/
+		29
+		];
+
+		lge,display-off-cmds = [
+		05 01 00 00 0A 00 01
+		28
+		05 01 00 00 0A 00 01
+		10
+		15 01 00 00 0A 00 02
+		C1 02
+		];
+};
+
+&dsi_lh500wx9_vid_b{
+		qcom,cont-splash-enabled;
+		status = "ok";
+
+		qcom,mdss-dsi-on-command = [
+		15 00 00 00 00 00 02
+		36 02
+		39 00 00 00 00 00 06/* dsi config */
+		B0 43 00 80 00 00
+		39 00 00 00 00 00 03/* panel character */
+		B3 2A 9F
+		15 00 00 00 00 00 02/* set inversion */
+		B4 00
+		39 00 00 00 00 00 06   /*display ctrl 1 */
+		B5 40 20 40 00 20
+		39 00 00 00 00 00 08   /*display ctrl 2 */
+		B6 00 14 0F 16 13 05 30
+		39 00 00 00 00 00 0A /*Positive Gamma Curve for Red*/
+		D0 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Negative Gamma Curve for Red*/
+		D1 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Positive Gamma Curve for Green*/
+		D2 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Negative Gamma Curve for Green*/
+		D3 00 04 76 03 00 00 77 22 04
+		39 00 00 00 00 00 0A /*Positive Gamma Curve for Blue*/
+		D4 00 04 76 03 00 00 44 22 04
+		39 00 00 00 00 00 0A /*Negative Gamma Curve for Blue*/
+		D5 00 04 76 03 00 00 44 22 04
+
+		39 00 00 00 00 00 04 /* osc setting */
+		C0 00 0A 10
+		39 00 00 00 00 00 0D /* power setting 3 */
+		C3 00 88 13 05 00 11 FA
+		33 02 38 38 00
+		39 00 00 00 00 00 06 /* power setting 4 */
+		C4 22 24 0C 0C 54
+		39 00 00 00 00 00 04 /* power setting 5 */
+		C5 3B 3B 03
+		39 00 00 00 00 00 04 /* power setting 7 */
+		C7 00 00 14
+
+		15 00 00 00 00 00 02 /* write display brightness */
+		51 FF
+		15 00 00 00 00 00 02 /* write control display */
+		53 24
+		15 00 00 00 00 00 02 /* white content adaptive brightness control */
+		55 01
+		15 00 00 00 00 00 02 /* write CABC min brightness */
+		5E 80
+		39 00 00 00 00 00 06 /* backlight control */
+		C8 44 44 44 37 80
+		39 00 00 00 00 00 03 /* Sync disable */
+		F5 22 16
+		05 01 00 00 00 00 01 /* Display ON*/
+		29
+		];
+
+		lge,display-off-cmds = [
+		05 01 00 00 0A 00 01
+		28
+		05 01 00 00 0A 00 01
+		10
+		15 01 00 00 0A 00 02
+		C1 02
+		];
+};
+
+&soc {
+		mdss_dsi0: qcom,mdss_dsi@fd922800 {
+				qcom,platform-supply-entry1 {
+					   qcom,supply-name = "vdd";
+					   qcom,supply-min-voltage = <3000000>;
+					   qcom,supply-max-voltage = <3000000>;
+		};
+	};
+};

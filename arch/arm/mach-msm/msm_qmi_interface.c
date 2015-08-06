@@ -653,7 +653,7 @@ int qmi_connect_to_service(struct qmi_handle *handle,
 	svc_name.instance = instance_id;
 
 	rc = msm_ipc_router_lookup_server_name(&svc_name, &svc_info,
-						1, LOOKUP_MASK);
+				1, LOOKUP_MASK);
 	if (rc <= 0) {
 		pr_err("%s: Server %08x:%08x not found\n",
 			__func__, service_id, instance_id);

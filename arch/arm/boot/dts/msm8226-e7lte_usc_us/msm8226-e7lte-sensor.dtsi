@@ -1,0 +1,61 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	/* I2C device */
+	i2c@f9926000 {
+		qcom,i2c-bus-freq = <400000>;
+		qcom,i2c-src-freq = <19200000>;
+		qcom,sda-gpio = <&msmgpio 14 0>;
+		qcom,scl-gpio = <&msmgpio 15 0>;
+		qcom,master-id = <86>;
+		
+		/* sx9500 cap sensor */
+		Semtech_sx9500@28 {
+			compatible = "Semtech,sx9500";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <54 0x2>;
+			Semtech,irq-gpio = <&msmgpio 54 0x00>;
+			Semtech,vdd-supply = <&pm8226_l15>;
+			Semtech,svdd-supply = <&pm8226_l23>;
+			Semtech,vdd_supply_min = <2800000>;
+			Semtech,vdd_supply_max = <2800000>;
+			Semtech,vdd_load_ua = <15000>;
+			Semtech,svdd_supply_min = <1800000>;
+			Semtech,svdd_supply_max = <1800000>;
+			Semtech,svdd_load_ua = <10000>;
+			Semtech,RegIrqMask = <0x03 0x70>;
+			Semtech,RegProxCtrl0 = <0x06 0x5C>;
+			Semtech,RegProxCtrl1 = <0x07 0x02>;
+			Semtech,RegProxCtrl2 = <0x08 0x77>;
+			Semtech,RegProxCtrl3 = <0x09 0x01>;
+			Semtech,RegProxCtrl4 = <0x0A 0x40>;
+			Semtech,RegProxCtrl5 = <0x0B 0x0D>;
+			Semtech,RegProxCtrl6 = <0x0C 0x09>;
+			Semtech,RegProxCtrl7 = <0x0D 0x00>;
+			Semtech,RegProxCtrl8 = <0x0E 0x00>;
+			Semtech,RegSensorSel = <0x20 0x02>;
+			Semtech,InputPinsNum = <1>;
+			Semtech,InputMainSensor = <0x02>;
+			Semtech,InputMainSensor2 = <0x0F>;
+			Semtech,InputRefSensor = <0x03>;
+			Semtech,DynamicThres_Offset = <21000>;
+			Semtech,DynamicThres_Temp_Slope = <45>;
+			Semtech,DynamicThres_Hysteresis = <1000>;
+			Semtech,Calibration_Margin = <0>;
+			Semtech,Startup_Touch_RegAvgThres = <0x29>;
+			Semtech,Startup_Release_RegAvgThres = <0x40>;
+			status = "ok";
+		};
+	};
+};

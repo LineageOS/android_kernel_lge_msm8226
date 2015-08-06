@@ -1,0 +1,13 @@
+#
+# MTV222_DEVICE subsystem configuration
+#
+
+#menu "MTV222 support"
+
+config MTV222_ISDBT
+	default n
+	---help---
+	  This driver implements the front-end of the Xen virtual
+	  keyboard and mouse device driver.  It communicates with a back-end
+	  in another domain.
+#endmenu

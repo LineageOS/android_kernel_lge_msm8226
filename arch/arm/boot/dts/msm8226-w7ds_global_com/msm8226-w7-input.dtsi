@@ -1,0 +1,132 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		synaptics@20 {
+			//synaptics,fw-image-name = "synaptics/PR1237618-DS4.3.5.0.16.img";
+			revision = "rev_0";
+			status = "ok";
+		};
+
+		melfas_mms136@48 {
+			melfas,product = "E4A47A";
+			melfas,fw-image-name = "melfas/w7ds_global_com/w7ds_global_com_rev_a_v102.mfsb";
+			melfas,panel-spec-name = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_a";
+			status = "disable";
+		};
+
+		melfas_mms136_rev_b@48 {
+			melfas,product = "E4A47A";
+			interrupts = <17 0x0>;
+			melfas,fw-image-name = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			melfas,panel-spec-name = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_b";
+			status = "disable";
+		};
+
+		melfas_mms136_rev_c@48 {
+			melfas,product = "E4A47A";
+			melfas,fw-image-name = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			melfas,panel-spec-name = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			vdd-supply = <0>;
+			melfas,ce = <60>;
+			melfas,auto_fw_update = <1>;
+			melfas,enalbe_active_mode = <0>;
+			revision = "rev_c...rev_d";
+			status ="disable";
+		};
+
+		atmel_s336@4a {
+			revision = "rev_e";
+			status = "ok";
+
+			atmel,t15_key_state = <1 2 4 8>;
+			atmel,t15_key_map = <158 172 139 249>;
+			atmel,t15_key_array = <0 0 1 0 2 0 3 0>;
+
+			atmel,fw_name = "atmel/E4A47P2_2_07.fw";
+			atmel,panel_check = <1>;
+			atmel,t15_extra_key_state = <2 128 8 1>;
+			atmel,t15_extra_key_array = <11 0 8 0 4 0 1 0>;
+			atmel,extra_fw_name = "atmel/E4A47P1_2_04.fw";
+			atmel,ghost_detection_enable = <1>;
+			atmel,butt_check_enable = <1>;
+			atmel,panel_delta_value = <292 229 0>;
+		};
+
+		atmel_s336_rev_b@4a {
+			revision = "rev_10";
+			status = "ok";
+
+			atmel,t15_key_state = <1 2 4 8>;
+			atmel,t15_key_map = <158 172 139 249>;
+			atmel,t15_key_array = <0 0 1 0 2 0 3 0>;
+
+			atmel,fw_name = "atmel/E4A47P2_2_07.fw";
+			atmel,fw2_name = "atmel/I4A47P2_2_07.fw";
+			atmel,panel_check = <0>;
+			atmel,maker_id = <1>;
+			atmel,maker_id_gpio = <116>;
+			atmel,maker_id2_gpio = <16>;
+			atmel,t15_extra_key_state = <2 128 8 1>;
+			atmel,t15_extra_key_array = <11 0 8 0 4 0 1 0>;
+			atmel,extra_fw_name = "atmel/E4A47P1_2_04.fw";
+			atmel,ghost_detection_enable = <1>;
+			atmel,butt_check_enable = <1>;
+                        atmel,panel_delta_value = <292 229 0>;
+		};
+
+		lge_touch@48 {
+			lge,product = "E4A47A";
+			lge,fw_image = "melfas/w7ds_global_com/w7ds_global_com_rev_a_v102.mfsb";
+			lge,panel_spec = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_a";
+			status = "ok";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+		};
+
+		lge_touch_rev_b@48 {
+			lge,product = "E4A47A";
+			interrupts = <17 0x2>;
+			lge,fw_image = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			lge,panel_spec = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_b";
+			status = "ok";
+			vdd_type0 = <2>;
+			vdd_type1 = <2>;
+		};
+
+		lge_touch_rev_c@48 {
+			lge,product = "E4A47A";
+			lge,fw_image = "melfas/w7ds_global_com/w7ds_global_com_rev_b_v104.mfsb";
+			lge,panel_spec = "melfas/w7ds_global_com/w7ds_global_com_limit.txt";
+			revision = "rev_c...rev_d";
+			status = "ok";
+			vdd_type0 = <1>;
+			vdd_name0 = "high";
+			vdd_value0 = <60>;
+			vdd_type1 = <2>;
+		};
+
+		lge_ts_misc {
+			revision = "rev_c...rev_d";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="ok";
+		};
+	};
+};

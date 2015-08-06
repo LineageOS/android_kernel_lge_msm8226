@@ -1,0 +1,108 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	gpio_keys {
+		vol_up {
+			gpios = <&msmgpio 106 0x1>;
+		};
+
+		vol_down {
+			gpios = <&msmgpio 107 0x1>;
+		};
+
+		home {
+			unused;
+		};
+
+		quick_clip {
+			unused;
+		};
+	};
+
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		lge_touch@34 {
+			status = "ok";
+			revision = "rev_a...";
+			compatible = "lge,touch_core";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x2>;
+			lge,rst-gpio	=	<&msmgpio 16 0x00>;
+			lge,int-gpio	=	<&msmgpio 17 0x00>;
+			lge,sda-gpio	=	<&msmgpio 18 0x00>;
+			lge,scl-gpio	=	<&msmgpio 19 0x00>;
+			lge,id-gpio	=	<&msmgpio 0 0x00>;
+			lge,id2-gpio	=	<&msmgpio 0 0x00>;
+
+			/* IC Type. This should be matched with proper device. */
+			/*      0 : MMS-100S Series. MMS-128S , MMS-134S */
+			/*      1 : MMS-100A Series. MMS-136 , MMS-144 , MMS-152 */
+			/*      2 : MIT-200. AIT(Advanced Incell Touch)*/
+			lge,auto_fw_update = <1>;
+			lge,ic_type = <2>;
+			lge,maker = "Melfas";
+			lge,product = "L0M45P1";
+			lge,fw_image = "melfas/mit200/L0M45P1_0_53.fw";
+			lge,panel_spec = "melfas/mit200/L0M45P1_spec.txt";
+
+			/* platform_data->caps */
+			button_support = <0>;
+			button_name = <>;
+			is_width_supported = <1>;
+			is_pressure_supported = <1>;
+			is_id_supported = <1>;
+			max_width = <30>;
+			max_pressure = <0xff>;
+			max_id = <10>;
+			x_max = <480>;
+			y_max = <800>;
+			lcd_x = <480>;
+			lcd_y = <800>;
+			operation_mode = <1>;
+			key_type = <3>;
+			report_mode = <0>;
+			delta_pos_threshold = <0>;
+			panel_id = "L", "?", "?", "?";
+
+			/* platform_data->role */
+			booting_delay = <10>;
+			reset_delay = <5>;
+			suspend_pwr = <0>;
+			resume_pwr = <1>;
+			ghost_detection_enable = <0>;
+
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <2>;
+			vdd_name0 = "vdd";
+			vdd_value0 = <3000000>;
+			vdd-supply = <&pm8226_l28>;
+
+			vdd_type1 = <1>;
+			vdd_name1 = "high";
+			vdd_value1 = <120>;
+			vio_i2c-supply = <0>;
+
+			vdd_type2 = <0>;
+			vdd_name2 = "NULL";
+			vdd_value2 = <0>;
+			vio_int-supply = <0>;
+		};
+	};
+};

@@ -160,6 +160,9 @@ static void msm_enqueue(struct msm_queue_head *qhead,
 		struct list_head *entry)
 {
 	unsigned long flags;
+
+	BUG_ON(!qhead);  /* LGE_CHANGE, soojong.jin, 2013.11.25, Fixed WBT*/ 
+	
 	spin_lock_irqsave(&qhead->lock, flags);
 	qhead->len++;
 	if (qhead->len > qhead->max)
@@ -711,8 +714,8 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 
 	if (timeout < 0) {
 		mutex_unlock(&session->lock);
-		pr_err("%s : timeout cannot be negative Line %d\n",
-				__func__, __LINE__);
+                if(event->id != MSM_CAMERA_DEL_SESSION)  /* LGE_CHANGE, jaehan.jeong, 2014.4.9, do not spam logs unless necessary */
+		    pr_err("%s : timeout cannot be negative Line %d\n",__func__, __LINE__);
 		return rc;
 	}
 
@@ -724,10 +727,16 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 		if (!rc) {
 			pr_err("%s: Timed out\n", __func__);
 			rc = -ETIMEDOUT;
-		} else {
+		}
+		if(rc < 0){ /* LGE_CHANGE, soojong.jin, 2014.12.31,  fixed recovery code*/
 			pr_err("%s: Error: No timeout but list empty!",
 					__func__);
 			mutex_unlock(&session->lock);
+/* LGE_CHANGE_S, Camera Recovery Code, 2013-08-20, jungki.kim@lge.com */
+			pr_err("%s: ===== Camera Recovery Start! ===== \n", __func__);
+			dump_stack();
+			send_sig(SIGKILL, current, 0);
+/* LGE_CHANGE_E, Camera Recovery Code, 2013-08-20, jungki.kim@lge.com */
 			return -EINVAL;
 		}
 	}

@@ -21,6 +21,10 @@
 #include <linux/mmc/host.h>
 #include "queue.h"
 
+#if defined(CONFIG_LGE_MMC_DYNAMIC_LOG)
+#include <linux/mmc/debug_log.h>
+#endif
+
 #define MMC_QUEUE_BOUNCESZ	65536
 
 
@@ -80,8 +84,8 @@ static int mmc_queue_thread(void *d)
 				continue; /* fetch again */
 			} else if (test_bit(MMC_QUEUE_URGENT_REQUEST,
 					&mq->flags) && (mq->mqrq_cur->req &&
-					!(mq->mqrq_cur->req->cmd_flags &
-						MMC_REQ_NOREINSERT_MASK))) {
+				!(mq->mqrq_cur->req->cmd_flags &
+				       MMC_REQ_NOREINSERT_MASK))) {
 				/*
 				 * clean current request when urgent request
 				 * processing in progress and current request is
@@ -379,6 +383,8 @@ prev_sg_alloc_failed:
 cur_sg_alloc_failed:
 		host->max_segs /= 2;
 		if (host->max_segs) {
+			pr_warning("%s: p1-fs allocate max segs =%d\n",
+					mmc_card_name(card), host->max_segs);
 			goto retry;
 		} else {
 			host->max_segs = max_segs;

@@ -6,3 +6,6 @@ obj-$(CONFIG_IRQ_DOMAIN) += irqdomain.o
 obj-$(CONFIG_PROC_FS) += proc.o
 obj-$(CONFIG_GENERIC_PENDING_IRQ) += migration.o
 obj-$(CONFIG_PM_SLEEP) += pm.o
+#LGE_CHANGE_S
+obj-$(CONFIG_LGE_WAKE_IRQ_PRINT) += wake_irq_print.o
+#LGE_CHANGE_E

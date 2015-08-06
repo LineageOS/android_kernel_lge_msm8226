@@ -389,7 +389,7 @@
 		status = "okay";
 		pm8110_l20: regulator-l20 {
 			regulator-min-microvolt = <3075000>;
-			regulator-max-microvolt = <3075000>;
+			regulator-max-microvolt = <3500000>;
 			qcom,init-voltage = <3075000>;
 			status = "okay";
 		};

@@ -65,7 +65,7 @@ void mdss_check_dsi_ctrl_status(struct work_struct *work, uint32_t interval)
 		return;
 	}
 
-	if (ctl->power_state == MDSS_PANEL_POWER_OFF) {
+	if (!ctl->power_on) {
 		schedule_delayed_work(&pstatus_data->check_status,
 			msecs_to_jiffies(interval));
 		pr_err("%s: ctl not powered on\n", __func__);
@@ -102,16 +102,16 @@ void mdss_check_dsi_ctrl_status(struct work_struct *work, uint32_t interval)
 
 	pr_debug("%s: DSI ctrl wait for ping pong done\n", __func__);
 
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON, false);
 	ret = ctrl_pdata->check_status(ctrl_pdata);
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
+	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF, false);
 
 	mutex_unlock(&mdp5_data->ov_lock);
 	if (ctl->shared_lock)
 		mutex_unlock(ctl->shared_lock);
 	mutex_unlock(&ctrl_pdata->mutex);
 
-	if ((pstatus_data->mfd->panel_power_state == MDSS_PANEL_POWER_ON)) {
+	if ((pstatus_data->mfd->panel_power_on)) {
 		if (ret > 0) {
 			schedule_delayed_work(&pstatus_data->check_status,
 				msecs_to_jiffies(interval));

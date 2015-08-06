@@ -34,7 +34,6 @@
 
 #define FIRMWARE_SIZE			0X00A00000
 #define REG_ADDR_OFFSET_BITMASK	0x000FFFFF
-#define VENUS_VERSION_LENGTH 128
 
 /*Workaround for simulator */
 #define HFI_SIM_FW_BIAS		0x0
@@ -1160,8 +1159,6 @@ static inline int venus_hfi_clk_enable(struct venus_hfi_device *device)
 	}
 
 	for (i = VCODEC_CLK; i <= device->clk_gating_level; i++) {
-		if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
-			continue;
 		cl = &device->resources.clock[i];
 		rc = clk_enable(cl->clk);
 		if (rc) {
@@ -1178,8 +1175,6 @@ static inline int venus_hfi_clk_enable(struct venus_hfi_device *device)
 	return 0;
 fail_clk_enable:
 	for (i--; i >= VCODEC_CLK; i--) {
-		if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
-			continue;
 		cl = &device->resources.clock[i];
 		usleep(100);
 		clk_disable(cl->clk);
@@ -1214,17 +1209,15 @@ static inline void venus_hfi_clk_disable(struct venus_hfi_device *device)
 	if (rc)
 		dprintk(VIDC_WARN, "Failed to set clock rate to min: %d\n", rc);
 
-	device->clk_state = DISABLED_PREPARED;
-	--device->clk_cnt;
 	for (i = VCODEC_CLK; i <= device->clk_gating_level; i++) {
-		if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
-			continue;
 		cl = &device->resources.clock[i];
 		usleep(100);
 		clk_disable(cl->clk);
 		dprintk(VIDC_DBG, "%s: Clock: %s disabled\n",
 			__func__, cl->name);
 	}
+	device->clk_state = DISABLED_PREPARED;
+	--device->clk_cnt;
 }
 
 static int venus_hfi_halt_axi(struct venus_hfi_device *device)
@@ -2031,7 +2024,6 @@ static int venus_hfi_core_release(void *device)
 		return -ENODEV;
 	}
 	if (dev->hal_client) {
-		cancel_delayed_work_sync(&venus_hfi_pm_work);
 		mutex_lock(&dev->clk_pwr_lock);
 		rc = venus_hfi_clk_gating_off(device);
 		if (rc) {
@@ -2880,6 +2872,7 @@ err_pc_prep:
 static void venus_hfi_pm_hndlr(struct work_struct *work)
 {
 	int rc = 0;
+	u32 ctrl_status = 0;
 	struct venus_hfi_device *device = list_first_entry(
 			&hal_ctxt.dev_head, struct venus_hfi_device, list);
 
@@ -2941,12 +2934,13 @@ static void venus_hfi_pm_hndlr(struct work_struct *work)
 err_power_off:
 skip_power_off:
 
-	/*
-	* When power collapse is escaped, driver no need to inform Venus.
-	* Venus is self-sufficient to come out of the power collapse at
-	* any stage. Driver can skip power collapse and continue with
-	* normal execution.
-	*/
+	/* Reset PC_READY bit as power_off is skipped, if set by Venus */
+	ctrl_status = venus_hfi_read_register(device, VIDC_CPU_CS_SCIACMDARG0);
+	if (ctrl_status & VIDC_CPU_CS_SCIACMDARG0_HFI_CTRL_PC_READY) {
+		ctrl_status &= ~(VIDC_CPU_CS_SCIACMDARG0_HFI_CTRL_PC_READY);
+		venus_hfi_write_register(device, VIDC_CPU_CS_SCIACMDARG0,
+				ctrl_status, 0);
+	}
 
 	/* Cancel pending delayed works if any */
 	cancel_delayed_work(&venus_hfi_pm_work);
@@ -3256,18 +3250,7 @@ static inline void venus_hfi_disable_unprepare_clks(
 	}
 
 	WARN_ON(!mutex_is_locked(&device->clk_pwr_lock));
-	/*
-	* Make the clock state variable as unprepared before actually
-	* unpreparing clocks. This will make sure that when we check
-	* the state, we have the right clock state. We are not taking
-	* any action based unprepare failures. So it is safe to do
-	* before the call. This is also in sync with prepare_enable
-	* state update.
-	*/
-
-	--device->clk_cnt;
 	if (device->clk_state == ENABLED_PREPARED) {
-                device->clk_state = DISABLED_PREPARED;
 		for (i = VCODEC_CLK; i < VCODEC_MAX_CLKS; i++) {
 			if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
 				continue;
@@ -3278,11 +3261,8 @@ static inline void venus_hfi_disable_unprepare_clks(
 				__func__, cl->name);
 		}
 	} else {
-                device->clk_state = DISABLED_PREPARED;
 		for (i = device->clk_gating_level + 1;
 			i < VCODEC_MAX_CLKS; i++) {
-			if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
-				continue;
 			cl = &device->resources.clock[i];
 			usleep(100);
 			clk_disable(cl->clk);
@@ -3290,7 +3270,6 @@ static inline void venus_hfi_disable_unprepare_clks(
 				__func__, cl->name);
 		}
 	}
-	device->clk_state = DISABLED_UNPREPARED;
 	for (i = VCODEC_CLK; i < VCODEC_MAX_CLKS; i++) {
 		if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
 			continue;
@@ -3299,6 +3278,8 @@ static inline void venus_hfi_disable_unprepare_clks(
 		dprintk(VIDC_DBG, "%s: Clock: %s unprepared\n",
 			__func__, cl->name);
 	}
+	device->clk_state = DISABLED_UNPREPARED;
+	--device->clk_cnt;
 }
 
 static inline int venus_hfi_prepare_enable_clks(struct venus_hfi_device *device)
@@ -3335,8 +3316,6 @@ static inline int venus_hfi_prepare_enable_clks(struct venus_hfi_device *device)
 	return rc;
 fail_clk_enable:
 	for (; i >= VCODEC_CLK; i--) {
-		if (i == VCODEC_OCMEM_CLK && !device->res->ocmem_size)
-			continue;
 		cl = &device->resources.clock[i];
 		usleep(100);
 		clk_disable_unprepare(cl->clk);
@@ -3769,42 +3748,37 @@ exit:
 	return rc;
 }
 
-static int venus_hfi_get_fw_info(void *dev, struct hal_fw_info *fw_info)
+static int venus_hfi_get_fw_info(void *dev, enum fw_info info)
 {
-	int rc = 0, i = 0, j = 0;
+	int rc = 0;
 	struct venus_hfi_device *device = dev;
-	u32 smem_block_size = 0;
-	u8 *smem_table_ptr;
-	char version[VENUS_VERSION_LENGTH];
-	const u32 version_string_size = VENUS_VERSION_LENGTH;
-	const u32 smem_image_index_venus = 14 * 128;
 
-
-	if (!device|| !fw_info) {
-		dprintk(VIDC_ERR,
-			 "%s Invalid paramter: device = %p fw_info = %p\n",
-			__func__, device, fw_info);
+	if (!device) {
+		dprintk(VIDC_ERR, "%s Invalid paramter: %p\n",
+			__func__, device);
 		return -EINVAL;
 	}
-	smem_table_ptr = smem_get_entry(SMEM_IMAGE_VERSION_TABLE,
-			&smem_block_size);
-	if (smem_table_ptr &&
-			((smem_image_index_venus +
-			  version_string_size) <= smem_block_size))
-		memcpy(version,
-			smem_table_ptr + smem_image_index_venus,
-			version_string_size);
 
-	while (version[i++] != 'V' && i < version_string_size)
-		;
+	switch (info) {
+	case FW_BASE_ADDRESS:
+		rc = device->base_addr;
+		break;
 
-	for (i--; i < version_string_size && j < version_string_size; i++)
-		fw_info->version[j++] = version[i];
-	fw_info->version[version_string_size - 1] = '\0';
-	dprintk(VIDC_DBG, "F/W version retrieved : %s\n", fw_info->version);
+	case FW_REGISTER_BASE:
+		rc = device->register_base;
+		break;
 
-	fw_info->register_base = (u32)device->res->register_base;
-	fw_info->irq = device->hal_data->irq;
+	case FW_REGISTER_SIZE:
+		rc = device->register_size;
+		break;
+
+	case FW_IRQ:
+		rc = device->irq;
+		break;
+
+	default:
+		dprintk(VIDC_ERR, "Invalid fw info requested");
+	}
 	return rc;
 }
 

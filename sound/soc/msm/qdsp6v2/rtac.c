@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -487,7 +487,7 @@ static void rtac_remove_adm_device_v2(u32 port_id)
 
 	/* look for device */
 	for (i = 0; i < rtac_adm_data_v2.num_of_dev; i++) {
-		if (rtac_adm_data_v2.device[i].afe_port == port_id && rtac_adm_data_v2.device[i].num_of_popp == 0) {
+		if (rtac_adm_data_v2.device[i].afe_port == port_id) {
 			memset(&rtac_adm_data_v2.device[i], 0,
 				   sizeof(rtac_adm_data_v2.device[i]));
 			rtac_adm_data_v2.num_of_dev--;
@@ -971,16 +971,17 @@ u32 send_adm_apr(void *buf, u32 opcode)
 	result = wait_event_timeout(rtac_adm_apr_data.cmd_wait,
 		(atomic_read(&rtac_adm_apr_data.cmd_state) == 0),
 		msecs_to_jiffies(TIMEOUT_MS));
+	mutex_unlock(&rtac_adm_apr_mutex);
 	if (!result) {
-		pr_err("%s: Set params timed out copp = %d\n", __func__,
-			copp_id);
-		goto err;
+		pr_err("%s: Set params timed out port = %d, copp = %d\n",
+			__func__, port_index, copp_id);
+		goto done;
 	}
 	if (atomic_read(&rtac_common.apr_err_code)) {
 		pr_err("%s: DSP returned error code = %d, opcode = 0x%x\n",
 			__func__, atomic_read(&rtac_common.apr_err_code),
 			opcode);
-		goto err;
+		goto done;
 	}
 
 	if (opcode == ADM_CMD_GET_PP_PARAMS_V5) {
@@ -990,7 +991,7 @@ u32 send_adm_apr(void *buf, u32 opcode)
 		if (bytes_returned > user_buf_size) {
 			pr_err("%s: User buf not big enough, size = 0x%x, returned size = 0x%x\n",
 				__func__, user_buf_size, bytes_returned);
-			goto err;
+			goto done;
 		}
 
 		if (copy_to_user(buf, (void *)
@@ -998,14 +999,16 @@ u32 send_adm_apr(void *buf, u32 opcode)
 				bytes_returned)) {
 			pr_err("%s: Could not copy buffer to user,size = %d\n",
 				__func__, bytes_returned);
-			goto err;
+			goto done;
 		}
 	} else {
 		bytes_returned = data_size;
 	}
+
+done:
+	return bytes_returned;
 err:
 	mutex_unlock(&rtac_adm_apr_mutex);
-done:
 	return bytes_returned;
 }
 
@@ -1177,16 +1180,17 @@ u32 send_rtac_asm_apr(void *buf, u32 opcode)
 	result = wait_event_timeout(rtac_asm_apr_data[session_id].cmd_wait,
 		(atomic_read(&rtac_asm_apr_data[session_id].cmd_state) == 0),
 		5 * HZ);
+	mutex_unlock(&rtac_asm_apr_mutex);
 	if (!result) {
 		pr_err("%s: Set params timed out session = %d\n",
 			__func__, session_id);
-		goto err;
+		goto done;
 	}
 	if (atomic_read(&rtac_common.apr_err_code)) {
 		pr_err("%s: DSP returned error code = %d, opcode = 0x%x\n",
 			__func__, atomic_read(&rtac_common.apr_err_code),
 			opcode);
-		goto err;
+		goto done;
 	}
 
 	if (opcode == ASM_STREAM_CMD_GET_PP_PARAMS_V2) {
@@ -1196,7 +1200,7 @@ u32 send_rtac_asm_apr(void *buf, u32 opcode)
 		if (bytes_returned > user_buf_size) {
 			pr_err("%s: User buf not big enough, size = 0x%x, returned size = 0x%x\n",
 				__func__, user_buf_size, bytes_returned);
-			goto err;
+			goto done;
 		}
 
 		if (copy_to_user(buf, (void *)
@@ -1204,16 +1208,18 @@ u32 send_rtac_asm_apr(void *buf, u32 opcode)
 				bytes_returned)) {
 			pr_err("%s: Could not copy buffer to user,size = %d\n",
 				 __func__, bytes_returned);
-			goto err;
+			goto done;
 		}
 	} else {
 		bytes_returned = data_size;
 	}
-err:
-	mutex_unlock(&rtac_asm_apr_mutex);
 done:
 	return bytes_returned;
+err:
+	mutex_unlock(&rtac_asm_apr_mutex);
+	return bytes_returned;
 }
+
 
 /* Voice APR */
 void rtac_set_voice_handle(u32 mode, void *handle)
@@ -1382,16 +1388,17 @@ u32 send_voice_apr(u32 mode, void *buf, u32 opcode)
 	result = wait_event_timeout(rtac_voice_apr_data[mode].cmd_wait,
 		(atomic_read(&rtac_voice_apr_data[mode].cmd_state) == 0),
 		msecs_to_jiffies(TIMEOUT_MS));
+	mutex_unlock(&rtac_voice_apr_mutex);
 	if (!result) {
 		pr_err("%s: apr_send_pkt timed out opcode = %x\n",
 			__func__, opcode);
-		goto err;
+		goto done;
 	}
 	if (atomic_read(&rtac_common.apr_err_code)) {
 		pr_err("%s: DSP returned error code = %d, opcode = 0x%x\n",
 			__func__, atomic_read(&rtac_common.apr_err_code),
 			opcode);
-		goto err;
+		goto done;
 	}
 
 	if (opcode == VOICE_CMD_GET_PARAM) {
@@ -1401,7 +1408,7 @@ u32 send_voice_apr(u32 mode, void *buf, u32 opcode)
 		if (bytes_returned > user_buf_size) {
 			pr_err("%s: User buf not big enough, size = 0x%x, returned size = 0x%x\n",
 				__func__, user_buf_size, bytes_returned);
-			goto err;
+			goto done;
 		}
 
 		if (copy_to_user(buf, (void *)
@@ -1409,14 +1416,15 @@ u32 send_voice_apr(u32 mode, void *buf, u32 opcode)
 				bytes_returned)) {
 			pr_err("%s: Could not copy buffer to user, size = %d\n",
 				 __func__, bytes_returned);
-			goto err;
+			goto done;
 		}
 	} else {
 		bytes_returned = data_size;
 	}
+done:
+	return bytes_returned;
 err:
 	mutex_unlock(&rtac_voice_apr_mutex);
-done:
 	return bytes_returned;
 }
 

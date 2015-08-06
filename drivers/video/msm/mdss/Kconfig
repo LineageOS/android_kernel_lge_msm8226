@@ -30,8 +30,41 @@ config FB_MSM_MDSS_DSI_CTRL_STATUS
 	  to HAL layer to reset the controller.
 
 config FB_MSM_MDSS_MDP3
-	depends on FB_MSM_MDSS
-	bool "MDP3 display controller"
+        depends on FB_MSM_MDSS
+        bool "MDP3 display controller"
+        ---help---
+        The MDP3 provides support for an older version display controller
+        included in latest display sub-system, known as MDSS.
+
+config LGE_LCD_DCDC
+        tristate "Display Mode - DCDC Mode Enable "
+        default n
+
+config LCD_KCAL
+        bool "Enable sysfs for LCD KCAL"
+        default n
+
+config LGE_LCD_ESD
+	bool "Enable sysfs for LCD ESD Recovery"
+	default n
+
+config FB_MSM_MIPI_JDI_R69338_VIDEO_HD_PANEL
+        bool "MIPI JDI Display HD PT Panel"
+	default n
+
+config LGE_LCD_DYNAMIC_LOG
+	bool "LCD debugging - enable logs through adb"
+	default n
 	---help---
-	The MDP3 provides support for an older version display controller
-	included in latest display sub-system, known as MDSS.
+	If you say Y here, developers can enable/disable lcd logs through adb
+	by accessing /sys/module/mdss_mdp3/parameters/debug_level
+	ex. echo {debug_level} > /sys/module/mdss_mdp3/parameters/debug_level
+
+config LGE_LCD_DSV_CTRL
+	bool "Enable DSV Control when panel off"
+	default n
+
+config LGE_VSYNC_SKIP
+     bool "MDSS VSYNC Skip scheme"
+	---help---
+	This feature provides VSYNC skip scheme.

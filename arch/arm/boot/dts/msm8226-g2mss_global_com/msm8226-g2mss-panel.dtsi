@@ -1,0 +1,41 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&dsi_tianma_vid_dsv>;
+};
+
+&dsi_tianma_vid_dsv {
+	qcom,cont-splash-enabled;
+	qcom,enable-gpio = <&msmgpio 111 0>;
+};
+
+&mdss_mdp {
+	dsi_tianma_vid_dsv: qcom,mdss_dsi_tianma_video_dsv {
+		qcom,mdss-dsi-panel-width = <540>;
+		qcom,mdss-dsi-panel-height = <960>;
+		qcom,mdss-dsi-h-front-porch = <61>;
+		qcom,mdss-dsi-h-back-porch = <52>;
+		qcom,mdss-dsi-h-pulse-width = <52>;
+		qcom,mdss-dsi-h-sync-skew = <0>;
+		qcom,mdss-dsi-v-back-porch = <15>;
+		qcom,mdss-dsi-v-front-porch = <7>;
+		qcom,mdss-dsi-v-pulse-width = <4>;
+		qcom,mdss-dsi-h-left-border = <0>;
+		qcom,mdss-dsi-h-right-border = <0>;
+		qcom,mdss-dsi-v-top-border = <0>;
+		qcom,mdss-dsi-v-bottom-border = <0>;
+		qcom,mdss-dsi-panel-timings = [7E 27 20 00 39 3A 21 29 32 03 04 00];
+		qcom,mdss-dsi-t-clk-post = <0x1f>;
+		qcom,mdss-dsi-t-clk-pre = <0x2D>;
+	};
+};

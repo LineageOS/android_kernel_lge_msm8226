@@ -37,6 +37,9 @@
 #include "msm_watchdog.h"
 #include "timer.h"
 #include "wdog_debug.h"
+#ifdef CONFIG_LGE_HANDLE_PANIC
+#include <mach/lge_handle_panic.h>
+#endif
 
 #define WDT0_RST	0x38
 #define WDT0_EN		0x40
@@ -74,7 +77,7 @@ static void *emergency_dload_mode_addr;
 
 /* Download mode master kill-switch */
 static int dload_set(const char *val, struct kernel_param *kp);
-static int download_mode = 1;
+static int download_mode = 0;
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 static int panic_prep_restart(struct notifier_block *this,
@@ -90,6 +93,7 @@ static struct notifier_block panic_blk = {
 
 static void set_dload_mode(int on)
 {
+	pr_err("%s(%d)\n", __func__, on);
 	if (dload_mode_addr) {
 		__raw_writel(on ? 0xE47B337D : 0, dload_mode_addr);
 		__raw_writel(on ? 0xCE14091A : 0,
@@ -101,6 +105,7 @@ static void set_dload_mode(int on)
 
 static bool get_dload_mode(void)
 {
+	pr_err("%s(%d)\n", __func__, dload_mode_enabled);
 	return dload_mode_enabled;
 }
 
@@ -248,8 +253,13 @@ static irqreturn_t resout_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+
+extern unsigned int set_ram_test_flag;
 static void msm_restart_prepare(const char *cmd)
 {
+#if defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+	int Reset_type = 0; //default Hard reset
+#endif
 #ifdef CONFIG_MSM_DLOAD_MODE
 
 	/* This looks like a normal reboot at this point. */
@@ -258,9 +268,11 @@ static void msm_restart_prepare(const char *cmd)
 	/* Write download mode flags if we're panic'ing */
 	set_dload_mode(in_panic);
 
+#ifndef CONFIG_LGE_HANDLE_PANIC
 	/* Write download mode flags if restart_mode says so */
 	if (restart_mode == RESTART_DLOAD)
 		set_dload_mode(1);
+#endif
 
 	/* Kill download mode if master-kill switch is set */
 	if (!download_mode)
@@ -270,7 +282,36 @@ static void msm_restart_prepare(const char *cmd)
 	pm8xxx_reset_pwr_off(1);
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
-	if (get_dload_mode() || (cmd != NULL && cmd[0] != '\0'))
+#if defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+	if (cmd != NULL) {
+		if (!strncmp(cmd, "bootloader", 10)
+		    ||!strncmp(cmd, "recovery", 8)
+		    ||!strncmp(cmd, "fota", 4)
+#ifdef CONFIG_LGE_BNR_RECOVERY_REBOOT
+		/* PC Sync B&R : Add restart reason */
+		    ||!strncmp(cmd, "--bnr_recovery", 14)
+#endif
+		    ||!strncmp(cmd, "rtc", 3)
+		    ||!strncmp(cmd, "oem-", 4)
+		    ||!strncmp(cmd, "edl", 3)
+#ifdef CONFIG_LGE_LCD_OFF_DIMMING
+		    ||!strncmp(cmd, "LCD off", 7)
+#endif
+		)
+		    Reset_type = 1; //Warm reset;
+	}
+#ifdef CONFIG_LAF_G_DRIVER
+	if (get_dload_mode() || Reset_type || (restart_mode == RESTART_DLOAD))
+#else
+	if (get_dload_mode() || Reset_type )
+#endif
+#else //CONFIG_MACH_MSM8926_AKA_CN  CONFIG_MACH_MSM8926_AKA_KR
+#ifdef CONFIG_LAF_G_DRIVER
+	if (get_dload_mode() || in_panic || (cmd != NULL && cmd[0] != '\0') || (restart_mode == RESTART_DLOAD))
+#else
+	if (get_dload_mode() || in_panic || (cmd != NULL && cmd[0] != '\0'))
+#endif
+#endif
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
 	else
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
@@ -280,6 +321,17 @@ static void msm_restart_prepare(const char *cmd)
 			__raw_writel(0x77665500, restart_reason);
 		} else if (!strncmp(cmd, "recovery", 8)) {
 			__raw_writel(0x77665502, restart_reason);
+		} else if (!strncmp(cmd, "fota", 4)) {
+			__raw_writel(0x77665566, restart_reason);
+#ifdef CONFIG_LGE_BNR_RECOVERY_REBOOT
+			/* PC Sync B&R : Add restart reason */
+		} else if (!strncmp(cmd, "--bnr_recovery", 14)) {
+			__raw_writel(0x77665555, restart_reason);
+#endif
+#ifdef CONFIG_LGE_LCD_OFF_DIMMING
+        } else if (!strncmp(cmd, "LCD off", 7)) {
+            __raw_writel(0x77665560, restart_reason);
+#endif
 		} else if (!strcmp(cmd, "rtc")) {
 			__raw_writel(0x77665503, restart_reason);
 		} else if (!strncmp(cmd, "oem-", 4)) {
@@ -292,7 +344,31 @@ static void msm_restart_prepare(const char *cmd)
 			__raw_writel(0x77665501, restart_reason);
 		}
 	}
+#ifdef CONFIG_LGE_HANDLE_PANIC
+	else {
+		__raw_writel(0x77665503, restart_reason);
+	}
 
+	if (restart_mode == RESTART_DLOAD)
+	{
+	 if(set_ram_test_flag)  //add ram test flag ..
+	 {
+	 	lge_set_restart_reason(0xABCDEFAB);
+		set_ram_test_flag=0;
+	 }	
+	 else
+	 {
+	 	lge_set_restart_reason(LAF_DLOAD_MODE);
+	 }
+	}
+	if (in_panic) {
+		lge_set_panic_reason();
+	}
+	{// write fb addr for crash handler display
+		extern unsigned long msm_fb_phys_addr_backup;
+		lge_set_fb1_addr((unsigned int) msm_fb_phys_addr_backup);
+	}
+#endif
 	flush_cache_all();
 	outer_flush_all();
 }
@@ -366,6 +442,12 @@ static int __init msm_restart_init(void)
 
 	if (scm_is_call_available(SCM_SVC_PWR, SCM_IO_DISABLE_PMIC_ARBITER) > 0)
 		scm_pmic_arbiter_disable_supported = true;
+
+#ifdef CONFIG_LGE_HANDLE_PANIC
+	/* Set default restart_reason to TZ crash.
+	 * If can't be set explicit, it causes by TZ */
+	__raw_writel(LGE_RB_MAGIC | LGE_ERR_TZ, restart_reason);
+#endif
 
 	return 0;
 }

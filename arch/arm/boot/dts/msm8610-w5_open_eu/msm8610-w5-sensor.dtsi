@@ -1,0 +1,137 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+    /* I2C device */
+    i2c@f9925000 {
+        /* Acceleration sensor */
+        K303C_ACC@1D {
+            revision = "rev_a";
+            status = "okay";
+            compatible = "STMicroelectronics,accelerometer" , "STMicroelectronics,K303C" ;
+            reg = <0x1D>;
+            interrupt-parent = <&msmgpio>;
+            interrupts = <81 0x2>;
+            vdda-supply = <&pm8110_l19>;
+            vddio-supply = <&pm8110_l14>;
+            STMicroelectronics,irq-gpio = <&msmgpio 81 0x00>;
+            STMicroelectronics,i2c-pull-up = <1>;
+            STMicroelectronics,vdd_ana_supply_min = <2850000>;
+            STMicroelectronics,vdd_ana_supply_max = <3300000>;
+            STMicroelectronics,vdd_ana_load_ua = <15000>;
+            STMicroelectronics,vddio_dig_supply_min = <1800000>;
+            STMicroelectronics,vddio_dig_supply_max = <1800000>;
+            STMicroelectronics,vddio_dig_load_ua = <10000>;
+            STMicroelectronics,vddio_i2c_supply_min = <1800000>;
+            STMicroelectronics,vddio_i2c_supply_max = <1800000>;
+            STMicroelectronics,vddio_i2c_load_ua = <10000>;
+        };
+        Bosch_bma2x2@10 {
+            compatible = "Bosch,bma2x2";
+            reg = <0x10>;
+            interrupt-parent = <&msmgpio>;
+            interrupts = <81 0x2>;
+            Bosch,vdd_ana-supply = <&pm8110_l19>;
+            Bosch,vddio_i2c-supply = <&pm8110_l14>;
+            Bosch,irq-gpio = <&msmgpio 81 0x00>;
+            Bosch,i2c-pull-up = <1>;
+            Bosch,vdd_ana_supply_min = <2850000>;
+            Bosch,vdd_ana_supply_max = <3300000>;
+            Bosch,vdd_ana_load_ua = <15000>;
+            Bosch,vddio_dig_supply_min = <1800000>;
+            Bosch,vddio_dig_supply_max = <1800000>;
+            Bosch,vddio_dig_load_ua = <10000>;
+            Bosch,vddio_i2c_supply_min = <1800000>;
+            Bosch,vddio_i2c_supply_max = <1800000>;
+            Bosch,vddio_i2c_load_ua = <10000>;
+            place = <4>;
+            status = "ok";
+            revision = "rev_b...";
+        };
+
+        /* Magnetic Sensor Driver */
+
+
+        K303C_MAG@1E {
+            revision = "rev_a";
+            status = "okay";
+            compatible = "STMicroelectronics,magnetometer" , "STMicroelectronics,K303C";
+            reg = <0x1E>;
+            interrupt-parent = <&msmgpio>;
+            interrupts = <83 0x2>;
+            vdda-supply = <&pm8110_l19>;
+            vddio-supply = <&pm8110_l14>;
+            STMicroelectronics,irq-gpio = <&msmgpio 83 0x00>;
+            STMicroelectronics,i2c-pull-up = <1>;
+            STMicroelectronics,vdd_ana_supply_min = <2850000>;
+            STMicroelectronics,vdd_ana_supply_max = <3300000>;
+            STMicroelectronics,vdd_ana_load_ua = <15000>;
+            STMicroelectronics,vddio_dig_supply_min = <1800000>;
+            STMicroelectronics,vddio_dig_supply_max = <1800000>;
+            STMicroelectronics,vddio_dig_load_ua = <10000>;
+            STMicroelectronics,vddio_i2c_supply_min = <1800000>;
+            STMicroelectronics,vddio_i2c_supply_max = <1800000>;
+            STMicroelectronics,vddio_i2c_load_ua = <10000>;
+
+        };
+        Bosch_bmm050@12 {
+            compatible = "Bosch,bmm050";
+            reg = <0x12>;
+            interrupt-parent = <&msmgpio>;
+            interrupts = <83 0x2>;
+            Bosch,vdd_ana-supply = <&pm8110_l19>;
+            Bosch,vddio_i2c-supply = <&pm8110_l14>;
+            Bosch,irq-gpio = <&msmgpio 83 0x00>;
+            Bosch,i2c-pull-up = <1>;
+            Bosch,vdd_ana_supply_min = <2850000>;
+            Bosch,vdd_ana_supply_max = <3300000>;
+            Bosch,vdd_ana_load_ua = <15000>;
+            Bosch,vddio_dig_supply_min = <1800000>;
+            Bosch,vddio_dig_supply_max = <1800000>;
+            Bosch,vddio_dig_load_ua = <10000>;
+            Bosch,vddio_i2c_supply_min = <1800000>;
+            Bosch,vddio_i2c_supply_max = <1800000>;
+            Bosch,vddio_i2c_load_ua = <10000>;
+            place = <4>;
+            status = "ok";
+            revision = "rev_b...";
+        };
+
+        /* Proximity sensor */
+        Avago_apds9130@39 {
+            compatible = "Avago,apds9130";
+            reg = <0x39>;
+            interrupt-parent = <&msmgpio>;
+            interrupts = <80 0x2>;
+            Avago,vdd_ana-supply = <&pm8110_l19>;
+            Avago,vddio_i2c-supply = <&pm8110_l14>;
+            Avago,irq-gpio = <&msmgpio 80 0x00>;
+            Avago,i2c-pull-up = <1>;
+            Avago,vdd_ana_supply_min = <2850000>;
+            Avago,vdd_ana_supply_max = <3300000>;
+            Avago,vdd_ana_load_ua = <15000>;
+            Avago,vddio_dig_supply_min = <1800000>;
+            Avago,vddio_dig_supply_max = <1800000>;
+            Avago,vddio_dig_load_ua = <10000>;
+            Avago,vddio_i2c_supply_min = <1800000>;
+            Avago,vddio_i2c_supply_max = <1800000>;
+            Avago,vddio_i2c_load_ua = <10000>;
+            /*add*/
+            Avago,ppcount = <8>;
+            Avago,pdrive = <0>;
+            Avago,near_offset = <150>;
+            Avago,far_offset = <50>;
+            Avago,crosstalk_max = <770>;
+            status = "ok";
+        };
+    };
+};

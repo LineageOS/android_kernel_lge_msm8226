@@ -438,7 +438,9 @@ void apr_cb_func(void *buf, int len, void *priv)
 		data.payload = (char *)hdr + hdr_size;
 
 	temp_port = ((data.dest_port >> 8) * 8) + (data.dest_port & 0xFF);
-	pr_debug("port = %d t_port = %d\n", data.src_port, temp_port);
+
+	pr_debug("port = %d t_port = %d\n", data.src_port, temp_port); 
+
 	if (c_svc->port_cnt && c_svc->port_fn[temp_port])
 		c_svc->port_fn[temp_port](&data,  c_svc->port_priv[temp_port]);
 	else if (c_svc->fn)
@@ -508,7 +510,6 @@ int apr_deregister(void *handle)
 	dest_id = svc->dest_id;
 	client_id = svc->client_id;
 	clnt = &client[dest_id][client_id];
-
 	if (svc->port_cnt > 0 || svc->svc_cnt > 0) {
 		if (svc->port_cnt)
 			svc->port_cnt--;
@@ -525,7 +526,6 @@ int apr_deregister(void *handle)
 			pr_debug("%s: service is reset %p\n", __func__, svc);
 		}
 	}
-
 	if (!svc->port_cnt && !svc->svc_cnt) {
 		svc->priv = NULL;
 		svc->id = 0;

@@ -1,0 +1,80 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	gpio_keys {
+		home {
+			unused;
+		};
+
+		quick_clip {
+			unused;
+		};
+		camera {
+                        label = "camera";
+                        gpios = <&msmgpio 107 0x1>;
+                        linux,input-type = <1>;
+                        linux,code = <212>;
+                        gpio-key,wakeup;
+                        debounce-interval = <15>;
+                };
+
+	};
+
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		mms100s@48 {
+			melfas,product = "I2S45A";
+			melfas,auto_fw_update = <1>;
+			melfas,max-x = <320>;
+                        melfas,max-y = <480>;
+			melfas,use_vdd = <1>;
+			melfas,use_vdd_i2c = <1>;
+			melfas,gpio-vdd-en = <60>;
+			melfas,fw-image-name = "melfas/vfp_lgu_kr/vfp_lgu_kr_rev_a_v107.mfsb";
+			melfas,panel-spec-name = "melfas/vfp_lgu_kr/vfp_lgu_kr_limit.txt";
+			revision = "rev_a..";
+			status = "disable";
+		};
+
+		lge_touch@48 {
+			revision = "rev_a..";
+			status = "ok";
+			interrupts = <17 0x2>;
+			lge,int-gpio = <&msmgpio 17 0x00>;
+			lge,product = "T2S35A";
+			lge,fw_image = "melfas/vfp_lgu_kr/vfp_lgu_kr_rev_a_v001.mfsb";
+			lge,panel_spec = "melfas/vfp_lgu_kr/vfp_lgu_kr_limit.txt";
+			lge,ic_type = <0>;
+			lge,auto_fw_update = <1>;
+			button_support = <0>;
+			x_max = <320>;
+			y_max = <480>;
+			lcd_x = <320>;
+			lcd_y = <480>;
+			key_type = <0>;
+			vdd_type0 = <2>;
+			vdd_type1 = <0>;
+			vdd_type2 = <2>;
+		};
+
+		lge_ts_misc {
+			revision = "rev_a..";
+			vdd_on = <1>;
+			vio_l28_on = <0>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			vdd_voltage = <2950000>;
+			status ="disable";
+		};
+	};
+
+};

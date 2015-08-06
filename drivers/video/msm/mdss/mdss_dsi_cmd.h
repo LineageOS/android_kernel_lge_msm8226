@@ -43,6 +43,13 @@ struct dsi_buf {
 	int read_cnt;
 };
 
+#ifdef CONFIG_FB_MSM_MIPI_LGD_LH500WX9_VIDEO_HD_PT_PANEL
+/* dcs read/write */
+#define MIPI_DSI_V_SYNC_START		0x01
+#define MIPI_DSI_H_SYNC_START		0x21
+#define MIPI_DSI_PACKED_PIXEL_STREAM_24		0x3e
+#endif
+
 /* dcs read/write */
 #define DTYPE_DCS_WRITE		0x05	/* short write, 0 parameter */
 #define DTYPE_DCS_WRITE1	0x15	/* short write, 1 parameter */

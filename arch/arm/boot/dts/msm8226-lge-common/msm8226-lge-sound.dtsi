@@ -1,0 +1,78 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+
+/* LGE_UPDATE beekey@lge.com This's for WCD9306. WX use WCD9302.
+	sound {
+		qcom,audio-routing =
+			"RX_BIAS", "MCLK",
+			"LDO_H", "MCLK",
+			"SPK_OUT", "MCLK",
+			"SPK_OUT", "EXT_VDD_SPKR",
+			"AMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Handset Mic",
+			"AMIC2", "MIC BIAS2 External",
+			"MIC BIAS2 External", "Headset Mic",
+			"AMIC3", "MIC BIAS1 External",
+			"MIC BIAS1 External", "ANCRight Headset Mic",
+			"AMIC4", "MIC BIAS2 External",
+			"MIC BIAS2 External", "ANCLeft Headset Mic";
+
+		qcom,cdc-mclk-gpios = <&pm8226_gpios 1 0>;
+		qcom,cdc-vdd-spkr-gpios = <&msmgpio 87 0>;
+	};
+*/		
+
+	sound-9302 {
+		qcom,audio-routing =
+			"RX_BIAS", "MCLK",
+			"LDO_H", "MCLK",
+			"SPK_OUT", "MCLK",
+			"SPK_OUT", "EXT_VDD_SPKR",
+			"AMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Handset Mic",
+			"AMIC2", "MIC BIAS2 External",
+			"MIC BIAS2 External", "Headset Mic",
+			//LGE, 2013-06-24, seungkyu.joo@lge.com, enable Mic Bias1 external connected to AMIC3 (submic) [Start]
+			"AMIC3", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Handset SubMic";
+			//LGE, 2013-06-24, seungkyu.joo@lge.com, enable Mic Bias1 external connected to AMIC3 (submic) [End]
+
+		qcom,cdc-mclk-gpios = <&pm8226_gpios 1 0>;
+		//LGE_UPDATE 20131028 beekay.lee@lge.com tangible IO issue on x5_vzw.
+		//qcom,cdc-vdd-spkr-gpios = <&pm8226_gpios 2 0>;
+		qcom,cdc-boost-spkr-gpios = <&pm8226_gpios 2 0>;
+	};
+
+	maxim_max1462x { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		interrupt-parent = <&msmgpio>;
+		interrupts = <67 0x3 35 0x3>;
+		max1462x,gpio_detect = <&msmgpio 35 0x00>;
+		max1462x,gpio_mic_en = <&pm8226_mpps 4 0x0>;
+		max1462x,gpio_key = <&msmgpio 67 0x00>;
+		qcom,micen-vadc = <&pm8226_vadc>;
+	};
+
+	lge_sw_irrc { /* LGE_UPDATE 20130626 beekay.lee@lge.com WX_IRRC */
+		compatible = "lge,sw_irrc";
+		vreg_irrc-supply = <&pm8226_l19>;
+		lge,gp-cmd-rcgr = <0xFD8C3420>;
+		lge,pwm-gpio = <&msmgpio 33 0x00>;
+		lge,pwm-gpio-func = <3>;
+		lge,clk-name = "cam_gp0_clk";
+		lge,clk-rate = <96000>; //This must match with clk_freq_tbl.
+	};
+
+};

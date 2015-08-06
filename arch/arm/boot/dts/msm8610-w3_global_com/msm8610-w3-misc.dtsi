@@ -1,0 +1,49 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	earjack-debugger {
+		status = "disable";
+	};
+
+	i2c@f9924000 {
+		rt8542@39 {
+			status = "disable";
+		};
+        	lm3530@38 {
+            		status = "ok";
+            		revision = "rev_0";
+        	};
+		lp5521@32 {
+			status = "disable";
+			revision = "rev_0";
+		};
+	};
+	i2c@0 {
+		lm3530@38 {
+			status = "ok";
+			revision = "rev_a...";
+		};
+		lp5521@32 {
+			status = "disable";
+			ti,led_en = <&msmgpio 6 0x0>;
+			ti,i2c-pull-up = <1>;
+			ti,vddio_i2c-supply = <&pm8110_l14>;
+			ti,vddio_i2c_supply_min = <1800000>;
+			ti,vddio_i2c_supply_max = <1800000>;
+			ti,vddio_i2c_load_ua = <10000>;
+		};
+		rt8542@39 {
+			status = "disable";
+		};
+	};
+};

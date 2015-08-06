@@ -659,15 +659,18 @@ audio_unbind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct audio_dev *audio = func_to_audio_source(f);
 	struct usb_request *req;
+	unsigned long flags;
 
 	while ((req = audio_req_get(audio)))
 		audio_request_free(req, audio->in_ep);
 
 	snd_card_free_when_closed(audio->card);
+	spin_lock_irqsave(&audio->lock,flags);
 	audio->card = NULL;
 	audio->pcm = NULL;
 	audio->substream = NULL;
 	audio->in_ep = NULL;
+	spin_unlock_irqrestore(&audio->lock,flags);
 }
 
 static void audio_pcm_playback_start(struct audio_dev *audio)
@@ -692,13 +695,16 @@ static int audio_pcm_open(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct audio_dev *audio = substream->private_data;
+	unsigned long flags;
 
 	runtime->private_data = audio;
 	runtime->hw = audio_hw_info;
 	snd_pcm_limit_hw_rates(runtime);
 	runtime->hw.channels_max = 2;
 
+	spin_lock_irqsave(&audio->lock,flags);
 	audio->substream = substream;
+	spin_unlock_irqrestore(&audio->lock,flags);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, 2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -16,7 +16,12 @@
 #include <linux/delay.h>
 #include "mdss_io_util.h"
 
+#if defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#endif
 #define MAX_I2C_CMDS  16
+
 void dss_reg_w(struct dss_io_data *io, u32 offset, u32 value, u32 debug)
 {
 	u32 in_val;
@@ -199,51 +204,25 @@ vreg_get_fail:
 	return rc;
 } /* msm_dss_config_vreg */
 
-int msm_dss_config_vreg_opt_mode(struct dss_vreg *in_vreg, int num_vreg,
-	enum dss_vreg_mode mode)
-{
-	int i = 0, rc = 0;
+#if defined (CONFIG_MACH_MSM8X10_W5) || defined (CONFIG_MACH_MSM8X10_W6) || defined (CONFIG_MACH_MSM8X10_L70P)
+int is_first_booting;
+#endif
 
-	if (mode >= DSS_REG_MODE_MAX) {
-		pr_err("%pS->%s: invalid mode %d\n",
-			__builtin_return_address(0), __func__, mode);
-		rc = -EINVAL;
-		goto error;
-	}
-
-	for (i = 0; i < num_vreg; i++) {
-		rc = PTR_RET(in_vreg[i].vreg);
-		if (rc) {
-			DEV_ERR("%pS->%s: %s regulator error. rc=%d\n",
-				__builtin_return_address(0), __func__,
-				in_vreg[i].vreg_name, rc);
-			goto error;
-		}
-
-		DEV_DBG("%s: Setting optimum mode %d for %s (load=%d)\n",
-			__func__, mode, in_vreg[i].vreg_name,
-			in_vreg[i].load[mode]);
-		rc = regulator_set_optimum_mode(in_vreg[i].vreg,
-			in_vreg[i].load[mode]);
-		if (rc < 0) {
-			DEV_ERR("%pS->%s: %s set opt mode failed. rc=%d\n",
-				__builtin_return_address(0), __func__,
-				in_vreg[i].vreg_name, rc);
-			goto error;
-		} else {
-			/*
-			 * regulator_set_optimum_mode can return non-zero
-			 * value for success. However, this API is expected
-			 * to return 0 for success.
-			 */
-			rc = 0;
-		}
-	}
-
-error:
-	return rc;
-}
-
+#if defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+extern int is_shutdown;
+struct regulator {
+	struct device *dev;
+	struct list_head list;
+	int uA_load;
+	int min_uV;
+	int max_uV;
+	int enabled;
+	char *supply_name;
+	struct device_attribute dev_attr;
+	struct regulator_dev *rdev;
+	struct dentry *debugfs;
+};
+#endif
 int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 {
 	int i = 0, rc = 0;
@@ -259,7 +238,7 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 			if (in_vreg[i].pre_on_sleep)
 				msleep(in_vreg[i].pre_on_sleep);
 			rc = regulator_set_optimum_mode(in_vreg[i].vreg,
-				in_vreg[i].load[DSS_REG_MODE_ENABLE]);
+				in_vreg[i].enable_load);
 			if (rc < 0) {
 				DEV_ERR("%pS->%s: %s set opt m fail\n",
 					__builtin_return_address(0), __func__,
@@ -275,31 +254,64 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 					in_vreg[i].vreg_name);
 				goto disable_vreg;
 			}
+
+#if defined (CONFIG_MACH_MSM8X10_W5) || defined (CONFIG_MACH_MSM8X10_W6) || defined (CONFIG_MACH_MSM8X10_L70P)
+			/* VCI toggle for W5 Display (both for Tovis Shrink/Non-Shrink panel) */
+			if (strcmp(in_vreg[i].vreg_name, "vdda") == 0) {
+				if (is_first_booting) {
+					rc = regulator_disable(in_vreg[i].vreg);
+				}
+				if (in_vreg[i].post_on_sleep)
+					msleep(in_vreg[i].post_on_sleep);
+				if (rc < 0) {
+					DEV_ERR("%pS->%s: %s enable failed\n",
+						__builtin_return_address(0), __func__,
+						in_vreg[i].vreg_name);
+					goto disable_vreg;
+				}
+				rc = regulator_enable(in_vreg[i].vreg);
+				if (in_vreg[i].post_on_sleep)
+					msleep(in_vreg[i].post_on_sleep);
+				if (rc < 0) {
+					DEV_ERR("%pS->%s: %s enable failed\n",
+						__builtin_return_address(0), __func__,
+						in_vreg[i].vreg_name);
+					goto disable_vreg;
+				}
+			}
+#endif
 		}
 	} else {
 		for (i = num_vreg-1; i >= 0; i--)
-			if (regulator_is_enabled(in_vreg[i].vreg)) {
-				if (in_vreg[i].pre_off_sleep)
+				if (regulator_is_enabled(in_vreg[i].vreg)) {
+#if defined(CONFIG_MACH_MSM8926_AKA_CN) || defined(CONFIG_MACH_MSM8926_AKA_KR)
+					if (is_shutdown && (strcmp(in_vreg[i].vreg_name, "vdd") == 0 || strcmp(in_vreg[i].vreg_name, "vddio") == 0))
+						in_vreg[i].vreg->rdev->constraints->always_on = 0;
+#endif
+					if (in_vreg[i].pre_off_sleep)
 					msleep(in_vreg[i].pre_off_sleep);
-				regulator_set_optimum_mode(in_vreg[i].vreg,
-					in_vreg[i].load[DSS_REG_MODE_DISABLE]);
-				regulator_disable(in_vreg[i].vreg);
-				if (in_vreg[i].post_off_sleep)
-					msleep(in_vreg[i].post_off_sleep);
-			}
+					regulator_set_optimum_mode(in_vreg[i].vreg,
+						in_vreg[i].disable_load);
+					regulator_disable(in_vreg[i].vreg);
+					if (in_vreg[i].post_off_sleep)
+						msleep(in_vreg[i].post_off_sleep);
+				}
 	}
+
+#if defined (CONFIG_MACH_MSM8X10_W5) || defined (CONFIG_MACH_MSM8X10_W6) || defined (CONFIG_MACH_MSM8X10_L70P)
+	is_first_booting = 1;
+#endif
 	return rc;
 
 disable_vreg:
-	regulator_set_optimum_mode(in_vreg[i].vreg,
-		in_vreg[i].load[DSS_REG_MODE_DISABLE]);
+	regulator_set_optimum_mode(in_vreg[i].vreg, in_vreg[i].disable_load);
 
 vreg_set_opt_mode_fail:
 	for (i--; i >= 0; i--) {
 		if (in_vreg[i].pre_off_sleep)
 			msleep(in_vreg[i].pre_off_sleep);
 		regulator_set_optimum_mode(in_vreg[i].vreg,
-			in_vreg[i].load[DSS_REG_MODE_DISABLE]);
+			in_vreg[i].disable_load);
 		regulator_disable(in_vreg[i].vreg);
 		if (in_vreg[i].post_off_sleep)
 			msleep(in_vreg[i].post_off_sleep);

@@ -390,6 +390,7 @@ int msm_audio_ion_free_legacy(struct ion_client *client,
 	if (msm_audio_ion_data.smmu_enabled)
 		ion_unmap_iommu(client, handle,
 		msm_audio_ion_data.domain_id, 0);
+	/* To add condition for SMMU enabled */
 	ion_unmap_kernel(client, handle);
 
 	ion_free(client, handle);

@@ -239,7 +239,6 @@ static int sel_netport_avc_callback(u32 event, u32 ssid, u32 tsid,
 {
 	if (event == AVC_CALLBACK_RESET) {
 		sel_netport_flush();
-		synchronize_net();
 	}
 	return 0;
 }

@@ -1,0 +1,58 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+	qcom,mdss_dsi@fd922800 {
+		revision = "...rev_a";
+		qcom,dsi-pref-prim-pan = <&dsi_lh500wx9_vid>;
+	};
+};
+
+&mdss_dsi0 {
+	qcom,mdss_dsi@fd922800 {
+		revision = "rev_b...";
+		qcom,dsi-pref-prim-pan = <&dsi_lh500wx9_vid_b>;
+	};
+};		
+
+&dsi_lh500wx9_vid{
+	revision = "...rev_a";
+	qcom,cont-splash-enabled;
+	status = "ok";
+};
+
+&dsi_lh500wx9_vid_b{
+	revision = "rev_b...";
+	qcom,cont-splash-enabled;
+	status = "ok";
+};
+
+&soc {
+	qcom,mdss_dsi_lh500wx9_vid {
+	revision = "...rev_a";
+	status = "ok";
+	};
+	qcom,mdss_dsi_lh500wx9_vid_b {
+	revision = "rev_b...";
+	status = "ok";
+	};
+	mdss_dsi0: qcom,mdss_dsi@fd922800 {
+		qcom,platform-supply-entry1 {
+			qcom,supply-name = "vdd";
+			qcom,supply-min-voltage = <3000000>;
+			qcom,supply-max-voltage = <3000000>;
+		};
+	};
+  mdss_mdp: qcom,mdss_mdp@fd900000 {
+    /delete-property/ qcom,mdss-clk-levels;
+  };
+};

@@ -41,7 +41,7 @@
 		qcom,platform-mode-gpio = <&msmgpio 7 0>;
 		qcom,platform-strength-ctrl = [ff 06];
 		qcom,platform-bist-ctrl = [03 03 00 00 0f 00];
-		qcom,platform-regulator-settings = [02 08 05 00 20 03];
+		qcom,platform-regulator-settings = [09 08 05 00 20 03];
 		qcom,platform-lane-config = [80 45 00 00 01 66
 		80 45 00 00 01 66
 		80 45 00 00 01 66

@@ -80,6 +80,9 @@ enum msm_camera_i2c_data_type {
 	MSM_CAMERA_I2C_SET_WORD_MASK,
 	MSM_CAMERA_I2C_UNSET_WORD_MASK,
 	MSM_CAMERA_I2C_SET_BYTE_WRITE_MASK_DATA,
+//LGE_CHANGE_S: V3 HI351 Camera Bringup I2C speed up burst mode - hong.junki@lge.com 2012/10/05
+        MSM_CAMERA_I2C_BURST_DATA,
+//LGE_CHANGE_E: V3 HI351 Camera Bringup I2C speed up burst mode - hong.junki@lge.com 2012/10/05
 	MSM_CAMERA_I2C_DATA_TYPE_MAX,
 };
 
@@ -106,6 +109,10 @@ enum msm_sensor_power_seq_gpio_t {
 	SENSOR_GPIO_VAF,
 	SENSOR_GPIO_FL_EN,
 	SENSOR_GPIO_FL_NOW,
+/* LGE_CHANGE_S, Camera bring-up : Add gpio to control LDO*/
+	SENSOR_GPIO_AF_MVDD,
+	SENSOR_GPIO_LDAF_EN,
+/* LGE_CHANGE_E, Camera bring-up : Add gpio to control LDO*/
 	SENSOR_GPIO_MAX,
 };
 
@@ -269,7 +276,15 @@ struct msm_camera_i2c_reg_setting {
 	enum msm_camera_i2c_reg_addr_type addr_type;
 	enum msm_camera_i2c_data_type data_type;
 	uint16_t delay;
+	uint16_t *value;	/*LGE_CHANGE, add soc exif, 2013-10-04, kwangsik83.kim@lge.com*/
 };
+
+/*LGE_CHANGE_E, this is for sending fps variables via Hal to Kernel as of integer, 2013-10-04, youngwook.song@lge.com*/
+struct msm_fps_range_setting{
+   int32_t min_fps;
+   int32_t max_fps;
+};
+/*LGE_CHANGE_X, this is for sending fps variables via Hal to Kernel as of interger, 2013-10-04, youngwook.song@lge.com*/
 
 struct msm_camera_i2c_seq_reg_array {
 	uint16_t reg_addr;
@@ -354,7 +369,24 @@ struct msm_sensor_info_t {
 	uint32_t sensor_mount_angle;
 	int modes_supported;
 	enum camb_position_t position;
+	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
+	int					product_kor;
+	uint8_t 	module_id;   /*LGE_CHANGE,	To check module-vedorID for same sensor without any differences of HW, 2014-07-31, sujeong.kwon@lge.com*/
 };
+
+#if 1 /* LGE_FEATURE_APLUS */
+/* LGE_CHANGE_S, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
+struct msm_sensor_proxy_info_t{
+	uint16_t proxy_val;
+	uint32_t proxy_conv;
+	uint32_t proxy_sig;
+	uint32_t proxy_amb;
+	uint32_t proxy_raw;
+	uint32_t cal_count;
+	uint32_t cal_done;
+};
+/* LGE_CHANGE_E, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
+#endif
 
 struct camera_vreg_t {
 	const char *reg_name;
@@ -378,6 +410,8 @@ struct msm_sensor_init_params {
 	enum camb_position_t position;
 	/* sensor mount angle */
 	uint32_t            sensor_mount_angle;
+	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
+	int					product_kor;
 };
 
 struct msm_camera_sensor_slave_info {
@@ -398,6 +432,10 @@ struct sensorb_cfg_data {
 	union {
 		struct msm_sensor_info_t      sensor_info;
 		struct msm_sensor_init_params sensor_init_params;
+#if 1  /* LGE_FEATURE_APLUS */
+		struct msm_sensor_proxy_info_t	proxy_info;	/* LGE_CHANGE, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
+		uint16_t proxy_data;	/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+#endif
 		void                         *setting;
 	} cfg;
 };
@@ -462,6 +500,7 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_SLAVE_INFO,
 	CFG_SLAVE_READ_I2C,
 	CFG_WRITE_I2C_ARRAY,
+	CFG_READ_I2C_ARRAY_LG,	  /*LGE_CHANGE,  add bank register for imx219, 2014-02-19, younjung.park.kim@lge.com*/
 	CFG_SLAVE_WRITE_I2C_ARRAY,
 	CFG_WRITE_I2C_SEQ_ARRAY,
 	CFG_POWER_UP,
@@ -484,6 +523,25 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_WHITE_BALANCE,
 	CFG_SET_AUTOFOCUS,
 	CFG_CANCEL_AUTOFOCUS,
+	CFG_PAGE_MODE_READ_I2C_ARRAY,	/*LGE_CHANGE, add soc exif, 2013-10-04, kwangsik83.kim@lge.com*/
+	CFG_SET_FRAMERATE_FOR_SOC,		/*LGE_CHANGE, add Framerate for SoC, 2013-10-27, youngwook.song@lge.com*/
+/* LGE_CHANGE_S, Enable touch AE in soc sensor , 2013-11-12, dongsu.bag@lge.com */
+	CFG_SET_AEC_ROI,
+	CFG_SET_AWB_LOCK,
+	CFG_SET_AEC_LOCK,
+	CFG_SET_INIT_SETTING_VT,
+/* LGE_CHANGE_E, Enable touch AE in soc sensor , 2013-11-12, dongsu.bag@lge.com */
+	CFG_SET_REGISTER_UPDATE,		/* LGE_CHANGE . To fast tune register. sujeong.kwon@lge.com 2014.03.22*/
+#if 1  /* LGE_FEATURE_APLUS */
+	CFG_PROXY_ON,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+	CFG_PROXY_OFF,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+	CFG_GET_PROXY,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_ON,				/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_PAUSE,			/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_RESTART,			/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_OFF,				/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_CAL,
+#endif
 };
 
 enum msm_actuator_cfg_type_t {
@@ -595,6 +653,8 @@ enum af_camera_name {
 	ACTUATOR_MAIN_CAM_3,
 	ACTUATOR_MAIN_CAM_4,
 	ACTUATOR_MAIN_CAM_5,
+	ACTUATOR_MAIN_CAM_6,
+	ACTUATOR_MAIN_CAM_7,
 	ACTUATOR_WEB_CAM_0,
 	ACTUATOR_WEB_CAM_1,
 	ACTUATOR_WEB_CAM_2,

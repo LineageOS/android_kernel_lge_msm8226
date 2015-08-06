@@ -1,0 +1,63 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	gpio_keys {
+		home {
+			unused;
+		};
+
+		quick_clip {
+			unused;
+		};
+	};
+
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		atmel_s336@4a {
+			revision = "rev_0";
+			status = "disable";
+			atmel,fw_name = "atmel/Jaguar02.fw";
+			atmel,panel_check = <0>;
+			atmel,reset-gpio = <&msmgpio 16 0x00>;
+		};
+		synaptics_s7020B@20 {
+			revision = "rev_a...";
+			status = "ok";
+			synaptics,fw_version_info = <0x30 0x05 0x01>;
+			synaptics,fw_image = "synaptics/jagn_kr/PLG364-V0.126-PR1674037-DS4.3.5.1.16_3005017E.img";
+			synaptics,panel_spec = "synaptics/jagn_kr/jagn_kr_limit.txt";
+			lge,knock_on_type = <1>;
+			max_id = <5>;
+			synaptics,platform_data	{
+				/* firmware image depends on this value, temporarily used */
+				/* 0: No image(default), 1: W3DS(TIM BR)(PLG312_T001), 2: W3S(VDF)(PLG311_T001), 3: X3(GLOBAL_COM, TRF_ATT, GLOBAL_SCA, KR)... */
+				panel_type = <4>;
+				/*maker_id disable(0), enable(1)*/
+				maker_id = <0>;
+				maker_id_gpio = <120>;
+				palm_detect_mode = <1>;
+				ghost_detection_enable = <1>;
+				vdd_voltage = <3050000>;
+			};
+		};
+
+		lge_ts_misc {
+			revision = "rev_0";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="disable";
+		};
+	};
+
+};

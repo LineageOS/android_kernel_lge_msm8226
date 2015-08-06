@@ -1,0 +1,170 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	sound {
+		qcom,audio-routing =
+		"RX_BIAS", "MCLK",
+		"INT_LDO_H", "MCLK",
+		"MIC BIAS External", "Handset Mic",
+		"MIC BIAS External", "Headset Mic",
+		"MIC BIAS External", "Secondary Mic",
+		"AMIC1", "MIC BIAS External",
+		"AMIC2", "MIC BIAS External",
+		"AMIC3", "MIC BIAS External";
+	};
+//2013-07-29, seungkyu.joo, add gpio85 config for revA[Start]	
+	maxim_max1462x_rev0 { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		revision = "rev_0";
+		interrupt-parent = <&msmgpio>;
+		interrupts = <100 0x3 92 0x3>;
+		max1462x,gpio_detect = <&msmgpio 92 0x00>;
+		max1462x,gpio_mic_en = <&msmgpio 59 0x00>;
+		max1462x,gpio_key = <&msmgpio 100 0x00>;
+		qcom,micen-vadc = <&pm8110_vadc>;
+	};
+
+	maxim_max1462x_revA { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		interrupt-parent = <&msmgpio>;
+		interrupts = <100 0x3 85 0x3>;
+		max1462x,gpio_detect = <&msmgpio 85 0x00>;
+		max1462x,gpio_mic_en = <&msmgpio 59 0x00>;
+		max1462x,gpio_key = <&msmgpio 100 0x00>;
+		qcom,micen-vadc = <&pm8110_vadc>;
+	};
+
+	maxim_max1462x_revB { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		interrupt-parent = <&msmgpio>;
+		interrupts = <93 0x3 91 0x3>;
+		max1462x,gpio_detect = <&msmgpio 91 0x00>;
+		max1462x,gpio_mic_en = <&pm8110_gpios 2 0x00>;
+		max1462x,gpio_key = <&msmgpio 93 0x00>;
+		qcom,micen-vadc = <&pm8110_vadc>;
+	};
+
+	maxim_max1462x_revC { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		interrupt-parent = <&msmgpio>;
+		interrupts = <93 0x3 91 0x3>;
+		max1462x,gpio_detect = <&msmgpio 91 0x00>;
+		max1462x,gpio_mic_en = <&pm8110_gpios 2 0x00>;
+		max1462x,gpio_key = <&msmgpio 93 0x00>;
+		qcom,micen-vadc = <&pm8110_vadc>;
+	};
+
+	maxim_max1462x_revD { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		interrupt-parent = <&msmgpio>;
+		interrupts = <93 0x3 91 0x3>;
+		max1462x,gpio_detect = <&msmgpio 91 0x00>;
+		max1462x,gpio_mic_en = <&pm8110_gpios 2 0x00>;
+		max1462x,gpio_key = <&msmgpio 93 0x00>;
+		qcom,micen-vadc = <&pm8110_vadc>;
+	};
+
+	maxim_max1462x_revE { //LGE_UPDATE 20130626 beekay.lee@lge.com WX_MAXIM
+		compatible = "maxim,max1462x";
+		status = "disable";          //"ok" or "disable"
+		interrupt-parent = <&msmgpio>;
+		interrupts = <93 0x3 91 0x3>;
+		max1462x,gpio_detect = <&msmgpio 91 0x00>;
+		max1462x,gpio_mic_en = <&pm8110_gpios 2 0x00>;
+		max1462x,gpio_key = <&msmgpio 93 0x00>;
+		qcom,micen-vadc = <&pm8110_vadc>;
+	};
+//2013-07-29, seungkyu.joo, add gpio85 config for revA[End]
+
+	lge_sw_irrc { /* LGE_UPDATE 20130626 beekay.lee@lge.com WX_IRRC */
+		compatible = "lge,sw_irrc";
+		vreg_irrc-supply = <&pm8110_l19>;
+		lge,gp-cmd-rcgr = <0xFC401944>;
+		lge,pwm-gpio = <&msmgpio 90 0x00>;
+		lge,pwm-gpio-func = <3>;
+		lge,clk-name = "core_clk";
+		lge,clk-rate = <96000>; //This must match with clk_freq_tbl.
+	};
+//2013-08-23, real-wifi@lge.com(FM) added FM intenna GPIO control
+	lge_fmr_intenna {
+		compatible = "lge,fmr_intenna";
+		lge,fmr-intenna-gpio = <&msmgpio 58 0x00>;
+	};
+
+};
+
+&i2c_cdc  {
+	msm8x10_wcd_codec@0d{
+		compatible = "qcom,msm8x10-wcd-i2c";
+		reg = <0x0d>;
+
+		interrupt-parent = <&wcd9xxx_intc>;
+		interrupts = <0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+               			                 17 18 19 20 21 22 23>;
+
+		cdc-vdda-cp-supply = <&pm8110_s4>;
+		qcom,cdc-vdda-cp-voltage = <1800000 2150000>;
+		qcom,cdc-vdda-cp-current = <650000>;
+
+		cdc-vdda-h-supply = <&pm8110_l6>;
+		qcom,cdc-vdda-h-voltage = <1800000 1800000>;
+		qcom,cdc-vdda-h-current = <25000>;
+
+		cdc-vdd-px-supply = <&pm8110_l6>;
+		qcom,cdc-vdd-px-voltage = <1800000 1800000>;
+		qcom,cdc-vdd-px-current = <10000>;
+
+		cdc-vdd-1p2v-supply = <&pm8110_l4>;
+		qcom,cdc-vdd-1p2v-voltage = <1200000 1200000>;
+		qcom,cdc-vdd-1p2v-current = <5000>;
+
+		cdc-vdd-mic-bias-supply = <&pm8110_l20>;
+		qcom,cdc-vdd-mic-bias-voltage = <3075000 3075000>;
+		qcom,cdc-vdd-mic-bias-current = <25000>;
+
+		qcom,cdc-micbias-ldoh-v = <0x3>;
+		qcom,cdc-micbias-cfilt-sel = <0x0>;
+		qcom,cdc-micbias-cfilt-mv = <2700>;
+		qcom,cdc-mclk-clk-rate = <12288000>;
+
+		qcom,cdc-static-supplies = "cdc-vdda-h",
+                		           "cdc-vdd-px",
+		                           "cdc-vdd-1p2v";
+
+		qcom,cdc-on-demand-supplies = "cdc-vdda-cp",
+		                              "cdc-vdd-mic-bias";
+        qcom,cdc-micbias1-ext-cap;
+//LGE_UPDATE  sangman.park@lge.com(SOUND) 2013_7_17 added speaker switch mixer control
+		qcom,spk-switch-enable-gpio= <&msmgpio 19 0x00>; 
+	};
+
+	msm8x10_wcd_codec@77{
+		compatible = "qcom,msm8x10-wcd-i2c";
+		reg = <0x77>;
+	};
+
+	msm8x10_wcd_codec@66{
+		compatible = "qcom,msm8x10-wcd-i2c";
+		reg = <0x66>;
+	};
+
+	msm8x10_wcd_codec@55{
+		compatible = "qcom,msm8x10-wcd-i2c";
+		reg = <0x55>;
+	};
+};

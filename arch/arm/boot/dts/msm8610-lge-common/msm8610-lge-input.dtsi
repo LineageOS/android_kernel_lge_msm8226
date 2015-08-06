@@ -1,0 +1,635 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	gpio_keys {
+		compatible = "gpio-keys";
+		input-name = "gpio-keys";
+
+		vol_down {
+			label = "volume_down";
+			gpios = <&msmgpio 73 0x1>;
+			linux,input-type = <1>;
+			linux,code = <114>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+
+		home {
+			label = "home";
+			gpios = <&msmgpio 74 0x1>;
+			linux,input-type = <1>;
+			linux,code = <102>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+
+		vol_up {
+			label = "volume_up";
+			gpios = <&msmgpio 72 0x1>;
+			linux,input-type = <1>;
+			linux,code = <115>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+ 		};
+	};
+
+	i2c@f9923000{
+		mms100s@48 {
+			compatible = "melfas,mms100s";
+			status = "disable";
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x2>;
+			melfas,auto_fw_update = <1>;
+			melfas,use_isp_erase = <0>;
+			melfas,product = "WX";
+			melfas,gpio-int = <0>;
+			melfas,max-x = <320>;
+			melfas,max-y = <480>;
+			melfas,use_vdd = <0>;
+			melfas,use_vdd_int = <0>;
+			melfas,use_vdd_i2c = <0>;
+			melfas,gpio-vdd-en = <0>;
+			melfas,vdd_voltage = <3050000>;
+			vdd-supply = <&pm8110_l22>;
+			vdd_i2c-supply = <&pm8110_l14>;
+			vdd_int-supply = <&pm8110_l8>;
+			melfas,key-map = <158 139>;
+			melfas,fw-image-name = "melfas/mms100s_core32_v01.mfsb";
+		};
+
+                /* mms100s@48_rev_c is only for w5ds_global_com, w5n_global_com */
+                mms100s@48_rev_c {
+			compatible = "melfas,mms100s";
+			status = "disable";
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x2>;
+			melfas,auto_fw_update = <1>;
+			melfas,use_isp_erase = <0>;
+			melfas,product = "WX";
+			melfas,gpio-int = <0>;
+			melfas,max-x = <320>;
+			melfas,max-y = <480>;
+			melfas,use_vdd = <0>;
+			melfas,use_vdd_int = <0>;
+			melfas,use_vdd_i2c = <0>;
+			melfas,gpio-vdd-en = <0>;
+			melfas,vdd_voltage = <3050000>;
+			vdd-supply = <&pm8110_l22>;
+			vdd_i2c-supply = <&pm8110_l14>;
+			vdd_int-supply = <&pm8110_l8>;
+			melfas,key-map = <158 139>;
+			melfas,fw-image-name = "melfas/mms100s_core32_v01.mfsb";
+		};
+
+		mms100s_rev_b@48 {
+			compatible = "melfas,mms100s";
+			status = "disable";
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x2>;
+			melfas,auto_fw_update = <1>;
+			melfas,use_isp_erase = <0>;
+			melfas,product = "WX";
+			melfas,gpio-int = <0>;
+			melfas,max-x = <320>;
+			melfas,max-y = <480>;
+			melfas,use_vdd = <0>;
+			melfas,use_vdd_int = <0>;
+			melfas,use_vdd_i2c = <0>;
+			melfas,gpio-vdd-en = <0>;
+			melfas,vdd_voltage = <3050000>;
+			vdd-supply = <&pm8110_l22>;
+			vdd_i2c-supply = <&pm8110_l14>;
+			vdd_int-supply = <&pm8110_l14>;
+			melfas,key-map = <158 139>;
+			melfas,fw-image-name = "melfas/mms100s_core32_v01.mfsb";
+		};
+
+		lgd_melfas@34 {
+			compatible = "lgd_melfas,incell";
+			status = "disable";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x2002>; /* IRQF_TRIGGER_FALLING | IRQF_ONESHOT */
+			vcc_i2c-supply = <&pm8110_l14>;
+			lgd_melfas,max_x = <480>;
+			lgd_melfas,max_y = <800>;
+			lgd_melfas,reset_gpio = <&msmgpio 0 0x00>;
+			lgd_melfas,irq_gpio = <&msmgpio 1 0x2002>;
+			lgd_melfas,button-map = <158 139>;
+		};
+
+		ads_ags04@6a {
+			compatible = "ads,ags04_ts";
+			status = "disable";
+			reg = <0x6a>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <82 0x2>;
+			ads,gpio-int = <82>;
+			ads,key_code = <139 158 0 0>;
+			ads,num-of-on-cmds = <9>;
+			ads,on-cmds = <
+				0x02 0x4d
+				0x0c 0x33
+				0x0d 0x33
+				0x0e 0x00
+				0x16 0x03
+				0x01 0x03 /* Channel Enable */
+				0x04 0x05 /* Sensitivity 1 */
+				0x05 0x05 /* Sensitivity 2 */
+				0x02 0x48
+			>;
+		};
+
+		lge_touch@48 {
+			compatible = "lge,touch_core";
+			status = "disable";
+			//revision = ;
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x2>;
+			lge,scl-gpio = <&msmgpio 3 0x00>;
+			lge,sda-gpio = <&msmgpio 2 0x00>;
+			lge,int-gpio = <&msmgpio 0 0x00>;
+			lge,id-gpio = <&msmgpio 0 0x00>;
+			lge,id2-gpio = <&msmgpio 0 0x00>;
+			lge,reset_pin = <0xffffffff>;
+
+			/* IC Type. This should be matched with proper device. */
+			/*      0 : MMS-100S Series. MMS-128S , MMS-134S */
+			/*      1 : MMS-100A Series. MMS-136 , MMS-144 , MMS-152 */
+			lge,auto_fw_update = <1>;
+			lge,ic_type = <0>;
+			lge,maker = "Melfas";
+			lge,product = "WX";
+			lge,fw_image = "melfas/mms100s_core32_v01.mfsb";
+
+			/* platform_data->caps */
+			button_support = <1>;
+			button_name = <158 172 139 249>;
+			is_width_supported = <1>;
+			is_pressure_supported = <1>;
+			is_id_supported = <1>;
+			max_width = <15>;
+			max_pressure = <0xff>;
+			max_id = <5>;
+			x_max = <320>;
+			y_max = <480>;
+			lcd_x = <320>;
+			lcd_y = <480>;
+			operation_mode = <1>;
+			key_type = <1>;
+			report_mode = <0>;
+			delta_pos_threshold = <0>;
+
+			/* platform_data->role */
+			booting_delay = <30>;
+			reset_delay = <10>;
+			suspend_pwr = <0>;
+			resume_pwr = <1>;
+			ghost_detection_enable = <0>;
+			//irqflags = <0x2>;
+
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <0>;
+			vdd_name0 = "vdd";
+			vdd_value0 = <3050000>;
+			vdd-supply = <&pm8110_l22>;
+
+			vdd_type1 = <0>;
+			vdd_name1 = "vio_i2c";
+			vdd_value1 = <1800000>;
+			vio_i2c-supply = <&pm8110_l14>;
+
+			vdd_type2 = <0>;
+			vdd_name2 = "vio_int";
+			vdd_value2 = <1800000>;
+			vio_int-supply = <&pm8110_l8>;
+		};
+
+		lge_touch_rev_b@48 {
+			compatible = "lge,touch_core";
+			status = "disable";
+			//revision = ;
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x2>;
+			lge,scl-gpio = <&msmgpio 3 0x00>;
+			lge,sda-gpio = <&msmgpio 2 0x00>;
+			lge,int-gpio = <&msmgpio 0 0x00>;
+			lge,id-gpio = <&msmgpio 0 0x00>;
+			lge,id2-gpio = <&msmgpio 0 0x00>;
+			lge,reset_pin = <0xffffffff>;
+
+			/* IC Type. This should be matched with proper device. */
+			/*      0 : MMS-100S Series. MMS-128S , MMS-134S */
+			/*      1 : MMS-100A Series. MMS-136 , MMS-144 , MMS-152 */
+			lge,auto_fw_update = <1>;
+			lge,ic_type = <0>;
+			lge,maker = "Melfas";
+			lge,product = "WX";
+			lge,fw_image = "melfas/mms100s_core32_v01.mfsb";
+
+			/* platform_data->caps */
+			button_support = <1>;
+			button_name = <158 172 139 249>;
+			is_width_supported = <1>;
+			is_pressure_supported = <1>;
+			is_id_supported = <1>;
+			max_width = <15>;
+			max_pressure = <0xff>;
+			max_id = <5>;
+			x_max = <320>;
+			y_max = <480>;
+			lcd_x = <320>;
+			lcd_y = <480>;
+			operation_mode = <1>;
+			key_type = <1>;
+			report_mode = <0>;
+			delta_pos_threshold = <0>;
+			panel_id = "T", "T", "E", "?";
+
+			/* platform_data->role */
+			booting_delay = <30>;
+			reset_delay = <10>;
+			suspend_pwr = <0>;
+			resume_pwr = <1>;
+			ghost_detection_enable = <0>;
+			//irqflags = <0x2>;
+
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <0>;
+			vdd_name0 = "vdd";
+			vdd_value0 = <3050000>;
+			vdd-supply = <&pm8110_l22>;
+
+			vdd_type1 = <0>;
+			vdd_name1 = "vio_i2c";
+			vdd_value1 = <1800000>;
+			vio_i2c-supply = <&pm8110_l14>;
+
+			vdd_type2 = <0>;
+			vdd_name2 = "vio_int";
+			vdd_value2 = <1800000>;
+			vio_int-supply = <&pm8110_l14>;
+		};
+		synaptics_red@20 {
+			compatible = "synaptics,rmi4";
+			reg = <0x20>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x02>;
+			vdd-supply = <&pm8110_l14>;
+			vcc_i2c-supply = <&pm8110_l14>;
+			synaptics,reset-gpio = <&msmgpio 0 0x00>;
+			synaptics,irq-gpio = <&msmgpio 1 0x02>;
+			synaptics,panel-x = <960>;
+			synaptics,panel-y = <1600>;
+			synaptics,button-map = <158 172 139 249>;
+			synaptics,i2c-pull-up =<1>;
+			synaptics,gpio_vdd_en = <62>;
+			synaptics,reg-en;
+			status = "disable";
+		};
+		synaptics_s220x@20 {
+			compatible = "synaptics,s220x";
+			status = "disable";
+			reg = <0x20>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x2>;
+			vdd-supply = <&pm8110_l22>;
+			vdd_i2c-supply = <&pm8110_l14>;
+			vdd_int-supply = <&pm8110_l14>;
+			synaptics,reset-gpio = <&msmgpio 0 0x00>;
+			synaptics,irq-gpio = <&msmgpio 1 0x02>;
+			synaptics,maker = "Synaptics";
+			synaptics,fw_version_info = <0x00 0x00 0x00>; /* Maker Key Supplier inch0 inch1 panel */
+									/* Maker if 8 : diversify panel */
+			/*if LCD Resolution : Touch Resolution = 1:1 then set 5 or LCD Resolution : Touch Resolution = 1:2 then set 10 */
+			synaptics,global_access_pixel = <5>; 
+			synaptics,platform_data	{
+				/*Caps*/
+				panel_type = <0>;
+				maker_id = <0>;
+				maker_id_gpio = <0>;
+				maker_id2_gpio = <0>;
+				finger_reg_offset=<0>; /*s22002 : 0, s2200 : 1*/
+				button_support = <1>;
+				y_button_boundary	= <0>;
+				button_margin = <10>;
+				number_of_button = <4>;
+				button_name = [9e ac 8b f9];
+				is_width_supported = <1>;
+				is_pressure_supported	= <1>;
+				is_id_supported = <1>;
+				max_width = <15>;
+				max_pressure = <0xff>;
+				max_id = <5>;
+				x_max = <320>;
+				y_max = <480>;
+				lcd_x = <320>;
+				lcd_y = <480>;
+				palm_detect_mode = <0>;
+				operation_mode = <1>;
+				key_type = <1>;
+				report_mode = <1>;
+				delta_pos_threshold = <1>;
+				/*role*/
+				orientation = <0>;
+				report_period = <10000000>;
+				booting_delay = <200>;
+				reset_delay = <20>;
+				suspend_pwr = <0>;
+				resume_pwr = <1>;
+				jitter_filter_enable = <0>;
+				jitter_curr_ratio = <26>;
+				accuracy_filter_enable = <0>;
+				ghost_finger_solution_enable = <0>;
+				ghost_detection_enable = <0>;
+				ghost_detection_button_enable = <0>;
+				/*booting time, duration, jitter, finger diff, subtraction time, finger-subtraction-cnt, force-cont-mode,long press cnt, button duration, button int num, time after rebase*/
+				ghost_detection_value = <200 50 10 6 11 5 10 500 100 6 5>;
+				irqflags = <0x00000002>;
+				/*pwr*/
+				use_regulator = <0>;
+				use_vio_regulator = <0>;
+				gpio_vdd_en = <62>;
+				vdd = "vdd";
+				vdd_voltage = <1800000>;
+				vio = "vdd_i2c";
+				vio_voltage = <1800000>;
+			};
+		};
+		
+		/* W5 VZW Only */
+		synaptics_s220x_rev_b@20 {
+			compatible = "synaptics,s220x";
+			status = "disable";
+			reg = <0x20>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x2>;
+			vdd-supply = <&pm8110_l22>;
+			vdd_i2c-supply = <&pm8110_l14>;
+			vdd_int-supply = <&pm8110_l14>;
+			synaptics,reset-gpio = <&msmgpio 0 0x00>;
+			synaptics,irq-gpio = <&msmgpio 1 0x02>;
+			synaptics,maker = "Synaptics";
+			synaptics,fw_version_info = <0x00 0x00 0x00>;  /* Maker Key Supplier inch0 inch1 panel */
+									/* Maker if 8 : diversify panel */
+			synaptics,platform_data	{
+				/*Caps*/
+				panel_type = <0>;
+				maker_id = <0>;
+				maker_id_gpio = <0>;
+				finger_reg_offset=<0>; /*s22002 : 0, s2200 : 1*/
+				button_support = <1>;
+				y_button_boundary	= <0>;
+				button_margin = <10>;
+				number_of_button = <4>;
+				button_name = [9e ac 8b f9];
+				is_width_supported = <1>;
+				is_pressure_supported	= <1>;
+				is_id_supported = <1>;
+				max_width = <15>;
+				max_pressure = <0xff>;
+				max_id = <5>;
+				x_max = <320>;
+				y_max = <480>;
+				lcd_x = <320>;
+				lcd_y = <480>;
+				palm_detect_mode = <0>;
+				operation_mode = <1>;
+				key_type = <1>;
+				report_mode = <1>;
+				delta_pos_threshold = <1>;
+				/*role*/
+				orientation = <0>;
+				report_period = <10000000>;
+				booting_delay = <200>;
+				reset_delay = <20>;
+				suspend_pwr = <0>;
+				resume_pwr = <1>;
+				jitter_filter_enable = <0>;
+				jitter_curr_ratio = <26>;
+				accuracy_filter_enable = <0>;
+				ghost_finger_solution_enable = <0>;
+				ghost_detection_enable = <0>;
+				ghost_detection_button_enable = <0>;
+				/*booting time, duration, jitter, finger diff, subtraction time, finger-subtraction-cnt, force-cont-mode,long press cnt, button duration, button int num, time after rebase*/
+				ghost_detection_value = <200 50 10 6 11 5 10 500 100 6 5>;
+				irqflags = <0x00000002>;
+				/*pwr*/
+				use_regulator = <0>;
+				use_vio_regulator = <0>;
+				gpio_vdd_en = <62>;
+				vdd = "vdd";
+				vdd_voltage = <1800000>;
+				vio = "vdd_i2c";
+				vio_voltage = <1800000>;
+			};
+		};
+		
+		lgd_mit200@34 {
+			compatible = "lgd_mit200,incell";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x2002>;
+			//vdd-supply = <&pm8226_l28>;
+			lgd_mit200,max_x = <480>;
+			lgd_mit200,max_y = <800>;
+			lgd_mit200,ldo_gpio = <&msmgpio 120 0x00>;
+			lgd_mit200,reset_gpio = <&msmgpio 60 0x00>;
+			lgd_mit200,irq_gpio = <&msmgpio 17 0x2002>;
+			lgd_mit200,button-map = <158 139>;
+			status = "disable";
+		};
+		
+		lge_touch_incell@34 {
+			compatible = "lge,touch_core";
+			status = "disable";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x2>;
+			lge,scl-gpio = <&msmgpio 3 0x00>;
+			lge,sda-gpio = <&msmgpio 2 0x00>;
+			lge,int-gpio = <&msmgpio 1 0x00>;
+			lge,id-gpio = <&msmgpio 0 0x00>;
+			lge,id2-gpio = <&msmgpio 0 0x00>;
+			lge,rst-gpio = <&msmgpio 0 0x00>;
+
+			/* IC Type. This should be matched with proper device. */
+			/*      0 : MMS-100S Series. MMS-128S , MMS-134S */
+			/*      1 : MMS-100A Series. MMS-136 , MMS-144 , MMS-152 */
+			/*      2 : MIT-200. AIT(Advanced Incell Touch)*/
+			lge,auto_fw_update = <1>;
+			lge,ic_type = <2>; 
+			lge,maker = "Melfas";
+			lge,product = "L0M45P1";
+			lge,fw_image = "melfas/mit200/L0M45P1_0_35.fw";
+			lge,panel_spec = "melfas/mit200/L0M45P1_spec.txt";
+
+			/* Limitation Value. */
+			raw_data_max = <42125>;
+			raw_data_min = <11394>;
+			open_short_max = <550>;
+			open_short_min = <100>;
+			slope_max = <110>;
+			slope_min = <90>;  
+
+			/* platform_data->caps */
+			button_support = <0>;
+			button_name = <>;
+			is_width_supported = <1>;
+			is_pressure_supported = <1>;
+			is_id_supported = <1>;
+			max_width = <30>;
+			max_pressure = <0xff>;
+			max_id = <10>;
+			x_max = <480>;
+			y_max = <800>;
+			lcd_x = <480>;
+			lcd_y = <800>;
+			operation_mode = <1>;
+			key_type = <3>;
+			report_mode = <0>;
+			delta_pos_threshold = <0>;
+			panel_id = "L", "?", "?", "?";
+
+			/* platform_data->role */
+			booting_delay = <10>;
+			reset_delay = <5>;
+			suspend_pwr = <0>;
+			resume_pwr = <1>;
+			ghost_detection_enable = <0>;
+			
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <2>;
+			vdd_name0 = "vdd";
+			vdd_value0 = <3000000>;
+			vdd-supply = <&pm8110_l22>;
+
+			vdd_type1 = <1>;
+			vdd_name1 = "vdd_io";
+			vdd_value1 = <1800000>;
+			vdd_io-supply = <0>;
+
+			vdd_type2 = <0>;
+			vdd_name2 = "NULL";
+			vdd_value2 = <0>;
+			vio_int-supply = <0>;
+		};
+		lge_touch_incell_rev_b@34 {
+			compatible = "lge,touch_core";
+			status = "disable";
+			reg = <0x34>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <1 0x2>;
+			lge,scl-gpio = <&msmgpio 3 0x00>;
+			lge,sda-gpio = <&msmgpio 2 0x00>;
+			lge,int-gpio = <&msmgpio 1 0x00>;
+			lge,id-gpio = <&msmgpio 0 0x00>;
+			lge,id2-gpio = <&msmgpio 0 0x00>;
+			lge,rst-gpio = <&msmgpio 0 0x00>;
+
+			/* IC Type. This should be matched with proper device. */
+			/*      0 : MMS-100S Series. MMS-128S , MMS-134S */
+			/*      1 : MMS-100A Series. MMS-136 , MMS-144 , MMS-152 */
+			/*      2 : MIT-200. AIT(Advanced Incell Touch)*/
+			lge,auto_fw_update = <1>;
+			lge,ic_type = <2>; 
+			lge,maker = "Melfas";
+			lge,product = "L0M45P1";
+			lge,fw_image = "melfas/mit200/L0M45P1_0_35.fw";
+			lge,panel_spec = "melfas/mit200/L0M45P1_spec.txt";
+
+			/* platform_data->caps */
+			button_support = <0>;
+			button_name = <>;
+			is_width_supported = <1>;
+			is_pressure_supported = <1>;
+			is_id_supported = <1>;
+			max_width = <30>;
+			max_pressure = <0xff>;
+			max_id = <10>;
+			x_max = <480>;
+			y_max = <800>;
+			lcd_x = <480>;
+			lcd_y = <800>;
+			operation_mode = <1>;
+			key_type = <3>;
+			report_mode = <0>;
+			delta_pos_threshold = <0>;
+			panel_id = "L", "?", "?", "?";
+			
+			/* Limitation Value. */
+			raw_data_max = <42125>;
+			raw_data_min = <11394>;
+			open_short_max = <550>;
+			open_short_min = <100>;
+			slope_max = <110>;
+			slope_min = <90>;
+
+			/* platform_data->role */
+			booting_delay = <10>;
+			reset_delay = <5>;
+			suspend_pwr = <0>;
+			resume_pwr = <1>;
+			ghost_detection_enable = <0>;
+			
+			/* platform_data->pwr*/
+			/* type 0: none(default) */
+			/*      1: gpio */
+			/*      2: regulator */
+			/* name if type == 1, gpio active condition "low" or "high" */
+			/*      if type == 2, sypply name for regulator */
+			/* value if type == 1, gpio pin no. */
+			/*       if type == 2, regulator voltage */
+			vdd_type0 = <2>;
+			vdd_name0 = "vdd";
+			vdd_value0 = <3000000>;
+			vdd-supply = <&pm8110_l22>;
+
+			vdd_type1 = <1>;
+			vdd_name1 = "vdd_io";
+			vdd_value1 = <1800000>;
+			vdd_io-supply = <0>;
+
+			vdd_type2 = <0>;
+			vdd_name2 = "NULL";
+			vdd_value2 = <0>;
+			vio_int-supply = <0>;
+		};
+	};
+};

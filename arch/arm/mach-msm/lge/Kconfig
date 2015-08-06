@@ -1,0 +1,1051 @@
+config MACH_LGE
+	bool
+
+menu "LGE Board Selection"
+
+config MACH_MSM8X26_LGPS14
+	depends on ARCH_MSM8226
+	select MACH_LGE
+	bool "MSM8X26 LGPS14"
+	help
+	  Support for the Qualcomm MSM8X26 LGPS14 device.
+
+config MACH_MSM8226_W7_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7 GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 W7 Single Sim device.
+
+config MACH_MSM8226_W7_GLOBAL_SCA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7 GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8226 W7 Single Sim device.
+
+config MACH_MSM8226_W7DS_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7DS GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 W7 Dual Sim Global Common device.
+
+config MACH_MSM8226_W7N_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7N GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 W7N Single Sim device.
+
+config MACH_MSM8226_W7N_GLOBAL_SCA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7N GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8226 W7N Single Sim device.
+
+config MACH_MSM8226_W7DSN_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7DSN GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 W7N Dual Sim Global Common device.
+
+config MACH_MSM8226_W7_TMO_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 W7 TMO US"
+        help
+          Support for the Qualcomm MSM8226 W7 Single Sim device.
+
+config MACH_MSM8226_JAG3GDS_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 JAG3GDS GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 JAG3G Dual Sim GLOBAL device.
+
+config MACH_MSM8226_JAG3GSS_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 JAG3GSS GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 JAG3G Single Sim GLOBAL device.
+
+config MACH_MSM8226_G2MDS_OPEN_CIS
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 G2MDS OPEN CIS"
+        help
+          Support for the Qualcomm MSM8226 G2M Dual Sim Open device.
+
+config MACH_MSM8226_G2MDS_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 G2MDS GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 G2M Dual Sim GLOBAL device.
+
+config MACH_MSM8226_G2MSS_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8226 G2MSS GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8226 G2M Single Sim GLOBAL device.
+
+config MACH_MSM8226_E9WIFI
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "APQ8026 E9WIFI OPEN"
+        help
+          Support for the Qualcomm APQ8026 E9 WiFi-Only device.
+
+config MACH_MSM8226_E9WIFIN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "APQ8026 E9WIFIN OPEN"
+        help
+          Support for the Qualcomm APQ8026 E9 WiFi-Only device.
+
+config MACH_MSM8226_E8WIFI
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "APQ8026 E8WIFI OPEN"
+        help
+          Support for the Qualcomm APQ8026 E8 WiFi-Only device.
+
+config MACH_MSM8926_E8LTE
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E8LTE OPEN"
+        help
+          Support for the Qualcomm MSM8926 E8 LTE device.
+
+config MACH_MSM8226_E7WIFI
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "APQ8026 E7WIFI OPEN"
+        help
+          Support for the Qualcomm APQ8026 E7 WiFi-Only device.
+
+config MACH_MSM8926_E7LTE_ATT_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E7LTE ATT US"
+        help
+          Support for the Qualcomm MSM8926 E7 LTE device.
+
+config MACH_MSM8926_E7LTE_VZW_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E7LTE VZW US"
+        help
+          Support for the Qualcomm MSM8926 E7 LTE device.
+
+config MACH_MSM8926_T8LTE
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 T8LTE"
+        help
+          Support for the Qualcomm MSM8926 T8 LTE device.
+
+config MACH_MSM8926_T8LTE_ATT_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 T8LTE ATT US"
+        help
+          Support for the Qualcomm MSM8926 T8 LTE device.
+
+config MACH_MSM8926_T8LTE_TMO_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 T8LTE TMO US"
+        help
+          Support for the Qualcomm MSM8926 T8 LTE device.
+
+config MACH_MSM8926_T8LTE_USC_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 T8LTE USC US"
+        help
+          Support for the Qualcomm MSM8926 T8 LTE device.
+
+config MACH_MSM8926_T8LTE_ACG_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 T8LTE ACG US"
+        help
+          Support for the Qualcomm MSM8926 T8 LTE device.
+
+config MACH_MSM8926_E9LTE_VZW_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E9LTE VZW US"
+        help
+          Support for the Qualcomm MSM8926 E9 LTE device.
+
+config MACH_MSM8926_E9LTE
+	   depends on ARCH_MSM8226
+	   select MACH_LGE
+	   bool "MSM8926 E9LTE"
+	   help
+	       Support for the Qualcomm MSM8926 E9 LTE device.
+
+config MACH_MSM8926_E2_SPR_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E2 SPR US"
+        help
+          Support for the Qualcomm MSM8926 E2 SPR US device.
+
+config MACH_MSM8926_E2_MPCS_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E2 MPCS US"
+        help
+          Support for the Qualcomm MSM8926 E2 MPCS US device.
+
+config MACH_MSM8926_E2_BELL_CA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E2 BELL CA"
+        help
+          Support for the Qualcomm MSM8926 E2 BELL CA device.
+
+config MACH_MSM8926_E2_RGS_CA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E2 RGS CA"
+        help
+          Support for the Qualcomm MSM8926 E2 RGS CA device.
+
+config MACH_MSM8926_E2_VTR_CA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E2 VTR CA"
+        help
+          Support for the Qualcomm MSM8926 E2 VTR CA device.
+
+config MACH_MSM8926_E2_VZW
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E2 VZW"
+        help
+          Support for the Qualcomm MSM8926 E2 VZW device.
+
+
+config MACH_MSM8926_E7LTE_USC_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 E7LTE USC US"
+        help
+          Support for the Qualcomm MSM8926 E7 LTE device.
+
+config MACH_MSM8926_X5_VZW
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X5 VZW"
+        help
+          Support for the Qualcomm MSM8926 X5 VZW device.
+
+config MACH_MSM8926_X5_LRA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X5 LRA"
+        help
+          Support for the Qualcomm MSM8926 X5 LRA device.
+
+config MACH_MSM8926_X3C_TRF_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X3C TRF US"
+        help
+          Support for the Qualcomm MSM8926 X3C TRF US device.
+
+config MACH_MSM8926_X3N_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X3N GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8926 X3N GLOBAL COM device.
+
+config MACH_MSM8926_F70N_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 F70N GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8926 X3N GLOBAL COM device.
+
+config MACH_MSM8926_F70N_GLOBAL_AME
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 F70N OPEN AME"
+        help
+          Support for the Qualcomm MSM8926 X3N GLOBAL COM device.
+
+config MACH_MSM8926_F70_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 F70 GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8926 X3N GLOBAL COM device.
+
+config MACH_MSM8926_X3N_GLOBAL_SCA
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X3N GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8926 X3N GLOBAL SCA device.
+
+config MACH_MSM8926_X3_TRF_US
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X3 TRF US"
+        help
+          Support for the Qualcomm MSM8926 X3 TRF US device.
+
+config MACH_MSM8926_F70N_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 F70N KR"
+        help
+          Support for the Qualcomm MSM8926 F70N KR device.
+
+config MACH_MSM8926_X3N_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X3N KR"
+        help
+          Support for the Qualcomm MSM8926 X3N KR device.
+
+config MACH_MSM8926_X5_SPR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X5 SPR"
+        help
+          Support for the Qualcomm MSM8926 X5 SPR device.
+
+config MACH_MSM8926_JAGC_SPR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 JAGC SPR"
+        help
+          Support for the Qualcomm MSM8926 JAGC SPR device.
+
+config MACH_MSM8926_G2M_VDF
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 G2M VDF"
+        help
+          Support for the Qualcomm MSM8926 X5 SPR device.
+
+config MACH_MSM8926_G2M_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 G2M KR"
+        help
+          Support for the Qualcomm MSM8926 X5 SPR device.
+
+config MACH_MSM8926_G2M_OPEN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 G2M OPEN"
+        help
+          Support for the Qualcomm MSM8926 X5 SPR device.
+
+config MACH_MSM8926_G2M_GLOBAL
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 G2M GLOBAL"
+        help
+          Support for the Qualcomm MSM8926 G2M GLOBAL device.
+
+config MACH_MSM8926_G2MH_SBM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 G2MH SBM"
+        help
+          Support for the Qualcomm MSM8926 G2MH SBM device.
+
+config MACH_MSM8926_X5_OPEN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X5 OPEN"
+        help
+          Support for the Qualcomm MSM8926 X5 OPEN device.
+
+config MACH_MSM8926_X10_VZW
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 X10 VZW"
+        help
+          Support for the Qualcomm MSM8926 X10 VZW device.
+
+config MACH_MSM8926_B2L_ATT
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2L ATT"
+        help
+          Support for the Qualcomm MSM8926 B2L ATT device.
+
+config MACH_MSM8926_B2LN_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2LN KR"
+        help
+          Support for the Qualcomm MSM8926 B2LN KR device.
+
+config MACH_MSM8926_JAGNM_ATT
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2L ATT"
+        help
+          Support for the Qualcomm MSM8926 B2L ATT device.
+
+config MACH_MSM8926_JAGNM_BELL
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2L ATT"
+        help
+          Support for the Qualcomm MSM8926 B2L ATT device.
+
+config MACH_MSM8926_JAGNM_RGS
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2L ATT"
+        help
+          Support for the Qualcomm MSM8926 B2L ATT device.
+
+config MACH_MSM8926_JAGNM_TLS
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2L ATT"
+        help
+          Support for the Qualcomm MSM8926 B2L ATT device.
+
+config MACH_MSM8926_JAGNM_VTR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 B2L ATT"
+        help
+          Support for the Qualcomm MSM8926 B2L ATT device.
+
+config MACH_MSM8926_JAGN_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 JAGN KR"
+        help
+          Support for the Qualcomm MSM8926 JAGN KR device.
+
+config MACH_MSM8926_JAGNM_GLOBAL_COM
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 Jaguar Global"
+        help
+          Support for the Qualcomm MSM8926 Jaguar Global device.
+
+config MACH_MSM8926_VFP_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 VFP KR"
+        help
+          Support for the Qualcomm MSM8926 VFP KR device.
+
+config MACH_MSM8X10_LGPS15
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8X26 LGPS15"
+	help
+	  Support for the Qualcomm MSM8X10 LGPS15 device.
+
+config MACH_MSM8X10_W3C_VZW
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W3C Verizon"
+	help
+	  Support for the Qualcomm MSM8610 W3C Verizon device.
+
+config MACH_MSM8X10_W3C_TRF_US
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W3 CDMA Tracfone"
+	help
+	  Support for the Qualcomm MSM8610 W3 CDMA Tracfone device.
+
+config MACH_MSM8X10_W3_VDF_EU
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3 Vodafone Europe"
+        help
+          Support for the Qualcomm MSM8610 W3 Vodafone Europe device.
+
+config MACH_MSM8X10_W3_VDF_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3 Vodafone Common"
+        help
+          Support for the Qualcomm MSM8610 W3 Vodafone Common device.
+
+config MACH_MSM8X10_W3_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3 Global Common"
+        help
+          Support for the Qualcomm MSM8610 W3 Global Common device.
+
+config MACH_MSM8X10_W3DS_TIM_BR
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3DS Open Brazil"
+        help
+          Support for the Qualcomm MSM8610 W3DS TIM Brazil device.
+
+config MACH_MSM8X10_W3DS_OPEN_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3DS OPEN SCA"
+        help
+          Support for the Qualcomm MSM8610 W3DS OPEN SCA device.
+
+config MACH_MSM8X10_W3_GLOBAL_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3 GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8610 W3 GLOBAL SCA device.
+
+config MACH_MSM8X10_W3DS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3DS Global Common"
+        help
+          Support for the Qualcomm MSM8610 W3DS Global Common device.
+
+config MACH_MSM8X10_W3DS_OPEN_BR
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3DS Open Brazil"
+        help
+          Support for the Qualcomm MSM8610 W3DS OPEN Brazil device.
+
+config MACH_MSM8X10_W3TS_OPEN_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3TS OPEN SCA"
+        help
+          Support for the Qualcomm MSM8610 W3TS OPEN SCA device.
+
+config MACH_MSM8X10_W3TS_GLOBAL_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W3TS GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8610 W3TS GLOBAL SCA device.
+
+config MACH_MSM8X10_W35
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W35 Series"
+        help
+          Support for the Qualcomm MSM8610 W35 Series device.
+
+config MACH_MSM8X10_W35_GLOBAL_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W35 GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8610 W35 GLOBAL SCA device.
+
+config MACH_MSM8X10_W35_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W35 GLOBAL COM"
+        help
+          Support for the Qualcomm MSM8610 W35 GLOBAL COM device.
+
+config MACH_MSM8X10_W35DS_GLOBAL_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W35DS GLOBAL SCA"
+        help
+          Support for the Qualcomm MSM8610 W35DS GLOBAL SCA device.
+
+config MACH_MSM8X10_W5
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5 Series"
+        help
+          Support for the Qualcomm MSM8610 W5 Series device.
+
+config MACH_MSM8X10_W5_OPEN_EU
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5 Open Europe"
+        help
+          Support for the Qualcomm MSM8610 W5 Open Europe device.
+
+config MACH_MSM8X10_W5N_VDF_EU
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5N Vodafone Europe"
+        help
+          Support for the Qualcomm MSM8610 W5N Vodafone Europe device.
+
+config MACH_MSM8X10_W5N_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5N Global Common"
+        help
+          Support for the Qualcomm MSM8610 W5N Global Common device.
+
+config MACH_MSM8X10_W5_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5 Global Common"
+        help
+          Support for the Qualcomm MSM8610 W5 Global Common device.
+
+config MACH_MSM8X10_W55_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W55 Global Common"
+        help
+          Support for the Qualcomm MSM8610 W55 Global Common device.
+
+config MACH_MSM8X10_W55N_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W55N Global Common"
+        help
+          Support for the Qualcomm MSM8610 W55N Global Common device.
+
+config MACH_MSM8X10_W5DS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5DS Global Common"
+        help
+          Support for the Qualcomm MSM8610 W5DS Global Common device.
+
+config MACH_MSM8X10_W55
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W55 Series"
+        help
+          Support for the Qualcomm MSM8610 W55 Series device.
+
+config MACH_MSM8X10_W55DS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W55DS Global Common"
+        help
+          Support for the Qualcomm MSM8610 W55DS Global Common device.
+
+config MACH_MSM8X10_W5TS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5TS Global Common"
+        help
+          Support for the Qualcomm MSM8610 W5TS Global Common device.
+
+config MACH_MSM8X10_W5TS_OPEN_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5TS Open South Central America"
+        help
+          Support for the Qualcomm MSM8610 W5TS Open South Central America device.
+
+config MACH_MSM8X10_W5_MPCS_US
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W5 MPCS US"
+	help
+	  Support for the Qualcomm MSM8610 W5 MPCS US device.
+
+config MACH_MSM8X10_W5_CCA_US
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W5 CCA US"
+	help
+	  Support for the Qualcomm MSM8610 W5 CCA US device.
+
+config MACH_MSM8X10_W5C_VZW
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W5C Verizon"
+	help
+	  Support for the Qualcomm MSM8610 W5C Verizon device.
+config MACH_MSM8X10_W5_AIO_US
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W5 AIO US"
+        help
+          Support for the Qualcomm MSM8610 W5 AIO US device.
+
+config MACH_MSM8X10_W5_TRF_US
+    depends on ARCH_MSM8610
+    select MACH_LGE
+    bool "MSM8610 W5 TRF US"
+    help
+        Support for the Qualcomm MSM8610 W5 TRF US device.
+
+config MACH_MSM8X10_W5C_ACG_US
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W5C ACG US"
+	help
+	  Support for the Qualcomm MSM8610 W5C ACG US device.
+
+config MACH_MSM8X10_W5C_TRF_US
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W5C TRF US"
+	help
+	  Support for the Qualcomm MSM8610 W5C TRF US device.
+
+config MACH_MSM8X10_W5C_SPR_US
+	depends on ARCH_MSM8610
+	select MACH_LGE
+	bool "MSM8610 W5C SPR US"
+	help
+	  Support for the Qualcomm MSM8610 W5C SPR US device.
+
+config MACH_MSM8X10_W6
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6 Series"
+        help
+          Support for the Qualcomm MSM8610 W6 Series device.
+
+config MACH_MSM8X10_W65
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W65 Series"
+        help
+          Support for the Qualcomm MSM8610 W65 Series device.
+
+config MACH_MSM8X10_W6_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6 Global Common"
+        help
+          Support for the Qualcomm MSM8610 W6 Global Common device.
+
+config MACH_MSM8X10_W6_GLOBAL_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6 Global SCA"
+        help
+          Support for the Qualcomm MSM8610 W6 Global SCA device.
+
+config MACH_MSM8X10_W65_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W65 Global Common"
+        help
+          Support for the Qualcomm MSM8610 W65 Global Common device.
+
+config MACH_MSM8X10_W6_TCL_MX
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6 Tcl Mx"
+        help
+          Support for the Qualcomm MSM8610 W6 Tcl Mx device.
+
+config MACH_MSM8X10_W6_GLOBAL_AME
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6 Global AME"
+        help
+          Support for the Qualcomm MSM8610 W6 Global AME device.
+
+config MACH_MSM8X10_W6DS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6DS Global Common"
+        help
+          Support for the Qualcomm MSM8610 W6DS Global Common device.
+
+config MACH_MSM8X10_W65DS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W65DS Global Common"
+        help
+          Support for the Qualcomm MSM8610 W65DS Global Common device.
+
+config MACH_MSM8X10_W6DS_GLOBAL_SCA
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6DS Global South Central America"
+        help
+          Support for the Qualcomm MSM8610 W6DS Global South Central America device.
+
+config MACH_MSM8X10_W6DS_TIM_BR
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 W6DS Tim Brazil"
+        help
+          Support for the Qualcomm MSM8610 W6DS Tim Brazil device.
+
+config MACH_MSM8926_JAGDSNM_CN
+		depends on ARCH_MSM8226
+		select MACH_LGE
+		bool "MSM8926 JAGDSNM CN"
+		help
+		  Support for the Qualcomm MSM8926 JAGDSNM CHINA device.
+
+config MACH_MSM8926_JAGDSNM_CMCC_CN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 JAGDSNM CMCC CN"
+        help
+          Support for the Qualcomm MSM8926 JAGDSNM CMCC device.
+
+config MACH_MSM8926_JAGDSNM_CUCC_CN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 JAGDSNM CUCC CN"
+        help
+          Support for the Qualcomm MSM8926 JAGDSNM CUCC device.
+
+config MACH_MSM8926_JAGDSNM_CTC_CN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 JAGDSNM CTC CN"
+        help
+          Support for the Qualcomm MSM8926 JAGDSNM CTC device.
+
+config MACH_MSM8926_AKA_CN
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 AKA CN"
+        help
+          Support for the Qualcomm MSM8926 AKA CN device.
+
+config MACH_MSM8926_AKA_KR
+        depends on ARCH_MSM8226
+        select MACH_LGE
+        bool "MSM8926 AKA KR"
+        help
+          Support for the Qualcomm MSM8926 AKA KR device.
+
+config MACH_MSM8X10_L70P
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 L70P Series"
+        help
+          Support for the Qualcomm MSM8610 L70P Series device.
+
+config MACH_MSM8X10_L70P_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 L70P Global Common"
+        help
+          Support for the Qualcomm MSM8610 L70P Global Common device.
+
+config MACH_MSM8X10_L70PN_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 L70PN Global Common"
+        help
+          Support for the Qualcomm MSM8610 L70PN Global Common device.
+
+config MACH_MSM8X10_L70PDS_GLOBAL_COM
+        depends on ARCH_MSM8610
+        select MACH_LGE
+        bool "MSM8610 L70PDS Global Common"
+        help
+          Support for the Qualcomm MSM8610 L70PDS Global Common device.
+
+config LCD_LGIT_VIDEO_WXGA
+	depends on ARCH_MSM8226
+	select MACH_LGE
+	bool "WXGA"
+	default n
+	help
+	  Support for the WXGA device.
+
+endmenu
+
+menu "LGE Specific Patches"
+
+config LGE_BOOTLOADER_LOG
+	tristate "Support LGE bootloader log"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE bootloader log
+
+config LGE_HANDLE_PANIC
+	tristate "Support LGE Kernel Panic Handler"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE Error handler
+
+config LGE_BOOTLOADER_TIME_CHECKER
+	bool "Show bootloader(LK, SBL) time"
+	default n
+	depends on MACH_LGE
+	help
+	  This shows the lk and sbl1 booting time in MSM8974.
+	  If this feature is enabled, it should be check by adb shell.
+	  Device Node : sys/module/lge_bootloader_time_checker/
+
+config LGE_USE_CPU_CLOCK_TIMESTAMP
+	bool "Print local time stamp for debugging"
+	default n
+	depends on MACH_LGE
+	help
+	  Print kernel time with local time for helping debug.
+
+config LGE_BNR_RECOVERY_REBOOT
+	bool "Support PC suite BNR recovery reboot"
+	default y
+	depends on MACH_LGE
+	help
+	  Support PC suite BNR recovery reboot. bnr recovery mode
+	  could be entered with reboot --bnr_recovery cmd.
+
+config LGE_QFPROM_INTERFACE
+	bool "Support qfprom interface"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE QFPROM DRIVER.
+
+config LGE_ENABLE_MMC_STRENGTH_CONTROL
+	bool "Support MMC Strength Control"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE mmc data,cmd,clk strength control support
+
+config LGE_PM_CONTROL_TSENS_CRITICAL_TEMPERATURE
+    bool "Support tsens critical temperature contorol"
+    default n
+    help
+      change tsens critical temperature for Accelerated High Temperature &
+	  Humidity Test
+
+menu "LGE Battery Profile"
+
+config LGE_PM_BATTERY_CAPACITY_1540mAh
+	bool "Support Battery Capacity : 1540mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 1540mAh
+
+config LGE_PM_BATTERY_CAPACITY_1700mAh
+	bool "Support Battery Capacity : 1700mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 1700mAh
+
+config LGE_PM_BATTERY_CAPACITY_1900mAh
+	bool "Support Battery Capacity : 1900mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 1900mAh
+
+config LGE_PM_BATTERY_CAPACITY_2100mAh
+	bool "Support Battery Capacity : 2100mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 2100mAh
+
+config LGE_PM_BATTERY_CAPACITY_2440mAh
+	bool "Support Battery Capacity : 2440mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 2440mAh
+
+config LGE_PM_BATTERY_CAPACITY_2540mAh
+	bool "Support Battery Capacity : 2540mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 2540mAh
+
+config LGE_PM_BATTERY_CAPACITY_3000mAh
+	bool "Support Battery Capacity : 3000mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 3000mAh
+
+config LGE_PM_BATTERY_CAPACITY_3200mAh
+	bool "Support Battery Capacity : 3200mAh"
+	depends on LGE_PM_BATTERY_PROFILE_DATA
+	help
+	  LGE battery capacity for 3200mAh
+
+config LGE_PM_BATTERY_CAPACITY_4000mAh
+        bool "Support Battery Capacity : 4000mAh"
+        depends on LGE_PM_BATTERY_PROFILE_DATA
+        help
+          LGE battery capacity for 4000mAh
+
+config LGE_PM_BATTERY_CAPACITY_4200mAh
+        bool "Support Battery Capacity : 4200mAh"
+        depends on LGE_PM_BATTERY_PROFILE_DATA
+        help
+          LGE battery capacity for 4200mAh
+
+config LGE_PM_BATTERY_CAPACITY_4600mAh
+        bool "Support Battery Capacity : 4600mAh"
+        depends on LGE_PM_BATTERY_PROFILE_DATA
+        help
+          LGE battery capacity for 4600mAh
+
+config LGE_PM_BATTERY_CAPACITY_8000mAh
+        bool "Support Battery Capacity : 8000mAh"
+        depends on LGE_PM_BATTERY_PROFILE_DATA
+        help
+          LGE battery capacity for 8000mAh
+
+endmenu
+
+config LGE_CRASH_FOOTPRINT
+	boolean "Crash footprint for MLT"
+	default n
+	depends on MACH_LGE && LGE_HANDLE_PANIC
+	help
+	  This feature is crash footprint for MLT.
+	  This refers to lge.bootreason and give information if the crash occured in previous to MLT.
+	  Device Node : /sys/module/lge_handle_panic/parameters/crash_footprint
+
+config LGE_QSDL_SUPPORT
+    tristate "Support for Quality Statistics Data Logging"
+    default n
+    depends on MACH_LGE
+    help
+       QSDL is a feature which notify infomation for quality statistics
+       data logging of device.
+
+config LGE_KSWITCH
+       tristate "Support LGE Kill Switch"
+       default n
+       depends on MACH_LGE
+       help
+         LGE Kill Switch
+
+config LGE_PRINT_WAKEUP_PENDING
+       tristate "print active wakeup source"
+       default n
+       depends on MACH_LGE
+       help
+         print active wakeup source
+
+config LGE_ENABLE_PRINT_CLK_LOG
+	bool "Support Enable print clock log"
+	default n
+	help
+	 Support Enable printing clock log
+
+config PRE_SELF_DIAGNOSIS
+	tristate "Support LGE self diagnosis for factory"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE self diagnosis
+
+endmenu

@@ -1,0 +1,79 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9923000{
+		mms100s@48 {
+			melfas,product = "T4S35A";
+			melfas,use_vdd = <0>;
+			melfas,use_vdd_int = <0>;
+			melfas,use_vdd_i2c = <1>;
+			melfas,gpio-vdd-en = <62>;
+			melfas,key-map = <158 172 139 249>;
+			melfas,fw-image-name = "melfas/w3ts_open_sca/w3ts_open_sca_rev_a_v103.mfsb";
+			status = "disable";
+			revision = "rev_a...";
+		};
+
+		imagis_ist30xx@50 {
+			compatible = "imagis,ist30xx";
+			reg = <0x50>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x2>;
+			vdd-supply = <&pm8110_l22>;
+			vcc_i2c-supply = <&pm8110_l14>;
+			imagis,i2c_int_gpio = <&msmgpio 0 0x00>;
+			imagis,panel-x = <320>;
+			imagis,panel-y = <480>;
+			imagis,i2c-pull-up = <1>;
+			status = "ok";
+			revision = "rev_0";
+		};
+		
+		lge_touch@48 {
+			revision = "rev_a...rev_d";
+			status = "ok";
+			lge,product = "T4S35A";
+			lge,fw_image = "melfas/w3ts_open_sca/w3ts_open_sca_rev_a_v103.mfsb";
+			vdd_type0 = <1>;
+			vdd_name0 = "high";
+			vdd_value0 = <62>;
+			vdd_type1 = <2>;
+		};
+
+		synaptics_red@20 {
+			status = "disable";
+			revision = "rev_e...";
+			synaptics,gpio_vdd_en  = <62>;
+		};
+
+		synaptics_s220x@20 {
+			status = "ok";
+			revision = "rev_e...";
+			synaptics,fw_version_info = <0x24 0x03 0x51>;
+			synaptics,fw_image = "synaptics/w3ts_open_sca/PLG312_V1.13_PR1599307_DS4.3.5.16_2403518D.img";
+			synaptics,panel_spec = "synaptics/w3ts_open_sca/w3ts_open_sca_limit.txt";
+			lge,knock_on_type = <1>;
+			synaptics,platform_data	{
+			    /* firmware image depends on this value, temporarily used */
+			    /* 0: No image(default), 1: W3DS(TIM BR)(PLG312_T001), 2: W3S(VDF)(PLG311_T001), ... */
+				panel_type = <1>;
+				/*maker_id  disable(0), enable(1)*/
+				maker_id = <0>;
+				maker_id_gpio = <0>;
+				palm_detect_mode = <1>;
+				ghost_detection_enable = <1>;
+				ghost_detection_value = <200 50 8 6 11 5 10 500 100 6 5>;
+			};
+		};
+	};
+};

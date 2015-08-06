@@ -7,6 +7,11 @@ config MSM_CAMERA_SENSOR
           data for camera support. The driver support V4L2
           subdev APIs.
 
+config LG_PROXY
+        bool "Qualcomm MSM camera proxy support"
+        depends on MSMB_CAMERA
+        ---help---
+        Enable support for proxy sensor for msm camera.
 config MSM_CPP
         bool "Qualcomm MSM Camera Post Processing Engine support"
         depends on MSMB_CAMERA
@@ -35,6 +40,14 @@ config MSM_CSI20_HEADER
           values and bit mask for register configuration bits
           This config macro is required targets based on 8960,
           8930 and 8064 platforms.
+
+# LGE_CHANGE_S: V3 HI351 Camera Bringup - hong.junki@lge.com 2012/09/25
+config HI351
+	bool "Sensor HI351 (YUV 3M)"
+	depends on MSMB_CAMERA
+	---help---
+	Hynix 3M YUV Sensor
+# LGE_CHANGE_E: V3 HI351 Camera Bringup - hong.junki@lge.com 2012/09/25
 
 config MSM_CSI22_HEADER
         bool "Qualcomm MSM CSI 2.2 Header"
@@ -101,6 +114,61 @@ config MSM_ISPIF_V1
           of any CID of MSM_CSI22_HEADER can be routed to of pixel
           or raw data interface in VFE.
 
+
+config IMX111
+	bool "Sensor imx111 (Sony 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX111 sensor driver.
+		This is a Sony 8MP Bayer Sensor with autofocus.
+		Say Y if the platform uses IMX111 sensor.
+
+config IMX179
+	bool "Sensor imx179 (Sony 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX179 sensor driver.
+		This is a Sony 8MP Bayer Sensor with autofocus.
+		Say Y if the platform uses IMX179 sensor.
+
+config IMX219
+	bool "Sensor imx219 (Sony 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX219 sensor driver.
+		This is a Sony 8MP Bayer Sensor with autofocus.
+		Say Y if the platform uses IMX219 sensor.
+
+config HI543
+    bool "Sensor hi543 (Hynix 5MP)"
+    depends on MSMB_CAMERA
+    ---help---
+        Support for HI543 sensor driver.
+        This is a Hynix 5MP Bayer Sensor with autofocus.
+        Say Y if the platform uses HI543 sensor.
+
+config HI544
+    bool "Sensor hi544 (Hynix 5MP)"
+    depends on MSMB_CAMERA
+    ---help---
+        Support for HI544 sensor driver.
+        This is a Hynix 5MP Bayer Sensor with autofocus.
+        Say Y if the platform uses HI544 sensor.
+
+config IMX132
+	bool "Sensor IMX132 2.4MP MIPI (Bayer 2.4M)"
+	depends on MSMB_CAMERA
+	---help---
+	  SONY 2.4M BAYER MIPI Sensor without Autofocus
+
+config IMX119
+	bool "Sensor imx119 (Sony Bayer 1.3MP)"
+	depends on MSMB_CAMERA
+	---help---
+		Support for IMX119 sensor driver.
+		This is a Sony 1.3MP Bayer Sensor.
+		Say Y if the platform uses IMX119 sensor.
+
 config IMX134
 	bool "Sensor IMX134 (BAYER 8M)"
 	depends on MSMB_CAMERA
@@ -128,6 +196,14 @@ config HI256
                 snapshot config = 3264 * 2448 at 18 fps.
                 2 lanes max fps is 18, 4 lanes max fps is 24.
 
+config HI258
+        bool "Hynix hi258 (YUV 2MP)"
+        depends on MSMB_CAMERA
+        ---help---
+                Hynix 2 MP Bayer Sensor with fixed focus.uses
+                2 mipi lanes, preview config = 1600*1200 30 fps,
+                snapshot config = 1600 * 1200 at 30 fps.
+
 config OV5648
 	bool "Sensor OV5648 (BAYER 5M)"
 	depends on MSMB_CAMERA
@@ -144,6 +220,15 @@ config MT9M114
 		MT9M114 is Aptina YUV sensor. It supports 1.26 MP preview
 		and snapshot. The preview and snapshot resolution shall be
 		1280 * 270. It does not support auto focus. It supports
+		few special effects like saturation.
+
+config HI707
+	bool "Sensor HI707 (YUV VGA)"
+	depends on MSMB_CAMERA
+	---help---
+		HI707 is Aptina YUV sensor. It supports VGA preview
+		and snapshot. The preview and snapshot resolution shall be
+		640 * 480. It does not support auto focus. It supports
 		few special effects like saturation.
 
 config SP1628

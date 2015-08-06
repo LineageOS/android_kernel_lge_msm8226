@@ -1,0 +1,30 @@
+# LGE Broadcast Device Driver Support
+
+menu "LGE Broadcast Device Support"
+
+
+config LGE_BROADCAST_ONESEG
+	bool "1Seg Broadcast service"
+	depends on (MACH_MSM8X10_W3DS_TIM_BR) || (MACH_MSM8X10_W3DS_OPEN_SCA) || (MACH_MSM8X10_W3TS_OPEN_SCA) || (MACH_MSM8X10_W6DS_GLOBAL_SCA) || (MACH_MSM8X10_W6DS_TIM_BR) || (MACH_MSM8X10_W3TS_GLOBAL_SCA) || (MACH_MSM8X10_W3_GLOBAL_SCA) || (MACH_MSM8X10_W35_GLOBAL_SCA) || (MACH_MSM8X10_W35DS_GLOBAL_SCA) || (MACH_MSM8X10_W6_GLOBAL_SCA)
+	default y
+	help
+	  Select this if you want to use Japanese 1Seg mobile broadcast service
+
+config LGE_BROADCAST_BRAZIL_FREQ
+	bool "1Seg Broadcast service"
+	depends on (MACH_MSM8X10_W3DS_TIM_BR) || (MACH_MSM8X10_W3DS_OPEN_SCA) || (MACH_MSM8X10_W3TS_OPEN_SCA) || (MACH_MSM8X10_W6DS_GLOBAL_SCA) || (MACH_MSM8X10_W6DS_TIM_BR) || (MACH_MSM8X10_W3TS_GLOBAL_SCA) || (MACH_MSM8X10_W3_GLOBAL_SCA) || (MACH_MSM8X10_W35_GLOBAL_SCA) || (MACH_MSM8X10_W35DS_GLOBAL_SCA) || (MACH_MSM8X10_W6_GLOBAL_SCA)
+	default y
+	help
+	  Select this if you want to use Japanese 1Seg mobile broadcast service
+	  
+config LGE_BROADCAST_TDMB
+	bool "LGE broadcast TDMB device Driver"
+	depends on (MACH_MSM8926_JAGN_KR) || (MACH_MSM8926_B2LN_KR) || (MACH_MSM8926_VFP_KR) || (MACH_MSM8926_AKA_KR)
+	default y
+	help
+	  Select this if you want to use TDMB broadcast service
+
+source "drivers/broadcast/oneseg/Kconfig"
+source "drivers/broadcast/tdmb/Kconfig"
+
+endmenu

@@ -1260,6 +1260,8 @@ static int msm_slim_qmi_send_power_request(struct msm_slim_ctrl *dev,
 					&resp_desc, &resp, sizeof(resp), 5000);
 	if (rc < 0) {
 		SLIM_ERR(dev, "%s: QMI send req failed %d\n", __func__, rc);
+if(rc==-110)
+  panic("slim qmi power fail. Contact to WX-BSP-Audio@lge.com");
 		return rc;
 	}
 
@@ -1375,12 +1377,12 @@ int msm_slim_qmi_check_framer_request(struct msm_slim_ctrl *dev)
 	rc = qmi_send_req_wait(dev->qmi.handle, &req_desc, NULL, 0,
 					&resp_desc, &resp, sizeof(resp), 5000);
 	if (rc < 0) {
-		SLIM_ERR(dev, "%s: QMI send req failed %d\n", __func__, rc);
+		dev_err(dev->dev, "%s: QMI send req failed %d\n", __func__, rc);
 		return rc;
 	}
 	/* Check the response */
 	if (resp.resp.result != QMI_RESULT_SUCCESS_V01) {
-		SLIM_ERR(dev, "%s: QMI request failed 0x%x (%s)\n",
+		dev_err(dev->dev, "%s: QMI request failed 0x%x (%s)\n",
 			__func__, resp.resp.result, get_qmi_error(&resp.resp));
 		return -EREMOTEIO;
 	}

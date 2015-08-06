@@ -95,6 +95,13 @@ config ANDROID_INTF_ALARM_DEV
 	  elapsed realtime, and a non-wakeup alarm on the monotonic clock.
 	  Also exports the alarm interface to user-space.
 
+config LGE_ANDROID_LOW_MEMORY_KILLER_IMPROVE
+        bool "Android Low Memory Killer: improve LMK behavior to sync up with kswapd"
+        depends on ANDROID_LOW_MEMORY_KILLER
+        default n
+        ---help---
+          adjust other file pages to sync up with kswapd
+
 endif # if ANDROID
 
 endmenu

@@ -1,0 +1,42 @@
+/* Copyright (c) 2013, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_mdp {
+	qcom,mdss-pref-prim-intf = "dsi";
+};
+
+&mdss_dsi0 {
+    qcom,dsi-pref-prim-pan = <&dsi_lgd_lg4577_wvga_video>;
+    qcom,dsi-pref-secondary-pan = <&dsi_tovis_shrink_wvga_video>;
+	qcom,platform-supply-entry3 {
+		qcom,supply-name = "vdda";
+		qcom,supply-min-voltage = <2850000>;
+		qcom,supply-max-voltage = <2850000>;
+		qcom,supply-enable-load = <100000>;
+		qcom,supply-disable-load = <100>;
+		qcom,supply-pre-on-sleep = <0>;
+		qcom,supply-post-on-sleep = <5>;
+		qcom,supply-pre-off-sleep = <0>;
+		qcom,supply-post-off-sleep = <0>;
+	};
+};
+
+&dsi_tovis_shrink_wvga_video {
+    qcom,cont-splash-enabled;
+    status = "disable";
+};
+
+&dsi_lgd_lg4577_wvga_video {
+    qcom,cont-splash-enabled;
+    status = "disable";
+};
+

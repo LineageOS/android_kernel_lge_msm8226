@@ -1,0 +1,125 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		mms100s@48 {
+			melfas,product = "I2S45A";
+			melfas,auto_fw_update = <1>;
+			melfas,use_vdd = <1>;
+			melfas,use_vdd_i2c = <1>;
+			melfas,fw-image-name = "melfas/f70n_global_ame/f70n_global_ame_rev_a_v08.mfsb";
+			melfas,panel-spec-name = "melfas/f70n_global_ame/f70n_global_ame_limit.txt";
+			revision = "rev_a";
+			status = "ok";
+		};
+
+		mms100s_rev_a2@48 {
+			melfas,product = "I2S45A";
+			melfas,auto_fw_update = <1>;
+			melfas,use_vdd = <0>;
+			melfas,use_vdd_i2c = <0>;
+			melfas,gpio-vdd-en = <60>;
+			melfas,fw-image-name = "melfas/f70n_global_ame/f70n_global_ame_rev_a_v08.mfsb";
+			melfas,panel-spec-name = "melfas/f70n_global_ame/f70n_global_ame_limit.txt";
+			revision = "rev_a2";
+			status = "ok";
+		};
+		lge_touch@48 {
+			lge,product = "I2S45A";
+			lge,fw-image-name = "melfas/f70n_global_ame/f70n_global_ame_rev_a_v08.mfsb";
+			lge,panel_spec = "melfas/f70n_global_ame/f70n_global_ame_limit.txt";
+			revision = "rev_a";
+			status = "disable";
+		};
+
+		lge_ts_misc {
+			revision = "rev_a2";
+			vdd_on = <1>;
+			vio_l19_on = <0>;
+			vio_l6_on = <0>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			vdd_voltage = <3050000>;
+			status ="ok";
+		};
+
+		lge_ts_misc_revb {
+			revision = "rev_b";
+			vdd_on = <1>;
+			vio_l19_on = <0>;
+			vio_l6_on = <1>;
+			vio_lvs1_on = <0>;
+			irq_wake = <0>;
+			vdd_voltage = <3050000>;
+			status ="ok";
+		};
+
+		synaptics_red@20 {
+			status = "disable";
+			vcc_i2c-supply = <&pm8226_l6>;
+			revision = "rev_b...";
+		};
+
+		synaptics_s220x@20 {
+			status = "ok";
+			revision = "rev_b";
+			vdd_i2c-supply = <&pm8226_l6>;
+			vdd_int-supply = <&pm8226_l6>;
+			synaptics,fw_version_info = <0x32 0x04 0x51>;
+			synaptics,fw_image = "synaptics/f70n_global_ame/PLG319_V0.09_PR1595097_DS4.3.5.1.16_32045109.img";
+			synaptics,panel_spec = "synaptics/f70n_global_ame/f70n_global_ame_limit.txt";
+			synaptics,global_access_pixel = <10>;
+			lge,knock_on_type = <1>;
+			synaptics,platform_data	{
+				/* firmware image depends on this value, temporarily used */
+				/* 0: No image(default), 1: W3DS(TIM BR)(PLG312_T001), 2: W3S(VDF)(PLG311_T001), 3: X3(GLOBAL_COM, TRF_ATT, GLOBAL_SCA)... */
+				panel_type = <3>;
+				use_regulator = <0>;
+				suspend_pwr = <2>;
+				resume_pwr = <3>;
+				palm_detect_mode = <1>;
+				ghost_detection_enable = <0>;
+				ghost_detection_button_enable = <0>;
+				/* booting time, duration, jitter, finger diff, subtraction time, finger-subtraction-cnt, force-cont-mode,long press cnt, buttobtraction time, finger-subtraction-cnt, force-cont-mode,long press cnt, button duration, button int num, time after rebase */
+				ghost_detection_value = <200 50 10 6 11 5 10 500 100 6 5>;
+				vdd_voltage = <3050000>;
+			};
+		};
+
+		synaptics_s220x_revb2@20 {
+			status = "ok";
+			revision = "rev_b2...";
+			vdd_i2c-supply = <&pm8226_l6>;
+			vdd_int-supply = <&pm8226_l6>;
+			synaptics,fw_version_info = <0x32 0x04 0x51>;
+			synaptics,fw_image = "synaptics/f70n_global_ame/PLG319_V0.09_PR1595097_DS4.3.5.1.16_32045109.img";
+			synaptics,panel_spec = "synaptics/f70n_global_ame/f70n_global_ame_limit.txt";
+			synaptics,global_access_pixel = <10>;
+			lge,knock_on_type = <1>;
+			synaptics,platform_data	{
+				/* firmware image depends on this value, temporarily used */
+				/* 0: No image(default), 1: W3DS(TIM BR)(PLG312_T001), 2: W3S(VDF)(PLG311_T001), 3: X3(GLOBAL_COM, TRF_ATT, GLOBAL_SCA)... */
+				panel_type = <3>;
+				use_regulator = <1>;
+				suspend_pwr = <0>;
+				resume_pwr = <1>;
+				palm_detect_mode = <1>;
+				ghost_detection_enable = <0>;
+				ghost_detection_button_enable = <0>;
+				/* booting time, duration, jitter, finger diff, subtraction time, finger-subtraction-cnt, force-cont-mode,long press cnt, buttobtraction time, finger-subtraction-cnt, force-cont-mode,long press cnt, button duration, button int num, time after rebase */
+				ghost_detection_value = <200 50 10 6 11 5 10 500 100 6 5>;
+				vdd_voltage = <3050000>;
+			};
+		};
+	};
+};

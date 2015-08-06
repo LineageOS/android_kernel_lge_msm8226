@@ -135,6 +135,21 @@ config USB_MSM_OTG
 	  This driver is not supported on boards like trout which
 	  has an external PHY.
 
+config LGE_SUPPORT_TYPE_A_USB
+	bool "LGE Support Sradard A Type USB"
+	depends on USB_MSM_OTG
+	default n
+	help
+	  Say U to enable standard USB A TYPE Port, to support this configuration
+	  Need Specific H/W.
+
+config LGE_SUPPORT_TYPE_A_USB_NOTIFY
+	bool "LGE Support TYPE A Wake up From LCD"
+	depends on LGE_SUPPORT_TYPE_A_USB
+	default n
+	help
+	  Say Y to enable nofitier
+
 config USB_MSM_ACA
 	bool "Support for Accessory Charger Adapter (ACA)"
 	depends on (USB_MSM_OTG || USB_MSM_OTG_72K) && ARCH_MSM

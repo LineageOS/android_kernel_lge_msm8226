@@ -1,0 +1,87 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9923000{
+		melfas_mms136@48 {
+			compatible = "melfas,mms136";
+			reg = <0x48>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x0>;
+			vdd-supply = <&pm8110_l19>;
+			vcc_i2c-supply = <&pm8110_l14>;
+			melfas,i2c_int_gpio = <&msmgpio 0 0x00>;
+			melfas,i2c_sda_gpio = <2>;
+			melfas,i2c_scl_gpio = <3>;
+			melfas,i2c-pull-up = <1>;
+			melfas,auto_fw_update = <1>;
+			melfas,enalbe_active_mode = <0>;
+			melfas,product = "S4A50A";	
+			melfas,panel-x = <480>;
+			melfas,panel-y = <800>;
+			melfas,fw-image-name = "melfas/w6ds_global_com/w6ds_global_com_v003.mfsb";
+			melfas,button-map = <158 172 139 249>;
+			melfas,use_vdd_i2c = <0>;
+			melfas,use_vdd = <0>;
+			melfas,gpio-vdd-en = <82>;
+			status = "disable";
+		};
+		lge_touch@48 {
+			revision = "rev_a";
+			status = "ok";
+			lge,ic_type = <1>;
+			lge,product = "S4A50A";
+			lge,fw_image = "melfas/w6ds_global_com/w6ds_global_com_v003.mfsb";
+			x_max = <480>;
+			y_max = <800>;
+			lcd_x = <480>;
+			lcd_y = <800>;
+			vdd_type0 = <1>;
+			vdd_name0 = "high";
+			vdd_value0 = <75>;
+			vdd_type1 = <2>;
+		};
+		
+		synaptics_red@20 {
+			status = "disable";
+			revision = "rev_b...";
+			synaptics,button-map = <158 172 139 249>;
+			synaptics,i2c-pull-up = <0>;
+			synaptics,power-down  = <1>;
+			synaptics,gpio_vdd_en  = <75>;
+		};
+
+		synaptics_s220x@20 {
+			status = "ok";
+			revision = "rev_b...";
+			synaptics,fw_version_info = <0x14 0x05 0x01>;
+			synaptics,fw_image = "synaptics/w65_global_com/PLG323-T005-PR1582488-DS4.3.5.1.16_14050105.img";
+			lge,knock_on_type = <1>;
+			synaptics,platform_data	{
+				number_of_button = <4>;
+				button_name = [9e ac 8b f9];
+				x_max = <960>;
+				y_max = <1600>;
+				lcd_x = <480>;
+				lcd_y = <800>;
+				use_vio_regulator = <1>;
+				gpio_vdd_en = <75>;
+			    	/*maker_id  disable(0), enable(1)*/
+				maker_id = <0>;
+				maker_id_gpio = <76>;
+				palm_detect_mode = <1>;
+				ghost_detection_enable = <1>;
+				ghost_detection_jitter_value = <8>;
+			};		
+		};
+	};
+};

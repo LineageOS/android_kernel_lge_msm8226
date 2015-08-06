@@ -346,7 +346,13 @@ static void msm_vfe40_init_hardware_reg(struct vfe_device *vfe_dev)
 	msm_camera_io_w(0xC001FF7F, vfe_dev->vfe_base + 0x974);
 	/* BUS_CFG */
 	msm_camera_io_w(0x10000001, vfe_dev->vfe_base + 0x50);
+/* LGE_CHANGE_S, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+#ifdef CONFIG_LG_PROXY /* LGE_FEATURE_SEAMLESS */
+	msm_camera_io_w(0xF80000F3, vfe_dev->vfe_base + 0x28);
+#else // original
 	msm_camera_io_w(0xE00000F3, vfe_dev->vfe_base + 0x28);
+#endif
+/* LGE_CHANGE_E, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
 	msm_camera_io_w_mb(0xFEFFFFFF, vfe_dev->vfe_base + 0x2C);
 	msm_camera_io_w(0xFFFFFFFF, vfe_dev->vfe_base + 0x30);
 	msm_camera_io_w_mb(0xFEFFFFFF, vfe_dev->vfe_base + 0x34);
@@ -368,6 +374,8 @@ static void msm_vfe40_process_reset_irq(struct vfe_device *vfe_dev,
 static void msm_vfe40_process_halt_irq(struct vfe_device *vfe_dev,
 	uint32_t irq_status0, uint32_t irq_status1)
 {
+	if (irq_status1 & (1 << 8))
+		complete(&vfe_dev->halt_complete);
 }
 
 static void msm_vfe40_process_camif_irq(struct vfe_device *vfe_dev,
@@ -637,7 +645,7 @@ static long msm_vfe40_reset_hardware(struct vfe_device *vfe_dev ,
 	if (blocking) {
 		msm_camera_io_w_mb(rst_val, vfe_dev->vfe_base + 0xC);
 		rc = wait_for_completion_timeout(
-			&vfe_dev->reset_complete, msecs_to_jiffies(50));
+			&vfe_dev->reset_complete, msecs_to_jiffies(100)); /* LGE_CHANGE, jaehan.jeong, 2014.4.30, increased timeout delay from 50 ms to 100ms to avoid hw reset timeout, CN# 01535257. */
 	} else {
 		msm_camera_io_w_mb(0x1EF, vfe_dev->vfe_base + 0xC);
 	}
@@ -683,6 +691,21 @@ static void msm_vfe40_axi_cfg_comp_mask(struct vfe_device *vfe_dev,
 	 * For dual VFE, composite 2/3 interrupt is used to trigger
 	 * microcontroller to update certain VFE registers
 	 */
+
+/* LGE_CHANGE_S, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+#ifdef CONFIG_LG_PROXY /* LGE_FEATURE_SEAMLESS */
+	if (stream_info->stream_src == PIX_VIEWFINDER) {
+		comp_mask |= (axi_data->composite_info[comp_mask_index].
+		stream_composite_mask << 16);
+		irq_mask |= BIT(27);
+	}
+
+	if (stream_info->stream_src == PIX_ENCODER) {
+		comp_mask |= (axi_data->composite_info[comp_mask_index].
+		stream_composite_mask << 24);
+		irq_mask |= BIT(28);
+	}
+#else // original
 	if (stream_info->plane_cfg[0].plane_addr_offset &&
 		stream_info->stream_src == PIX_VIEWFINDER) {
 		comp_mask |= (axi_data->composite_info[comp_mask_index].
@@ -696,6 +719,9 @@ static void msm_vfe40_axi_cfg_comp_mask(struct vfe_device *vfe_dev,
 		stream_composite_mask << 24);
 		irq_mask |= BIT(28);
 	}
+#endif
+/* LGE_CHANGE_E, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+
 
 	msm_camera_io_w(comp_mask, vfe_dev->vfe_base + 0x40);
 	msm_camera_io_w(irq_mask, vfe_dev->vfe_base + 0x28);
@@ -714,6 +740,20 @@ static void msm_vfe40_axi_clear_comp_mask(struct vfe_device *vfe_dev,
 	irq_mask = msm_camera_io_r(vfe_dev->vfe_base + 0x28);
 	irq_mask &= ~(1 << (comp_mask_index + 25));
 
+/* LGE_CHANGE_S, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+#ifdef CONFIG_LG_PROXY /* LGE_FEATURE_SEAMLESS */
+	if (stream_info->stream_src == PIX_VIEWFINDER) {
+		comp_mask &= ~(axi_data->composite_info[comp_mask_index].
+		stream_composite_mask << 16);
+		irq_mask &= ~BIT(27);
+	}
+
+	if (stream_info->stream_src == PIX_ENCODER) {
+		comp_mask &= ~(axi_data->composite_info[comp_mask_index].
+		stream_composite_mask << 24);
+		irq_mask &= ~BIT(28);
+	}
+#else // original
 	if (stream_info->plane_cfg[0].plane_addr_offset &&
 		stream_info->stream_src == PIX_VIEWFINDER) {
 		comp_mask &= ~(axi_data->composite_info[comp_mask_index].
@@ -727,6 +767,8 @@ static void msm_vfe40_axi_clear_comp_mask(struct vfe_device *vfe_dev,
 		stream_composite_mask << 24);
 		irq_mask &= ~BIT(28);
 	}
+#endif
+	/* LGE_CHANGE_E, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
 
 	msm_camera_io_w(comp_mask, vfe_dev->vfe_base + 0x40);
 	msm_camera_io_w(irq_mask, vfe_dev->vfe_base + 0x28);
@@ -1192,11 +1234,27 @@ static long msm_vfe40_axi_halt(struct vfe_device *vfe_dev,
 	uint32_t blocking)
 {
 	long rc = 0;
-	uint32_t axi_busy_flag = true;
 	/* Keep only restart mask and halt mask*/
 	msm_camera_io_w(BIT(31), vfe_dev->vfe_base + 0x28);
-	msm_camera_io_w(BIT(8),  vfe_dev->vfe_base + 0x2C);
+	msm_camera_io_w(BIT(8), vfe_dev->vfe_base + 0x2C);
 	/* Clear IRQ Status*/
+#if !defined(CONFIG_MACH_LGE)
+	msm_camera_io_w(0x7FFFFFFF, vfe_dev->vfe_base + 0x30)
+	msm_camera_io_w(0xFEFFFEFF, vfe_dev->vfe_base + 0x34);
+	msm_camera_io_w(0x1, vfe_dev->vfe_base + 0x24);
+	if (blocking) {
+		init_completion(&vfe_dev->halt_complete);
+		/* Halt AXI Bus Bridge */
+		msm_camera_io_w_mb(0x1, vfe_dev->vfe_base + 0x2C0);
+		atomic_set(&vfe_dev->error_info.overflow_state, NO_OVERFLOW);
+		rc = wait_for_completion_interruptible_timeout(
+			&vfe_dev->halt_complete, msecs_to_jiffies(500));
+	} else {
+		/* Halt AXI Bus Bridge */
+		msm_camera_io_w_mb(0x1, vfe_dev->vfe_base + 0x2C0);
+	}
+#else
+/* PATCH, Fix halt timeout - CN01778240(CR746765), 2014-10-19, jinw.kim@lge.com */
 	msm_camera_io_w(0x7FFFFFFF, vfe_dev->vfe_base + 0x30);
 	msm_camera_io_w(0xFEFFFEFF, vfe_dev->vfe_base + 0x34);
 	msm_camera_io_w(0x1, vfe_dev->vfe_base + 0x24);
@@ -1205,13 +1263,13 @@ static long msm_vfe40_axi_halt(struct vfe_device *vfe_dev,
 		/* Halt AXI Bus Bridge */
 		msm_camera_io_w_mb(0x1, vfe_dev->vfe_base + 0x2C0);
 		atomic_set(&vfe_dev->error_info.overflow_state, NO_OVERFLOW);
-		while (axi_busy_flag) {
-			if (msm_camera_io_r(
-				vfe_dev->vfe_base + 0x2E4) & 0x1)
-				axi_busy_flag = false;
-		}
+		rc = wait_for_completion_interruptible_timeout(
+			&vfe_dev->halt_complete, msecs_to_jiffies(500));
+	} else {
+		/* Halt AXI Bus Bridge */
+		msm_camera_io_w_mb(0x1, vfe_dev->vfe_base + 0x2C0);
 	}
-	msm_camera_io_w_mb(0x0, vfe_dev->vfe_base + 0x2C0);
+#endif
 	return rc;
 }
 

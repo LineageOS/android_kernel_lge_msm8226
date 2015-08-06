@@ -13,6 +13,8 @@
 #include <asm/uaccess.h>
 #include <asm/page.h>
 
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
 
 /*
  * seq_files have a buffer which can may overflow. When this happens a larger
@@ -131,8 +133,12 @@ static int traverse(struct seq_file *m, loff_t offset)
 
 Eoverflow:
 	m->op->stop(m, p);
-	kfree(m->buf);
-	m->buf = kmalloc(m->size <<= 1, GFP_KERNEL);
+	is_vmalloc_addr(m->buf) ? vfree(m->buf) : kfree(m->buf);
+	m->size <<= 1;
+	if (m->size <= (2 * PAGE_SIZE))
+		m->buf = kmalloc(m->size, GFP_KERNEL);
+	else
+		m->buf = vmalloc(m->size);
 	return !m->buf ? -ENOMEM : -EAGAIN;
 }
 
@@ -227,8 +233,13 @@ ssize_t seq_read(struct file *file, char __user *buf, size_t size, loff_t *ppos)
 		if (m->count < m->size)
 			goto Fill;
 		m->op->stop(m, p);
-		kfree(m->buf);
-		m->buf = kmalloc(m->size <<= 1, GFP_KERNEL);
+		is_vmalloc_addr(m->buf) ? vfree(m->buf) : kfree(m->buf);
+		m->size <<= 1;
+		if (m->size > 2 * PAGE_SIZE)
+			m->buf = vmalloc(m->size);
+		else
+			m->buf = kmalloc(m->size, GFP_KERNEL);
+
 		if (!m->buf)
 			goto Enomem;
 		m->count = 0;
@@ -343,7 +354,7 @@ EXPORT_SYMBOL(seq_lseek);
 int seq_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *m = file->private_data;
-	kfree(m->buf);
+	is_vmalloc_addr(m->buf) ? vfree(m->buf) : kfree(m->buf);
 	kfree(m);
 	return 0;
 }

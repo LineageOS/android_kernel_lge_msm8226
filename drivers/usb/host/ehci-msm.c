@@ -265,6 +265,7 @@ static int ehci_msm_pm_resume(struct device *dev)
 {
 	struct usb_hcd *hcd = dev_get_drvdata(dev);
 	int ret;
+	u32 portsc;
 
 	dev_dbg(dev, "ehci-msm PM resume\n");
 
@@ -277,6 +278,10 @@ static int ehci_msm_pm_resume(struct device *dev)
 		return ret;
 
 	ehci_prepare_ports_for_controller_resume(hcd_to_ehci(hcd));
+	portsc = readl_relaxed(USB_PORTSC);
+	portsc &= ~PORT_RWC_BITS;
+	portsc |= PORT_RESUME;
+	writel_relaxed(portsc, USB_PORTSC);
 	/* Resume root-hub to handle USB event if any else initiate LPM again */
 	usb_hcd_resume_root_hub(hcd);
 

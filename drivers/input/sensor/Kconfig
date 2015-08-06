@@ -1,0 +1,106 @@
+# LGE_CHANGE_S: define kconfig for sensors
+#
+# Sensor driver configuration
+#
+menuconfig INPUT_SENSOR
+	bool "Sensors"
+	help
+	  Say Y here, and a list of supported touchscreens will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+if INPUT_SENSOR
+
+
+config SENSORS_BMC150_COMMON
+	bool
+	default n
+
+config SENSORS_BMA2X2
+	tristate "BMA255/BMA250E/BMA222E/BMA280 acceleration sensor support"
+	depends on I2C=y
+	select SENSORS_BMC150_COMMON
+	help
+	  If you say yes here you get support for Bosch Sensortec's
+	  acceleration sensors BMA255/BMA250E/BMA222E/BMA280.
+
+
+config SENSORS_BMM050
+	tristate "BMM050 Magnetic Sensor Driver"
+	depends on I2C=y
+	select SENSORS_BMC150_COMMON
+	help
+	 BMM050 Magnetic Sensor Driver implemented by Bosch-Sensortec.
+
+config SENSORS_K2DH
+	tristate "K2DH STM acceleration sensor"
+	depends on I2C=y
+	help
+	 acceleration sensor STM K2DH
+
+config SENSOR_K2DH
+    bool "K2DH support"
+    depends on I2C
+    help
+     Support K2DH as an input device.
+
+config SENSOR_AK09911
+   bool "AK09911 support"
+   depends on I2C
+   help
+     Support AK09911 as an input device.
+
+config SENSOR_APDS9130
+       tristate "APDS9130 Proximity Sensor Driver"
+       depends on I2C
+       help
+        APDS9130 Proximity Sensor Driver implemented by Avago Tech.
+
+config SENSOR_APDS9190
+       tristate "APDS9190 Proximity Sensor Driver"
+       depends on I2C
+       help
+        APDS9190 Proximity Sensor Driver implemented by Avago Tech.
+
+config SENSOR_K303C
+       tristate "K303C Accelerometer & Magnetometer Driver"
+       depends on I2C
+       help
+       K303C Accelerometer & Magnetomerer Sensor Driver implemented by ST Micro Electronics.
+
+config SENSOR_LGE_DT
+       tristate "KNOCK-ON Driver"
+       depends on I2C
+       default n
+       help
+         Say Y here if you use lge knock-on
+         If unsure, say N.
+
+config SENSOR_SX9500
+    tristate "SX9500 based capacitive touch button"
+    depends on I2C
+    help
+      Say Y here if you have a SX9500.
+      If unsure, say N.
+
+      To compile this driver as a module, choose M here: the
+      module will be called sx8651.
+
+config SENSOR_SX9311
+    tristate "SX9311 based capacitive touch button"
+    depends on I2C
+    help
+      Say Y here if you have a SX9311.
+      If unsure, say N.
+
+      To compile this driver as a module, choose M here: the
+      module will be called sx8651.
+
+config SENSOR_ATMF04
+    bool "ATMF04 Support"
+    depends on I2C
+    help
+      Support ATMF04 as an input device.
+endif
+# LGE_CHANGE_E

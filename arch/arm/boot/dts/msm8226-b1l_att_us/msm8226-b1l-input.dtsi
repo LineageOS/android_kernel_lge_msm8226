@@ -1,0 +1,59 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		synaptics_red@20 {
+			synaptics,reset-gpio = <&msmgpio 16 0x00>;
+			status = "disable";
+		};
+
+		synaptics_s220x@20 {
+			status = "ok";
+			revision = "rev_0";
+			synaptics,reset-gpio = <&msmgpio 16 0x00>;
+			synaptics,fw_version = <0x32 0x04 0x51 0x01>;
+			synaptics,fw_version_info = <0x32 0x04 0x51>;
+			synaptics,fw_image = "synaptics/b1l_att_us/PLG126-E029-PR1383035-DS4.3.5.1.16.img";
+			synaptics,platform_data	{
+				number_of_button = <2>;
+				button_name = [9e 8b];
+				x_max = <1540>;
+				y_max = <2560>;
+				lcd_x = <736>;
+				lcd_y = <1280>;
+			/*	gpio_vdd_en = <75>; */
+			    /* firmware image depends on this value, temporarily used */
+			    /* 0: No image(default), 1: W3DS(TIM BR)(PLG312_T001), 2: W3S(VDF)(PLG311_T001), 3:X3, 4:W5DS, 5:W5S ... */
+				panel_type = <4>;
+				/*maker_id  disable(0), enable(1)*/
+				maker_id = <1>;
+				maker_id_gpio = <120>;
+
+				/*pwr*/
+				use_vio_regulator = <0>; /*temporary added*/
+			};		
+		};
+		atmel_s540@4a {
+			revision = "rev_a...";
+			status = "ok";
+		};
+		lge_ts_misc {
+			revision = "...rev_a";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="ok";
+		};
+	};
+};

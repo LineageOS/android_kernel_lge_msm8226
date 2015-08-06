@@ -302,7 +302,6 @@ static int sel_netnode_avc_callback(u32 event, u32 ssid, u32 tsid,
 {
 	if (event == AVC_CALLBACK_RESET) {
 		sel_netnode_flush();
-		synchronize_net();
 	}
 	return 0;
 }

@@ -27,6 +27,7 @@
 #include <linux/radix-tree.h>
 #include <linux/qpnp/pwm.h>
 
+#include <linux/delay.h>
 #define QPNP_LPG_DRIVER_NAME	"qcom,qpnp-pwm"
 #define QPNP_LPG_CHANNEL_BASE	"qpnp-lpg-channel-base"
 #define QPNP_LPG_LUT_BASE	"qpnp-lpg-lut-base"
@@ -1238,6 +1239,7 @@ static int _pwm_enable(struct pwm_device *pwm)
 			rc = qpnp_lpg_configure_lut_state(pwm, QPNP_LUT_ENABLE);
 	}
 
+	mdelay(1);
 	spin_unlock_irqrestore(&pwm->chip->lpg_lock, flags);
 
 	if (rc)

@@ -222,6 +222,13 @@ config LEDS_LP5521
 	  Driver provides direct control via LED class and interface for
 	  programming the engines.
 
+config LEDS_LP5521_GPIO_I2C_PULL_UP_CONTROL
+	bool "LP5521 LED support for LGE GPIO I2C Pull up regulatorcontrol"
+	depends on LEDS_LP5521
+	help
+	  This option enables support for LGE GPIO I2C & pull up regulator
+	  on and off control.
+
 config LEDS_LP5523
 	tristate "LED Support for N.S. LP5523 LED driver chip"
 	depends on LEDS_CLASS && I2C
@@ -577,5 +584,37 @@ config LEDS_TRIGGER_SLEEP
 
 comment "iptables trigger is under Netfilter config (LED target)"
 	depends on LEDS_TRIGGERS
+
+config LGE_TOVIS_540P_PANEL_CABC
+	bool "MIPI TOVIS VIDEO 540P PANEL && MIPI TOVIS VIDEO 540 PANEL WITH DSV CABC ON"
+	default n
+
+config LGE_TOVIS_ILI9806E_WVGA_PANEL_CABC
+	bool "MIPI TOVIS ILI9806E VIDEO WVGA PANEL CABC ON"
+	default n
+
+config LGE_JAGDSNM_CABC
+	bool "MIPI JAGDSNM CABC ON"
+	default n
+
+config LGE_X10_VZW_LED
+	bool "LGE X10 VZW LED Enable"
+	default n
+
+config LGE_B2L_ATT_LED
+	bool "LGE B2L ATT LED Enable"
+	default n
+
+config LGE_B2LN_LGU_LED
+	bool "LGE B2L ATT LED Enable"
+	default n
+
+config LGE_JAG_LED
+	bool "LGE JAG LED Enable"
+	default n
+
+config LEDS_PM8226_EMOTIONAL
+	bool "LGE PM8226 Emotional LED"
+	default n
 
 endif # NEW_LEDS

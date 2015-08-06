@@ -39,6 +39,7 @@
 #include <mach/board.h>
 #include <mach/gpiomux.h>
 #include <mach/msm_bus_board.h>
+#include <mach/board_lge.h>
 
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION("0.2");
@@ -142,6 +143,12 @@ enum msm_i2c_state {
 #define I2C_STATUS_CLK_STATE		13
 #define QUP_OUT_FIFO_NOT_EMPTY		0x10
 #define I2C_GPIOS_DT_CNT		(2)		/* sda and scl */
+
+// LGE Added. Atmel touch IC for checking i2c suspend
+bool i2c_suspended = false;
+#if defined(CONFIG_TOUCHSCREEN_ATMEL_S540)
+bool atmel_touch_i2c_suspended = false;        /* Use atme touch IC for checking i2c suspend */
+#endif
 
 static char const * const i2c_rsrcs[] = {"i2c_clk", "i2c_sda"};
 
@@ -1802,6 +1809,15 @@ static int i2c_qup_pm_suspend_sys(struct device *device)
 	mutex_unlock(&dev->mlock);
 	if (!pm_runtime_enabled(device) || !pm_runtime_suspended(device)) {
 		dev_dbg(device, "system suspend\n");
+
+		i2c_suspended = true;
+#if defined(CONFIG_TOUCHSCREEN_ATMEL_S540)
+        // LGE Added. Atmel touch IC for checking i2c suspend
+		if (!strncmp(dev_name(device), "f9927000.i2c", 12)){
+			atmel_touch_i2c_suspended = true;
+			dev_info(device, "lge_touch I2C Suspend!\n");
+		}
+#endif
 		i2c_qup_pm_suspend(dev);
 		/*
 		 * set the device's runtime PM status to 'suspended'
@@ -1825,6 +1841,53 @@ static int i2c_qup_pm_resume_sys(struct device *device)
 	 */
 	dev_dbg(device, "system resume\n");
 	dev->pwr_state = MSM_I2C_PM_SUSPENDED;
+
+#if defined(CONFIG_MACH_MSM8926_X3_KR) || defined(CONFIG_MACH_MSM8926_X3N_KR) || defined(CONFIG_MACH_MSM8926_G2M_KR) || defined(CONFIG_MACH_MSM8926_F70N_KR)
+	if(lge_get_board_revno() <  HW_REV_B) {
+			dev_info(device, "X3_KR / G2M_KR revA/A2!!");
+	} else {
+		// LGE added. To avoid i2c fail in i2c suspend status. QCT 1387439
+		if (pm_runtime_suspended(device)) {
+			dev_info(device, "i2c is runtime suspended status !!! try to runtime resume !!!\n");
+		}
+
+		if (!pm_runtime_enabled(device)) {
+			dev_info(device, "Runtime PM is disabled\n");
+			i2c_qup_pm_resume_runtime(device);
+		} else {
+			pm_runtime_get_sync(device);
+		}
+
+	        if (pm_runtime_suspended(device)) {
+			dev_info(device, "i2c can't wake up !!! pm_runtime_get_sync() doesn't work !!!\n");
+		}
+	}
+#else
+	// LGE added. To avoid i2c fail in i2c suspend status. QCT 1387439
+	if (pm_runtime_suspended(device)) {
+		dev_info(device, "i2c is runtime suspended status !!! try to runtime resume !!!\n");
+	}
+
+	if (!pm_runtime_enabled(device)) {
+		dev_info(device, "Runtime PM is disabled\n");
+		i2c_qup_pm_resume_runtime(device);
+	} else {
+		pm_runtime_get_sync(device);
+	}
+
+	if (pm_runtime_suspended(device)) {
+		dev_info(device, "i2c can't wake up !!! pm_runtime_get_sync() doesn't work !!!\n");
+	}
+#endif
+	i2c_suspended = false;
+
+#if defined(CONFIG_TOUCHSCREEN_ATMEL_S540)
+	// LGE Added. Atmel touch IC for checking i2c suspend
+	if (!strncmp(dev_name(device), "f9927000.i2c", 12)){
+		atmel_touch_i2c_suspended = false;
+		dev_info(device, "lge_touch I2C Resume!\n");
+	}
+#endif
 	return 0;
 }
 #endif /* CONFIG_PM */

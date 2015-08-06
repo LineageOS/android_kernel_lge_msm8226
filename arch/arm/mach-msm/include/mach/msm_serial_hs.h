@@ -57,4 +57,15 @@ void msm_hs_request_clock_on(struct uart_port *uport);
 struct uart_port *msm_hs_get_uart_port(int port_index);
 void msm_hs_set_mctrl(struct uart_port *uport,
 				    unsigned int mctrl);
+
+/* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-04-10, For G2 LPM */
+/* LG_BTUI : chanha.park@lge.com : Added bluesleep interface - [S] */
+#if defined(CONFIG_LGE_BLUESLEEP) || defined(CONFIG_LGE_BLUETOOTH_PM)
+#define CLOCK_REQUEST_AVAILABLE 	0
+#define CLOCK_REQUEST_UNAVAILABLE 	1
+struct uart_port * msm_hs_get_bt_uport(unsigned int line);
+int msm_hs_get_bt_uport_clock_state(struct uart_port *uport);
+#endif /* defined(CONFIG_LGE_BLUESLEEP) || defined(CONFIG_LGE_BLUETOOTH_PM) */
+/* LG_BTUI : chanha.park@lge.com : Added bluesleep interface - [E] */
+/* LGE_CHANGE_E, [BT][younghyun.kwon@lge.com], 2013-04-10 */
 #endif

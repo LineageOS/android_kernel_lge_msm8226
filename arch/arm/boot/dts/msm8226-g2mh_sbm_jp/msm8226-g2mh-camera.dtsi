@@ -1,0 +1,128 @@
+/*
+ * Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&cci {
+	actuator0: qcom,actuator@18 {
+		cell-index = <2>;//Use Af_main_2 of dw9718
+		reg = <0x18 0x0>;
+		compatible = "qcom,actuator";
+		qcom,cci-master = <0>;
+	};
+
+	led_flash0: qcom,camera-led-flash {
+		cell-index = <0>;
+		compatible = "qcom,camera-led-flash";
+		qcom,flash-type = <1>;
+		qcom,flash-source = <&pm8226_flash0>;
+                qcom,torch-source = <&pm8226_torch>;
+	};
+
+	eeprom0: qcom,eeprom@a6 {
+		cell-index = <0>;
+		reg = <0xa6 0x0>;
+		qcom,eeprom-name = "imx179_eeprom";
+		compatible = "qcom,eeprom";
+		qcom,slave-addr = <0xa6>;
+		qcom,cci-master = <0>;
+
+		qcom,cam-power-seq-type = "sensor_gpio";
+		qcom,cam-power-seq-val = "sensor_gpio_vio";
+		qcom,cam-power-seq-cfg-val = <1>;
+		qcom,cam-power-seq-delay = <1>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 113 0>;	//CAM_IOVDD_1V8, LDO3_EN=GPIO 113
+		qcom,gpio-vio = <0>;		// =CAM_IOVDD_1V8
+		qcom,gpio-req-tbl-num = <0>;
+		qcom,gpio-req-tbl-flags = <0>;
+		qcom,gpio-req-tbl-label = "CAM_IOVDD";
+		
+		qcom,num-blocks = <1>;
+		qcom,page0 = <0 0x0 2 0x0 1 20>;
+		qcom,poll0 = <0 0x0 2 0x0 1 20>;
+		qcom,mem0 = <0x900 0x0000 2 0 1 0>;
+	};
+
+qcom,camera@20 {
+		compatible = "qcom,imx179";
+		reg = <0x20 0x0>;
+		qcom,slave-id = <0x20 0x0002 0x8179>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,actuator-src = <&actuator0>;
+		qcom,led-flash-src = <&led_flash0>;
+		qcom,eeprom-src = <&eeprom0>;
+		qcom,mount-angle = <90>;
+		qcom,sensor-name = "imx179";
+		cam_vdig-supply = <&pm8226_l5>;		//CAM_DVDD_1V8_1V2
+		qcom,cam-vreg-name = "cam_vdig";
+		qcom,cam-vreg-type = <0>;
+		qcom,cam-vreg-min-voltage = <1200000>;
+		qcom,cam-vreg-max-voltage = <1200000>;
+		qcom,cam-vreg-op-mode = <200000>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 26 0>,		//MAIN_CAM_MCLK
+			<&msmgpio 114 0>, 		//MAIN_RESET_N
+			<&msmgpio 36 0>,		//VCM_PWDN, //CAM_VCM_2V8, MAIN_CAM0_VCM_PWDN=GPIO36
+			<&msmgpio 62 0>,		//CAM_AVDD_2V8, LDO1_EN=GPIO 62
+			<&msmgpio 113 0>;	//CAM_IOVDD_1V8, LDO3_EN=GPIO 113
+		qcom,gpio-reset = <1>;
+		qcom,gpio-standby = <2>;		// +VCM_2V8 (AF)
+		qcom,gpio-vana = <3>;		// =CAM_AVDD_2V8
+		qcom,gpio-vio = <4>;		// =CAM_IOVDD_1V8
+		qcom,gpio-req-tbl-num = <0 1 2 3 4>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK", "CAM_RESET1", "CAM_STANDBY", "CAM_AVDD", "CAM_IOVDD";
+		qcom,csi-lane-assign = <0x4320>;
+		qcom,csi-lane-mask = <0x1F>;
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <0>;
+		qcom,cci-master = <0>;
+		status = "okay";
+		//revision = "rev_0";
+	};
+	qcom,camera@6e {
+		compatible = "qcom,imx119";
+		reg = <0x6e>;
+		qcom,slave-id = <0x6e 0x0 0x119>;
+		qcom,csiphy-sd-index = <1>;
+		qcom,csid-sd-index = <0>;
+		qcom,mount-angle = <270>;
+		qcom,sensor-name = "imx119";
+		cam_vdig-supply = <&pm8226_l5>;
+		qcom,cam-vreg-name = "cam_vdig";
+		qcom,cam-vreg-type = <0>;
+		qcom,cam-vreg-min-voltage = <1200000>;
+		qcom,cam-vreg-max-voltage = <1200000>;
+		qcom,cam-vreg-op-mode = <200000>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 27 0>,
+			<&msmgpio 28 0>,		//VT_CAM_RESET_N, GPIO 28
+			<&msmgpio 31 0>,		//VT_CAM_PWDN, GPIO=31
+			<&msmgpio 62 0>,		//CAM_AVDD_2V8, LDO1_EN=GPIO 62
+			<&msmgpio 113 0>;	//CAM_IOVDD_1V8, LDO3_EN=GPIO 113
+		qcom,gpio-reset = <1>;
+		qcom,gpio-standby = <2>;
+		qcom,gpio-vana = <3>;		// =CAM_AVDD_2V8
+		qcom,gpio-vio = <4>;		// =CAM_IOVDD_1V8
+		qcom,gpio-req-tbl-num = <0 1 2 3 4>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAMIF_MCLK2", "CAM_RESET2", "CAM_STANDBY", "CAM_AVDD", "CAM_IOVDD";
+		qcom,csi-lane-assign = <0x4320>;
+		qcom,csi-lane-mask = <0x3>;
+		qcom,sensor-position = <1>;
+		qcom,sensor-mode = <0>;
+		qcom,cci-master = <0>;
+		status = "ok";
+		//revision = "rev_0";
+	};
+};

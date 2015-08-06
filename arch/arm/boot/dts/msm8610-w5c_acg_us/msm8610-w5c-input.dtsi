@@ -1,0 +1,97 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	gpio_keys{
+		quick_clip{
+			label = "quick_clip";
+			gpios = <&msmgpio 75 0x1>;
+			linux,input-type = <1>;
+			linux,code = <250>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+	};
+	i2c@f9923000{
+		mms100s@48 {
+			melfas,product = "I2S45B";
+			melfas,max-x = <480>;
+			melfas,max-y = <800>;
+                        melfas,use_vdd_i2c = <1>;
+			melfas,gpio-vdd-en = <62>;
+			melfas,key-map = <158 139>;
+			melfas,fw-image-name = "melfas/w5c_acg_us/w5c_acg_us_rev_b_v101.mfsb";
+			status = "ok";
+			revision = "rev_a";
+		};
+		synaptics_red@20 {
+			status = "disable";
+			revision = "rev_b...";
+			synaptics,button-map = <158 139>;
+			synaptics,gpio_vdd_en  = <82>;
+		};
+		
+		synaptics_s220x_rev_b@20 {
+			status = "ok";
+			revision = "rev_b";
+			synaptics,fw_version_info = <0x32 0x04 0x51>;
+			lge,knock_on_type = <1>;
+			synaptics,fw_image = "synaptics/w5c_acg_us/PLG317-T015-PR1592889-DS4.3.5.1.16-3204510F.img";
+			synaptics,panel_spec = "synaptics/w5c_acg_us/w5c_acg_us_limit.txt";
+			synaptics,global_access_pixel = <10>;
+			synaptics,platform_data	{
+				/*Caps*/
+				panel_type = <5>;
+				/* maker_id disable(0), enable(1) */
+				maker_id = <1>;
+				maker_id_gpio = <76>;
+				number_of_button = <2>;
+				button_name = [9e 8b];
+				x_max = <960>;
+				y_max = <1600>;
+				gpio_vdd_en = <82>;
+				use_vio_regulator = <1>;
+				lcd_x = <480>;
+				lcd_y = <800>;
+				ghost_detection_enable=<1>;
+				ghost_detection_jitter_value=<10>;
+			};
+		};
+		
+		synaptics_s220x@20 {
+			status = "ok";
+			revision = "rev_c...";
+			synaptics,fw_version_info = <0x32 0x04 0x51>;
+			lge,knock_on_type = <1>;
+			vdd-supply = <&pm8110_l22>;
+			synaptics,fw_image = "synaptics/w5c_acg_us/PLG317-T015-PR1592889-DS4.3.5.1.16-3204510F.img";
+			synaptics,platform_data	{
+				/*Caps*/
+				panel_type = <5>;
+				/* maker_id disable(0), enable(1) */
+				maker_id = <1>;
+				maker_id_gpio = <76>;
+				number_of_button = <2>;
+				button_name = [9e 8b];
+				x_max = <960>;
+				y_max = <1600>;
+				lcd_x = <480>;
+				lcd_y = <800>;
+				use_regulator = <1>;
+				vdd_voltage = <3000000>;
+				palm_detect_mode=<1>;
+				ghost_detection_enable=<1>;
+				ghost_detection_jitter_value=<10>;
+			};
+		};
+	};
+};

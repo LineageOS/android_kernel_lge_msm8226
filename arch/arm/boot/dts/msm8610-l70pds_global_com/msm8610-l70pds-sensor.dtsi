@@ -1,0 +1,82 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	/* I2C device */
+	i2c@f9925000 {
+		/* Acceleration sensor */
+				k2dh0@18 {
+					status = "okay";
+					reg = <0x18>;
+					compatible = "st,k2dh";
+					interrupt-parent = <&msmgpio>;
+					interrupts = <81 0x0>;
+					stm,sensor_vdd-supply = <&pm8110_l19>;
+					stm,sensor_vcc_i2c-supply = <&pm8110_l14>;
+				/*	pinctrl-names = "default", "sleep";*/
+				/*	pinctrl-0 = <&k2dh_int_active>;*/
+				/*	pinctrl-1 = <&k2dh_int_suspend>; */
+					st,gpio-int = <&msmgpio 81 0x0>;
+					axis_map_x = <0>;
+					axis_map_y = <1>;
+					axis_map_z = <2>;
+					negate_x = <0>;
+					negate_y = <1>;
+					negate_z = <1>;
+				};    
+                
+        /* Magnetic Sensor Driver */
+			     ak09911@0c {
+					status = "okay";
+					reg = <0x0c>;
+					compatible = "ak,ak09911";
+					akm,sensor_vdd-supply = <&pm8110_l19>;
+					akm,sensor_vcc_i2c-supply = <&pm8110_l14>;
+				/*	pinctrl-names = "default", "sleep";      */
+				/*	pinctrl-0 = <&akm09911_active>; 		 */
+				/*	pinctrl-1 = <&akm09911_suspend>;		 */
+					akm,gpio_rstn = <&msmgpio 83 0x0>;
+						akm,layout = <0x0>;
+						akm,auto-report;
+				};
+			              
+		
+		/* Proximity sensor */
+            	Avago_apds9130@39 {
+	               status = "okay";
+	               compatible = "Avago,apds9130";
+                       reg = <0x39>;
+		       interrupt-parent = <&msmgpio>;
+                       interrupts = <80 0x2>;
+		       Avago,vdd_ana-supply = <&pm8110_l19>;
+		       Avago,vddio_i2c-supply = <&pm8110_l14>;
+		       Avago,irq-gpio = <&msmgpio 80 0x00>;
+		       Avago,i2c-pull-up = <1>;
+		       Avago,vdd_ana_supply_min = <2850000>;
+		       Avago,vdd_ana_supply_max = <3300000>;
+		       Avago,vdd_ana_load_ua = <15000>;
+		       Avago,vddio_dig_supply_min = <1800000>;
+		       Avago,vddio_dig_supply_max = <1800000>;
+		       Avago,vddio_dig_load_ua = <10000>;
+		       Avago,vddio_i2c_supply_min = <1800000>;
+		       Avago,vddio_i2c_supply_max = <1800000>;
+                       Avago,vddio_i2c_load_ua = <10000>;
+                       /*add*/
+                       Avago,ppcount = <8>;
+                       Avago,pdrive = <0>;
+                       Avago,near_offset = <130>;
+                       Avago,far_offset = <50>;
+                       Avago,crosstalk_max = <770>;
+		};
+		
+	};
+};

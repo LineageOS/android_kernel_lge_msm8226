@@ -1,0 +1,54 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+/include/ "msm8226-lge-panel.dtsi"
+/include/ "msm8226-lge-input.dtsi"
+/include/ "msm8226-lge-hdmi.dtsi"
+/include/ "msm8226-lge-usb.dtsi"
+/include/ "msm8226-lge-misc.dtsi"
+/include/ "msm8226-lge-pm.dtsi"
+/include/ "msm8226-lge-sensor.dtsi"
+/include/ "msm8226-lge-sound.dtsi"
+
+&soc {
+	android_usb: android_usb@fe8050c8 {
+		qcom,streaming-func = "rndis", "ecm", "mtp";
+	};
+
+	/delete-node/ sound;
+
+	qcom,wdt@f9017000 {
+		qcom,bark-time = <15000>;
+		qcom,pet-time = <10000>;
+	};
+
+	i2c@f9925000 { /* BLSP1 QUP3 */
+		cell-index = <2>;
+		compatible = "qcom,i2c-qup";
+		reg = <0Xf9925000 0x1000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "qup_phys_addr";
+		interrupts = <0 97 0>;
+		interrupt-names = "qup_err_intr";
+		qcom,i2c-bus-freq = <400000>;
+		qcom,i2c-src-freq = <50000000>;
+		qcom,scl-gpio = <&msmgpio 11 0>;
+		qcom,sda-gpio = <&msmgpio 10 0>;
+	};
+
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		qcom,master-id = <86>;
+	};
+};
+

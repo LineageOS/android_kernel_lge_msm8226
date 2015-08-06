@@ -129,6 +129,12 @@ void __attribute__ ((weak)) arch_suspend_enable_irqs(void)
 	local_irq_enable();
 }
 
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+extern void wakeup_irq_record_reset(void);
+extern void wakeup_irq_record_print(void);
+#endif
+	
+
 /**
  * suspend_enter - Make the system enter the given sleep state.
  * @state: System sleep state to enter.
@@ -175,6 +181,11 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 			error = suspend_ops->enter(state);
 			events_check_enabled = false;
 		}
+
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+		wakeup_irq_record_reset();
+#endif
+	
 		syscore_resume();
 	}
 
@@ -234,6 +245,11 @@ int suspend_devices_and_enter(suspend_state_t state)
  Resume_devices:
 	suspend_test_start();
 	dpm_resume_end(PMSG_RESUME);
+
+#if defined(CONFIG_LGE_WAKE_IRQ_PRINT)
+	wakeup_irq_record_print();
+#endif
+	
 	suspend_test_finish("resume devices");
 	resume_console();
  Close:
@@ -323,6 +339,9 @@ static void pm_suspend_marker(char *annotation)
  * Check if the value of @state represents one of the supported states,
  * execute enter_state() and update system suspend statistics.
  */
+#ifdef CONFIG_MACH_MSM8X10_L70P /* Boost Cpu when wake up */
+bool suspend_marker_entry = false;
+#endif
 int pm_suspend(suspend_state_t state)
 {
 	int error;
@@ -331,6 +350,9 @@ int pm_suspend(suspend_state_t state)
 		return -EINVAL;
 
 	pm_suspend_marker("entry");
+#ifdef CONFIG_MACH_MSM8X10_L70P /* Boost Cpu when wake up */
+	suspend_marker_entry = true;
+#endif
 	error = enter_state(state);
 	if (error) {
 		suspend_stats.fail++;
@@ -339,6 +361,9 @@ int pm_suspend(suspend_state_t state)
 		suspend_stats.success++;
 	}
 	pm_suspend_marker("exit");
+#ifdef CONFIG_MACH_MSM8X10_L70P /* Boost Cpu when wake up */
+	suspend_marker_entry = false;
+#endif
 	return error;
 }
 EXPORT_SYMBOL(pm_suspend);

@@ -58,6 +58,40 @@ struct evdev_client {
 static struct evdev *evdev_table[EVDEV_MINORS];
 static DEFINE_MUTEX(evdev_table_mutex);
 
+
+#if defined(CONFIG_LGE_EVENT_LOCK)
+static void __pass_event(struct evdev_client *client,
+			 const struct input_event *event)
+{
+	client->buffer[client->head++] = *event;
+	client->head &= client->bufsize - 1;
+
+	if (unlikely(client->head == client->tail)) {
+		/*
+		 * This effectively "drops" all unconsumed events, leaving
+		 * EV_SYN/SYN_DROPPED plus the newest event in the queue.
+		 */
+		client->tail = (client->head - 2) & (client->bufsize - 1);
+
+		client->buffer[client->tail].time = event->time;
+		client->buffer[client->tail].type = EV_SYN;
+		client->buffer[client->tail].code = SYN_DROPPED;
+		client->buffer[client->tail].value = 0;
+
+		client->packet_head = client->tail;
+		if (client->use_wake_lock)
+			wake_unlock(&client->wake_lock);
+	}
+
+	if (event->type == EV_SYN && event->code == SYN_REPORT) {
+		client->packet_head = client->head;
+		if (client->use_wake_lock)
+			wake_lock(&client->wake_lock);
+		kill_fasync(&client->fasync, SIGIO, POLL_IN);
+	}
+}
+
+#else
 static void evdev_pass_event(struct evdev_client *client,
 			     struct input_event *event,
 			     ktime_t mono, ktime_t real)
@@ -97,10 +131,114 @@ static void evdev_pass_event(struct evdev_client *client,
 
 	spin_unlock(&client->buffer_lock);
 }
+#endif
+
+#if defined(CONFIG_LGE_EVENT_LOCK)
+bool is_event_locked;
+
+void evdev_set_event_lock(bool lock)
+{
+	is_event_locked = lock;
+}
+EXPORT_SYMBOL(evdev_set_event_lock);
+
+bool evdev_get_event_lock(void)
+{
+	return is_event_locked;
+}
+EXPORT_SYMBOL(evdev_get_event_lock);
+
+#define IS_EVENT(_event, _type, _code) \
+	((_event)->type == _type && (_event)->code == _code)
+
+static void __pass_event_locked(struct evdev_client *client,
+	struct input_event *event)
+{
+	static struct input_event last_event;
+
+	if (IS_EVENT(event, EV_SYN, SYN_REPORT))
+		if (IS_EVENT(&last_event, EV_KEY, KEY_POWER)) {
+			__pass_event(client, &last_event);
+			__pass_event(client, event);
+		}
+
+	last_event = *event;
+}
+
+static void evdev_pass_values(struct evdev_client *client,
+			const struct input_value *vals, unsigned int count,
+			ktime_t mono, ktime_t real)
+{
+	struct evdev *evdev = client->evdev;
+	const struct input_value *v;
+	struct input_event event;
+	bool wakeup = false;
+
+	event.time = ktime_to_timeval(client->clkid == CLOCK_MONOTONIC ?
+				      mono : real);
+
+	/* Interrupts are disabled, just acquire the lock. */
+	spin_lock(&client->buffer_lock);
+
+	for (v = vals; v != vals + count; v++) {
+		event.type = v->type;
+		event.code = v->code;
+		event.value = v->value;
+
+		if (is_event_locked)
+			__pass_event_locked(client, &event);
+		else
+		__pass_event(client, &event);
+		if (v->type == EV_SYN && v->code == SYN_REPORT)
+			wakeup = true;
+	}
+
+	spin_unlock(&client->buffer_lock);
+
+	if (wakeup)
+		wake_up_interruptible(&evdev->wait);
+}
+
+static void evdev_events(struct input_handle *handle,
+			 const struct input_value *vals, unsigned int count)
+{
+	struct evdev *evdev = handle->private;
+	struct evdev_client *client;
+	ktime_t time_mono, time_real;
+
+	time_mono = ktime_get();
+	time_real = ktime_sub(time_mono, ktime_get_monotonic_offset());
+
+	rcu_read_lock();
+
+	client = rcu_dereference(evdev->grab);
+
+	if (client)
+		evdev_pass_values(client, vals, count, time_mono, time_real);
+	else
+		list_for_each_entry_rcu(client, &evdev->client_list, node)
+			evdev_pass_values(client, vals, count,
+					  time_mono, time_real);
+
+	rcu_read_unlock();
+}
+
+#endif
 
 /*
  * Pass incoming event to all connected clients.
  */
+
+#if defined(CONFIG_LGE_EVENT_LOCK)
+static void evdev_event(struct input_handle *handle,
+			unsigned int type, unsigned int code, int value)
+{
+	struct input_value vals[] = { { type, code, value } };
+
+	evdev_events(handle, vals, 1);
+}
+
+#else
 static void evdev_event(struct input_handle *handle,
 			unsigned int type, unsigned int code, int value)
 {
@@ -131,6 +269,7 @@ static void evdev_event(struct input_handle *handle,
 	if (type == EV_SYN && code == SYN_REPORT)
 		wake_up_interruptible(&evdev->wait);
 }
+#endif
 
 static int evdev_fasync(int fd, struct file *file, int on)
 {

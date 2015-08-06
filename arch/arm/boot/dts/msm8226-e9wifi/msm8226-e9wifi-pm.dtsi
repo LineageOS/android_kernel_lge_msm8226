@@ -1,0 +1,558 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+/ {
+
+};
+
+&spmi_bus {
+	qcom,pm8226@0 {
+		/* e9wifi model does not use leds so a100, a300, a500 will be set to disable */
+		qcom,leds@a100 {
+			status = "disable";
+		};
+
+		qcom,leds@a300 {
+			status = "disable";
+		};
+
+		qcom,leds@a500 {
+			status = "disable";
+		};
+
+		qcom,charger {
+			qcom,usb-chgpth@1300 {
+				status = "okay";
+			};
+		};
+	};
+	qcom,pm8226@1 {
+		qcom,vibrator@c000 {
+                        status = "okay";
+                        qcom,vib-timeout-ms = <15000>;
+                        qcom,vib-vtg-level-mV = <3100>;
+                };
+
+		/* e9wifi model does not use leds so d300, d800 will be set to disable */
+		qcom,leds@d300 {
+			status = "disable";
+		};
+
+		qcom,leds@d800 {
+			status = "disable";
+		};
+	};
+};
+
+&pm8226_gpios {
+
+	/* GPIO 1 : PMIC_AUDIO_REF_CLK */
+	/* XO_PMIC_CDC_MCLK enable for tapan codec */
+	/* Digital output /CMOS logic / QPNP_PIN_PULL_NO / QPNP_PIN_VIN2 / QPNP_PIN_OUT_STRENGTH_HIGH /QPNP_PIN_SEL_FUNC_1 /Enable GPIO */
+	gpio@c000 {
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <3>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <2>;
+		qcom,master-en = <1>;
+	};
+
+	/* GPIO 2 : EXT_OVP_CTRL */
+	gpio@c100 {
+		reg = <0xc100 0x100>;
+		qcom,pin-num = <2>;
+		status = "okay";
+		qcom,mode = <1>;		/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,output-type = <0>;		/* CMOS logic */
+		qcom,pull = <5>;		/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <3>;		/* QPNP_PIN_VIN2 */
+		qcom,invert = <0>;		/* QPNP_PIN_INVERT_DISABLE */
+		qcom,out-strength = <2>;	/* QPNP_PIN_OUT_STRENGTH_MED */
+		qcom,src-sel = <0>;		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;		/* Enable GPIO */
+	};
+
+	/* Rev 0 */
+	/* GPIO 2 : Reserved Pin */
+	/* QPNP_PIN_MODE_DIG_IN /QPNP_PIN_PULL_DOWN / Disable GPIO */
+	/* gpio@c100 { */
+	/*	status = "okay"; */
+	/*	revision = "rev_0"; */
+
+	/*	qcom,mode = <0>; */
+	/*	qcom,pull = <4>; */
+	/*	qcom,master-en = <0>; */
+	/* }; */
+
+	/* W7 model does not use external OVP except for TMO_US, so GPIO_2 will be set to a reserved pin */
+	/* Rev A ... */
+	/* GPIO 2 : Reserved Pin */
+	/* QPNP_PIN_MODE_DIG_IN /QPNP_PIN_PULL_DOWN / Disable GPIO */
+	/* gpio@c101 { */
+	/*	reg = <0xc100 0x100>; */
+	/*	qcom,pin-num = <2>; */
+	/*	status = "okay"; */
+	/*	revision = "rev_a..."; */
+
+	/*	qcom,mode = <0>; */
+	/*	qcom,pull = <4>; */
+	/*	qcom,master-en = <0>; */
+	/* }; */
+
+	/* If you want to enable external OVP, use below GPIO_2 setting */
+	/* Rev 0 */
+	/* GPIO 2 : EXT_OVP_CTRL */
+	/* gpio@c100 { */
+	/*	reg = <0xc100 0x100>; */
+	/*	qcom,pin-num = <2>; */
+	/*	status = "okay"; */
+	/*	revision = "rev_a"; */
+	/*	qcom,mode = <1>; */		/* QPNP_PIN_MODE_DIG_OUT */
+	/*	qcom,output-type = <0>; */	/* CMOS logic */
+	/*	qcom,pull = <5>; */		/* QPNP_PIN_PULL_NO */
+	/*	qcom,vin-sel = <3>; */		/* QPNP_PIN_VIN2 */
+	/*	qcom,invert = <0>; */		/* QPNP_PIN_INVERT_DISABLE */
+	/*	qcom,out-strength = <2>; */	/* QPNP_PIN_OUT_STRENGTH_MED */
+	/*	qcom,src-sel = <0>; */		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+	/*	qcom,master-en = <1>; */	/* Enable GPIO */
+	/*}; */
+
+	/* GPIO 3 : NFC_CLK_REQ */
+	/* QPNP_PIN_MODE_DIG_IN / QPNP_PIN_PULL_DN - Not Fixed / QPNP_PIN_VIN2 / QPNP_PIN_SEL_FUNC_1 */
+	gpio@c200 {
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,vin-sel = <3>;
+		qcom,src-sel = <2>;
+	};
+
+	/* GPIO 4 : BATT_UIM_ALARM : Reserved Pin */
+	gpio@c300 {
+		status = "okay";
+
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,master-en = <0>;
+	};
+
+	/* GPIO 5 : FLASH_STROBE_TRIG : Reserved Pin */
+	/* QPNP_PIN_MODE_DIG_IN / QPNP_PIN_PULL_DN - Not Fixed / QPNP_PIN_VIN2 / QPNP_PIN_SEL_FUNC_1 */
+	gpio@c400 {
+		status = "okay";
+
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,master-en = <0>;
+	};
+
+	/* GPIO 6 : CABC_WLED_PM : Reserved Pin */
+	/* QPNP_PIN_MODE_DIG_IN / QPNP_PIN_PULL_NO / QPNP_PIN_VIN2 / QPNP_PIN_SEL_FUNC_1 */
+	gpio@c500 {
+		status = "okay";
+
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,master-en = <0>;
+	};
+
+	/* GPIO 7 : TX_GTR_THRES : Reserved Pin */
+	gpio@c600 {
+		status = "okay";
+
+		qcom,mode = <0>;
+		qcom,pull = <4>;
+		qcom,master-en = <0>;
+
+	};
+
+	/* GPIO 8 : BOOST_BYP_BYP */
+	/* QPNP_PIN_MODE_DIG_OUT / QPNP_PIN_OUT_BUF_CMOS / QPNP_PIN_PULL_NO / QPNP_PIN_VIN2 */
+	/* QPNP_PIN_INVERT_ENABLE / QPNP_PIN_OUT_STRENGTH_MED / QPNP_PIN_SEL_FUNC_CONSTANT / Enable GPIO */
+	gpio@c700 {
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <4>;
+		qcom,vin-sel = <3>;
+		qcom,invert = <1>;
+		qcom,out-strength = <2>;
+		qcom,src-sel = <0>;
+		qcom,master-en = <1>;
+	};
+};
+
+&pm8226_mpps {
+	/* MPP 1 : VREF_MSM_PX */
+	/* QPNP_PIN_MODE_AOUT / QPNP_PIN_AOUT_1V25 - Not Fixe / QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD / Enable MPP */
+	mpp@a000 {
+		qcom,mode = <5>;
+		qcom,aout-ref = <0>;
+		qcom,src-sel = <0>;
+		qcom,master-en = <1>;
+	};
+
+	/* Rev 0 */
+	/* MPP 2 : HR_LED_SINK : Reserved Pin */
+	/* SINK / 5mA / CS Disable */
+	mpp@a100 {
+		status = "okay";
+
+		qcom,mode = <6>;
+		qcom,cs-out = <0>;
+		qcom,master-en = <0>;
+	};
+
+	/* Rev A ... */
+	/* MPP 2 : Reserved Pin */
+	/* SINK / 5mA / CS Disable */
+	/* mpp@a101 { */
+	/*	reg = <0xa100 0x100>; */
+	/*	qcom,pin-num = <2>; */
+
+	/*	status = "okay"; */
+	/*	revision = "rev_a..."; */
+
+	/*	qcom,mode = <6>; */
+	/*	qcom,cs-out = <0>; */
+	/*	qcom,master-en = <0>; */
+	/* }; */
+
+	/* MPP 3 : VREF_LDO */
+	/* QPNP_PIN_MODE_AOUT / QPNP_PIN_AOUT_1V25 / QPNP_PIN_SEL_FUNC_CONSTANT - QCT TBD / Enable MPP */
+	mpp@a200 {
+		qcom,mode = <5>;
+		qcom,aout-ref = <0>;
+		qcom,src-sel = <0>;
+		qcom,master-en = <1>;
+	};
+
+	/* Rev 0 */
+	/* MPP 4 : Reserved Pin */
+	/* SINK / 5mA / CS Disable */
+	mpp@a300 {
+		status = "okay";
+
+		qcom,mode = <6>;
+		qcom,cs-out = <0>;
+		qcom,master-en = <0>;
+	};
+
+	/* Rev A ... */
+	/* MPP 4 : EAR_MIC_EN */
+	/* Need to change */
+	/* mpp@a301 { */
+	/*	reg = <0xa300 0x100>; */
+	/*	qcom,pin-num = <4>; */
+
+	/*	status = "okay"; */
+	/*	revision = "rev_a"; */
+	/*	qcom,mode = <1>; */		/* QPNP_PIN_MODE_DIG_OUT */
+	/*	qcom,pull = <1>; */		/* QPNP_PIN_MPP_PULL_UP_OPEN - need to check */
+	/*	qcom,vin-sel = <2>; */		/* QPNP_PIN_VIN2 */
+	/*	qcom,src-select = <0>; */	/* QPNP_PIN_SEL_FUNC_CONSTANT */
+	/*	qcom,master-en = <1>; */
+	/* }; */
+
+	/* MPP 5 / PA_THERM0 */
+	/* PA_THERM0 config */
+	/* AIN input / Enable MPP / AMUX 5 / Master Enable / Function constant */
+	mpp@a400 {
+		qcom,mode = <4>;
+		qcom,invert = <1>;
+		qcom,ain-route = <0>;
+		qcom,master-en = <1>;
+		qcom,src-sel = <0>;
+	};
+
+	/* Rev 0 */
+	/* MPP 6 : Reserved Pin */
+	/* SINK / 5mA / CS Disable */
+	mpp@a500 {
+		status = "okay";
+
+		qcom,mode = <6>;
+		qcom,cs-out = <0>;
+		qcom,master-en = <0>;
+	};
+
+	/* Rev A ... */
+	/* MPP 6 : EAR_MIC_JACK */
+	/* SINK / 5mA / CS Disable */
+	/* mpp@a501 { */
+	/* 	reg = <0xa500 0x100>; */
+	/* 	qcom,pin-num = <6>; */
+
+	/* 	status = "okay"; */
+	/* 	revision = "rev_a"; */
+	/* 	qcom,mode = <4>; */		/* QPNP_PIN_MODE_AIN */
+	/* 	qcom,invert = <0>; */		/* no invert */
+	/* 	qcom,output-type = <0>; */	/* CMOS */
+	/* 	qcom,vin-sel = <2>; */		/* PM8226_S3 1.8V > 1.6V */
+	/* 	qcom,src-sel = <0>; */		/* CONSTANT */
+	/* 	qcom,ain-route = <1>; */
+	/* 	qcom,master-en = <1>; */
+	/* };
+
+	 /* MPP 7 : BOARD_ID */
+	 /* AIN input / QPNP_PIN_AIN_AMUX_CH8 / QPNP_PIN_AIN_AMUX_CH8 / QPNP_PIN_SEL_FUNC_CONSTANT /Enable MPP */
+	mpp@a600 {
+		qcom,mode = <4>;
+		qcom,ain-route = <2>;
+		qcom,src-sel = <0>;
+		qcom,master-en = <1>;
+	};
+
+	/* MPP 8 : Reserved Pin */
+	/* SINK / 5mA / CS Disable */
+	mpp@a700 {
+		status = "okay";
+
+		qcom,mode = <6>;
+		qcom,cs-out = <0>;
+		qcom,master-en = <0>;
+	};
+	/* Rev 0 */
+	/* MPP 8 : PM_USB_ID */
+	/* AIN input / QPNP_PIN_AIN_AMUX_CH8 / QPNP_PIN_SEL_FUNC_CONSTANT / Enable MPP */
+	/* mpp@a700 { */
+	/* 	status = "okay"; */
+	/* 	revision = "rev_0"; */
+
+	/* 	qcom,mode = <4>; */
+	/* 	qcom,ain-route = <3>; */
+	/* 	qcom,src-sel = <0>; */
+	/* 	qcom,master-en = <1>; */
+	/* };
+
+	/* Rev A... */
+	/* MPP 8 : Reserved Pin */
+	/* SINK / 5mA / CS Disable */
+	/* mpp@a701 { */
+	/* 	reg = <0xa700 0x100>; */
+	/* 	qcom,pin-num = <8>; */
+
+	/* 	status = "okay"; */
+	/* 	revision = "rev_a..."; */
+
+	/* 	qcom,mode = <6>; */
+	/* 	qcom,cs-out = <0>; */
+	/* 	qcom,master-en = <0>; */
+	/* }; */
+};
+
+&pm8226_vadc {
+	/* chan@13 { */
+	/* 	status = "ok"; */
+	/* 	label = "mpp4_adc"; */
+	/* 	reg = <0x13>; */
+	/* 	qcom,decimation = <0>; */
+	/* 	qcom,pre-div-channel-scaling = <0>; */
+	/* 	qcom,calibration-type = "absolute"; */
+	/* 	qcom,scale-function = <0>; */
+	/* 	qcom,hw-settle-time = <0>; */
+	/* 	qcom,fast-avg-setup = <0>; */
+	/* }; */
+
+	chan@14 {
+		label = "pa_therm0";
+		reg = <0x14>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <2>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	/* chan@15 { */
+	/* 	status = "ok"; */
+	/* 	label = "mpp6_adc"; */
+	/* 	reg = <0x15>; */
+	/* 	qcom,decimation = <0>; */
+	/* 	qcom,pre-div-channel-scaling = <0>; */
+	/* 	qcom,calibration-type = "absolute"; */
+	/* 	qcom,scale-function = <0>; */
+	/* 	qcom,hw-settle-time = <0>; */
+	/* 	qcom,fast-avg-setup = <0>; */
+	/* }; */
+
+	/* chan@17 { */
+	/* 	label = "MPP_USB_ID"; */
+	/* 	reg = <0x17>; */
+	/* 	qcom,decimation = <0>; */
+	/* 	qcom,pre-div-channel-scaling = <0>; */
+	/* 	qcom,calibration-type = "ratiometric"; */
+	/* 	qcom,scale-function = <0>; */
+	/* 	qcom,hw-settle-time = <0>; */
+	/* 	qcom,fast-avg-setup = <0>; */
+	/* }; */
+
+	chan@39 {
+		label = "usb_id_lv";
+		reg = <0x39>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0>;
+		qcom,hw-settle-time = <0>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+};
+
+&soc{
+	/* Cable type definition.
+	* Modify the USB cable and move to SoC
+	* to get each table for different USB Pull up resistor via HW Rev
+	* This must have the compatible property "lge,usb-id".
+	* If you don't want to use revision you can remove status & revision property.
+	* If this node is not exist, the charger driver would not be probed.
+	* Each cable type has 3 values
+	* that we can configure the threshold of ADC value and TA/USB IUSB max current value.
+	* ex)
+	*    cable type = <adc_threshold, TA_MA, USB_MA>.
+	*/
+
+	lge,usb_cable@0 {
+		compatible = "lge,usb-id";
+		usb_adc_table@200{
+			status = "okay";
+			lge,no-init-cable = <197000 500 500>;
+			lge,cable-56k = <496875 1500 1500>;
+			lge,cable-100k = <654545 500 500>;
+			lge,cable-130k = <780861 1500 1500>;
+			lge,cable-180k = <876316 1500 500>;
+			lge,cable-200k = <921429 1500 500>;
+			lge,cable-220k = <988450 1500 500>;
+			lge,cable-270k = <1077399 1500 500>;
+			lge,cable-330k = <1240865 500 500>;
+			lge,cable-620k = <1418326 500 500>;
+			lge,cable-910k = <1637838 1500 1500>;
+			lge,cable-none = <1900000 1500  500>;
+		};
+	};
+};
+
+
+&pm8226_chg {
+	qcom,vddmax-mv = <4360>;
+	qcom,vddsafe-mv = <4390>;
+	qcom,vinmin-mv = <4350>;
+	qcom,ibatterm-ma = <200>;
+	qcom,vbatdet-delta-mv = <100>;
+	qcom,tchg-mins = <480>;
+	qcom,ext-ovp-present = <1>;
+	qcom,power-stage-reduced;
+
+	/* If you want to enable external OVP, use below GPIO_2 setting */
+	lge,ext_ovp_gpio = <&pm8226_gpios 2 0x00>;
+};
+&pm8226_bms{
+
+	qcom,r-sense-uohm = <10000>;
+	qcom,v-cutoff-uv = <3400000>;
+	qcom,max-voltage-uv = <4350000>;
+	qcom,r-conn-mohm = <18>;
+	qcom,shutdown-soc-valid-limit = <20>;
+	qcom,adjust-soc-low-threshold = <25>;
+	qcom,adjust-soc-high-threshold = <45>;
+	qcom,ocv-voltage-high-threshold-uv = <3900000>;
+	qcom,ocv-voltage-low-threshold-uv = <3650000>;
+	qcom,low-soc-calculate-soc-threshold = <15>;
+	qcom,low-soc-calculate-soc-ms = <5000>;
+	qcom,calculate-soc-ms = <20000>;
+	qcom,low-voltage-calculate-soc-ms=<1000>;
+	qcom,chg-term-ua = <400000>;
+	qcom,batt-type = <0>;
+	qcom,low-voltage-threshold = <3420000>;
+	qcom,use-external-rsense = <1>;
+};
+
+&pm8226_iadc {
+		reg = <0x3600 0x100>, <0x12f1 0x1>;
+		reg-names = "iadc-base", "batt-id-trim-cnst-rds";
+		qcom,use-default-rds-trim = <0>;
+		qcom,rsense = <10000000>;
+};
+
+&rpm_bus {
+	rpm-regulator-smpa3 {
+		status = "okay";
+		pm8226_s3: regulator-s3 {
+			regulator-max-microvolt = <1350000>;
+			qcom,init-voltage = <1350000>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa7 {
+		status = "okay";
+		pm8226_l7: regulator-l7 {
+			regulator-name = "8226_l7";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1900000>;
+			qcom,init-voltage = <1800000>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa15 {
+		status = "okay";
+		pm8226_l15: regulator-l15 {
+			regulator-name = "8226_l15";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <2800000>;
+			qcom,init-voltage = <2800000>;
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa22 {
+		status = "okay";
+		pm8226_l22: regulator-l22 {
+			regulator-name = "8226_l22";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <3050000>;
+			qcom,init-voltage = <1800000>;
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa23 {
+		status = "okay";
+		pm8226_l23: regulator-l23 {
+			regulator-name = "8226_l23";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			qcom,init-voltage = <1800000>;
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa26 {
+		status = "okay";
+		pm8226_l26: regulator-l26 {
+			regulator-name = "8226_l26";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			qcom,init-voltage = <1200000>;
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+	rpm-regulator-ldoa27 {
+		status = "okay";
+		pm8226_l27: regulator-l27 {
+			qcom,init-enable = <0>;
+			status = "okay";
+		};
+	};
+};

@@ -1,0 +1,72 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&spmi_bus {
+        qcom,pm8110@0 {
+                qcom,power-on@800 {
+                        qcom,pon_2 {
+                                qcom,disable = <1>;
+
+                        };
+                };
+        };
+};
+
+/* LGE Code for crash */
+&apc_vreg_corner
+{
+		qcom,pvs-corner-ceiling-slow = <1275000 1275000 1275000>;
+		qcom,pvs-corner-ceiling-nom  = <1275000 1275000 1275000>;
+		qcom,pvs-corner-ceiling-fast = <1275000 1275000 1275000>;
+};
+
+/* Patch Code of QCT CASE 01282196
+ *
+ * Increase the hw-settling time delay for batt_therm since
+ * the warm-up time is high. Also set fast averaging to 1
+ * since it does not really need to sample that many times
+ * based on the existing configuration.
+ */
+
+&pm8110_adc_tm {
+	/* Channel Node */
+	chan@30 {
+		label = "batt_therm";
+		qcom,hw-settle-time = <0xf>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@8 {
+		label = "die_temp";
+		qcom,hw-settle-time = <0xf>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@6 {
+		label = "vbat_sns";
+		qcom,hw-settle-time = <0xf>;
+		qcom,fast-avg-setup = <0>;
+	};
+
+	chan@13 {
+		label = "pa_therm0";
+		qcom,hw-settle-time = <0xf>;
+		qcom,fast-avg-setup = <0>;
+	};
+};
+
+&soc {
+	qcom,msm-thermal {
+		qcom,vdd-restriction-temp;
+		qcom,vdd-restriction-temp-hysteresis;
+	};
+};

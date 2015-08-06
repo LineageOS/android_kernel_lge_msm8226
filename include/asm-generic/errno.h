@@ -110,4 +110,7 @@
 
 #define EHWPOISON	133	/* Memory page has hardware error */
 
+#ifdef CONFIG_MACH_LGE
+#define ESUPER      200 /* ext4 superblock is damaged */
+#endif
 #endif

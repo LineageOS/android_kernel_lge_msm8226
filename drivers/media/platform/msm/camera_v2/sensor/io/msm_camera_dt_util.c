@@ -31,12 +31,18 @@ int msm_camera_fill_vreg_params(struct camera_vreg_t *cam_vreg,
 	uint16_t i = 0;
 	int      j = 0;
 
+    pr_err("%s:%d enter ", __func__,__LINE__);
+/* LGE_CHANGE_S, sensor bring-up, 2014-08-27, yt.jeon@lge.com */
 	/* Validate input parameters */
-	if (!cam_vreg || !power_setting) {
+	if (!power_setting) {
 		pr_err("%s:%d failed: cam_vreg %p power_setting %p", __func__,
 			__LINE__,  cam_vreg, power_setting);
-		return -EINVAL;
+		return -EINVAL;		
+	}else if(!cam_vreg){
+		pr_err("%s:%d cam_vreg is NULL, There is no vreg setting!!",__func__,__LINE__);
+		return 0; 
 	}
+/* LGE_CHANGE_E, sensor bring-up, 2014-08-27, yt.jeon@lge.com */
 
 	/* Validate size of num_vreg */
 	if (num_vreg <= 0) {
@@ -443,6 +449,8 @@ int msm_camera_get_dt_power_setting_data(struct device_node *of_node,
 				ps[i].seq_val = SENSOR_GPIO_STANDBY;
 			else if (!strcmp(seq_name, "sensor_gpio_vdig"))
 				ps[i].seq_val = SENSOR_GPIO_VDIG;
+			else if (!strcmp(seq_name, "sensor_gpio_vio"))
+				ps[i].seq_val = SENSOR_GPIO_VIO;
 			else
 				rc = -EILSEQ;
 			break;
@@ -823,6 +831,98 @@ int msm_camera_init_gpio_pin_tbl(struct device_node *of_node,
 			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_FL_NOW]);
 	}
 
+#if defined(CONFIG_MACH_LGE)
+	if (of_property_read_bool(of_node, "qcom,gpio-vana") == true) {
+		rc = of_property_read_u32(of_node, "qcom,gpio-vana", &val);
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-vana failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-vana invalid %d\n",
+				__func__, __LINE__, val);
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VANA] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_VANA] = 1;
+		CDBG("%s qcom,gpio-vana %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VANA]);
+	}
+
+	if (of_property_read_bool(of_node, "qcom,gpio-vio") == true) {
+		rc = of_property_read_u32(of_node, "qcom,gpio-vio", &val);
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-vio failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-vio invalid %d\n",
+				__func__, __LINE__, val);
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VIO] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_VIO] = 1;
+		CDBG("%s qcom,gpio-vio %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VIO]);
+	}
+
+	if (of_property_read_bool(of_node, "qcom,gpio-vaf") == true) {
+		rc = of_property_read_u32(of_node, "qcom,gpio-vaf", &val);
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-vaf failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-vaf invalid %d\n",
+				__func__, __LINE__, val);
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VAF] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_VAF] = 1;
+		CDBG("%s qcom,gpio-vaf %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_VAF]);
+	}
+
+	if (of_property_read_bool(of_node, "qcom,gpio-af-pwdm") == true) {
+		rc = of_property_read_u32(of_node, "qcom,gpio-af-pwdm", &val);
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-af-pwdm failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-af-pwdm invalid %d\n",
+				__func__, __LINE__, val);
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_AF_PWDM] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_AF_PWDM] = 1;
+		CDBG("%s qcom,gpio-af-pwdm %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_AF_PWDM]);
+	}
+
+	if (of_property_read_bool(of_node, "qcom,gpio-ldaf-en") == true) {
+		rc = of_property_read_u32(of_node, "qcom,gpio-ldaf-en", &val);
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-ldaf-en failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-ldaf-en invalid %d\n",
+				__func__, __LINE__, val);
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_LDAF_EN] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_LDAF_EN] = 1;
+		CDBG("%s qcom,gpio-ldaf-en %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_LDAF_EN]);
+	}
+#endif
+
 	return rc;
 
 ERROR:
@@ -835,15 +935,22 @@ int msm_camera_get_dt_vreg_data(struct device_node *of_node,
 	struct camera_vreg_t **cam_vreg, int *num_vreg)
 {
 	int rc = 0, i = 0;
-	uint32_t count = 0;
+	int32_t count = 0;//uint32_t count = 0; //LGE_CHANGE, To prevent failure when vreg is not used.2014.11.3 sujeong.kwon@lge.com
 	uint32_t *vreg_array = NULL;
 	struct camera_vreg_t *vreg = NULL;
 
 	count = of_property_count_strings(of_node, "qcom,cam-vreg-name");
 	CDBG("%s qcom,cam-vreg-name count %d\n", __func__, count);
 
+	/* LGE_CHANGE_S, To prevent failure when vreg is not used.2014.11.3 sujeong.kwon@lge.com */
+	#if 0 //QCT origonal
 	if (!count)
 		return 0;
+	#else
+	if (count <= 0)
+		return 0;
+	#endif
+	/* LGE_CHANGE_E, To prevent failure when vreg is not used.2014.11.3 sujeong.kwon@lge.com */
 
 	vreg = kzalloc(sizeof(*vreg) * count, GFP_KERNEL);
 	if (!vreg) {

@@ -215,7 +215,6 @@ config SND_SOC_MSM8226
 	select SND_SOC_MSM_STUB
 	select SND_SOC_MSM_HOSTLESS_PCM
 	select SND_SOC_WCD9306
-	select SND_SOC_WCD9330
 	select SND_DYNAMIC_MINORS
 	select DOLBY_DAP
 	help
@@ -272,4 +271,48 @@ config SND_SOC_MDM9625
 	select SND_DYNAMIC_MINORS
 	help
 	 To add support for SoC audio on MDM9625 boards.
+
+# LGE_CHANGE_S, [FM RADIO], 2014-02-25, FM Radio Bring Up for B2 mini China
+config SND_BRCM_FM_RADIO
+	bool "mi2s interface for FM Radio"
+	default n
+	help
+	 mi2s interface for FM Radio
+# LGE_CHANGE_E, [FM RADIO], 2014-02-25, FM Radio Bring Up for B2 mini China
+
+config SND_LGE_EFFECT
+	bool "LGE DSP EFFECT"
+	default y
+	help
+	 To support LGE DSP EFFECT
+
+config SND_LGE_NORMALIZER
+	bool "LGE DSP NORMALIZER"
+	default y
+	help
+	 To support LGE DSP NORMALIZER
+
+config SND_LGE_MABL
+    bool "LGE DSP MABL"
+    default y
+    help
+     To support LGE DSP MABL
+
+config SND_SOC_HFP
+    bool "HFP SUPPORT"
+    default n
+    help
+     To support HFP for QPAIR Call
+
+config SND_SOC_HFP_WB
+    bool "HFP WIDE BAND SUPPORT"
+    default n
+    help
+     To support HFP for wide band
+
+config LGE_SW_IRRC_MUTE_SPEAKER
+	bool "LGE SW IRRC MUTE SPEAKER"
+	depends on SND_SOC_TPA2028D_STEREO_E9
+	help
+	 To support mute stereo speaker for msm8x26
 endmenu

@@ -156,8 +156,14 @@ static struct smd_config smd_configs[] = {
 	{5, "APPS_RIVA_ANT_CMD", NULL, SMD_APPS_WCNSS},
 	{6, "APPS_RIVA_ANT_DATA", NULL, SMD_APPS_WCNSS},
 	{7, "DATA1", NULL, SMD_APPS_MODEM},
+#ifndef CONFIG_LGE_DDM_TTY
+#ifdef CONFIG_ARCH_MSM8226
 	{8, "DATA4", NULL, SMD_APPS_MODEM},
+#endif
+#ifdef CONFIG_ARCH_MSM8610
 	{11, "DATA11", NULL, SMD_APPS_MODEM},
+#endif
+#endif
 	{21, "DATA21", NULL, SMD_APPS_MODEM},
 	{27, "GPSNMEA", NULL, SMD_APPS_MODEM},
 	{36, "LOOPBACK", "LOOPBACK_TTY", SMD_APPS_MODEM},
@@ -852,6 +858,7 @@ static int smd_tty_core_init(void)
 			legacy_ds |= cpu_is_msm7x01() || cpu_is_msm7x25();
 			legacy_ds |= cpu_is_msm7x27() || cpu_is_msm7x30();
 			legacy_ds |= cpu_is_qsd8x50() || cpu_is_msm8x55();
+			legacy_ds |= cpu_is_msm8610() || cpu_is_msm8226();
 			/*
 			 * use legacy mode for 8660 Standalone (subtype 0)
 			 */

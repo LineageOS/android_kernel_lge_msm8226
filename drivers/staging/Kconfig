@@ -132,4 +132,7 @@ source "drivers/staging/ramster/Kconfig"
 
 source "drivers/staging/ozwpan/Kconfig"
 
+#[LGE_WIFI][sangheon.shim@lge.com]:20131011. wlan module is changed to Built-In driver.
+source "drivers/staging/prima/Kconfig"
+
 endif # STAGING

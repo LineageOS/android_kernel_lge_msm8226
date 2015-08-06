@@ -19,6 +19,10 @@
 
 #include "power_supply.h"
 
+#ifdef CONFIG_LGE_PM_FACTORY_PSEUDO_BATTERY
+#include <mach/board_lge.h>
+#endif
+
 /*
  * This is because the name "current" breaks the device attr macro.
  * The "current" word resolves to "(get_current())" so instead of
@@ -31,12 +35,57 @@
  * (as a macro let's say).
  */
 
+/* BEGIN : janghyun.baek@lge.com 2012-12-26 Temporarily change mode to 777
+ * debug power sysfs node */
+#ifdef CONFIG_LGE_PM
+#define POWER_SUPPLY_ATTR(_name)					\
+{									\
+	.attr = { .name = #_name },			\
+	.show = power_supply_show_property,				\
+	.store = power_supply_store_property,				\
+}
+#else	/* QCT ORG */
 #define POWER_SUPPLY_ATTR(_name)					\
 {									\
 	.attr = { .name = #_name },					\
 	.show = power_supply_show_property,				\
 	.store = power_supply_store_property,				\
 }
+#endif
+/* END : janghyun.baek@lge.com 2012-12-26 */
+
+#ifdef CONFIG_LGE_PM_FACTORY_PSEUDO_BATTERY
+#define PSEUDO_BATT_ATTR(_name)						\
+{									\
+	.attr = { .name = #_name, .mode = 0644},			\
+	.show = pseudo_batt_show_property,				\
+	.store = pseudo_batt_store_property,				\
+}
+#endif
+
+#ifdef CONFIG_LGE_PM_VZW_LLK
+#define STORE_DEMO_ENABLED_ATTR(_name)						\
+{									\
+	.attr = { .name = #_name, .mode = 0644},			\
+	.show = store_demo_enabled_show_property,				\
+	.store = store_demo_enabled_store_property,				\
+}
+#endif
+
+#ifdef CONFIG_LGE_PM_FACTORY_TESTMODE
+#define DIAG_CHCOMP_ATTR(_name)						\
+{									\
+	.attr = { .name = #_name, .mode = 0644},			\
+	.show = at_chg_complete_show,				\
+}
+
+#define DIAG_CHARGE_ATTR(_name)						\
+{									\
+	.attr = { .name = #_name, .mode = 0644},			\
+	.show = at_chg_status_show,				\
+	.store = at_chg_status_store,				\
+}
+#endif
 
 static struct device_attribute power_supply_attrs[];
 
@@ -46,6 +95,16 @@ static ssize_t power_supply_show_property(struct device *dev,
 	static char *type_text[] = {
 		"Unknown", "Battery", "UPS", "Mains", "USB",
 		"USB_DCP", "USB_CDP", "USB_ACA"
+#ifdef CONFIG_MAX17048_FUELGAUGE
+		, "BMS"
+		, "Max17048"
+#endif
+#ifdef CONFIG_CHG_DETECTOR_MAX14656
+                , "Max14656"
+#endif
+#ifdef CONFIG_LGE_WIRELESS_CHARGER_RT9536
+		, "Wireless"
+#endif
 	};
 	static char *status_text[] = {
 		"Unknown", "Charging", "Discharging", "Not charging", "Full"
@@ -67,6 +126,22 @@ static ssize_t power_supply_show_property(struct device *dev,
 	static char *scope_text[] = {
 		"Unknown", "System", "Device"
 	};
+#ifdef CONFIG_LGE_PM_FACTORY_TESTMODE
+#if defined(CONFIG_MACH_MSM8926_X3N_OPEN_EU) || defined(CONFIG_MACH_MSM8926_X3N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_F70N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_F70N_GLOBAL_AME) || defined(CONFIG_MACH_MSM8926_F70_GLOBAL_COM) || \
+	defined(CONFIG_MACH_MSM8926_X3N_GLOBAL_SCA) || \
+	defined(CONFIG_MACH_MSM8926_X3_TRF_US) || defined(CONFIG_MACH_MSM8926_X3N_KR) || defined(CONFIG_MACH_MSM8926_F70N_KR)
+	static char *lge_hw_rev_text[] = {
+		"rev_0", "rev_a", "rev_a2", "rev_b", "rev_b2", "rev_c", "rev_10", "rev_11", "revserved"
+	};
+#else
+	static char *lge_hw_rev_text[] = {
+		"rev_0", "rev_a", "rev_b", "rev_c", "rev_d", "rev_e", "rev_10", "rev_11", "revserved"
+	};
+#endif
+	static char *lge_usb_id_text[] = {
+		"NOT INIT", "56K", "100K", "130K", "180K", "200K", "220K", "270K", "330K", "620K", "910K", "OPEN"
+	};
+#endif
 	ssize_t ret = 0;
 	struct power_supply *psy = dev_get_drvdata(dev);
 	const ptrdiff_t off = attr - power_supply_attrs;
@@ -101,6 +176,12 @@ static ssize_t power_supply_show_property(struct device *dev,
 		return sprintf(buf, "%s\n", type_text[value.intval]);
 	else if (off == POWER_SUPPLY_PROP_SCOPE)
 		return sprintf(buf, "%s\n", scope_text[value.intval]);
+#ifdef CONFIG_LGE_PM_FACTORY_TESTMODE
+	else if (off == POWER_SUPPLY_PROP_HW_REV)
+		return sprintf(buf, "%s\n", lge_hw_rev_text[value.intval]);
+	else if (off == POWER_SUPPLY_PROP_USB_ID)
+		return sprintf(buf, "%s\n", lge_usb_id_text[value.intval]);
+#endif
 	else if (off >= POWER_SUPPLY_PROP_MODEL_NAME)
 		return sprintf(buf, "%s\n", value.strval);
 
@@ -130,10 +211,193 @@ static ssize_t power_supply_store_property(struct device *dev,
 	return count;
 }
 
+#ifdef CONFIG_LGE_PM_FACTORY_PSEUDO_BATTERY
+extern int pseudo_batt_set(struct pseudo_batt_info_type *);
+
+static ssize_t pseudo_batt_show_property(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	ssize_t ret;
+	struct power_supply *psy = dev_get_drvdata(dev);
+	const ptrdiff_t off = attr - power_supply_attrs;
+	union power_supply_propval value;
+
+	static char *pseudo_batt[] = {
+		"NORMAL", "PSEUDO",
+	};
+
+	ret = psy->get_property(psy, off, &value);
+
+	if (ret < 0) {
+		if (ret != -ENODEV)
+			dev_err(dev, "driver failed to report `%s' property\n",
+					attr->attr.name);
+		return ret;
+	}
+	if (off == POWER_SUPPLY_PROP_PSEUDO_BATT)
+		return sprintf(buf, "[%s] \nusage: echo [mode] [ID] [therm] [temp] [volt] [cap] [charging] > pseudo_batt\n",
+				pseudo_batt[value.intval]);
+
+	return 0;
+}
+
+static ssize_t pseudo_batt_store_property(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	int ret = -EINVAL;
+	struct pseudo_batt_info_type info;
+
+	if (sscanf(buf, "%d %d %d %d %d %d %d", &info.mode, &info.id, &info.therm,
+				&info.temp, &info.volt, &info.capacity, &info.charging) != 7) {
+		if (info.mode == 1) {	/* pseudo mode */
+			printk(KERN_ERR "usage : echo [mode] [ID] [therm] [temp] [volt] [cap] [charging] > pseudo_batt");
+			goto out;
+		}
+	}
+
+	pseudo_batt_set(&info);
+	ret = count;
+
+out:
+	return ret;
+
+}
+#endif
+
+#ifdef CONFIG_LGE_PM_VZW_LLK
+extern int store_demo_enabled_set(bool enabled);
+
+static ssize_t store_demo_enabled_show_property(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	ssize_t ret;
+	struct power_supply *psy = dev_get_drvdata(dev);
+	const ptrdiff_t off = attr - power_supply_attrs;
+	union power_supply_propval value;
+
+	ret = psy->get_property(psy, off, &value);
+
+	if (ret < 0) {
+		if (ret != -ENODEV)
+			dev_err(dev, "driver failed to report `%s' property\n",
+					attr->attr.name);
+		return ret;
+	}
+	if (off == POWER_SUPPLY_PROP_STORE_DEMO_ENABLED)
+		return sprintf(buf, "%d\n", value.intval);
+
+	return 0;
+}
+
+static ssize_t store_demo_enabled_store_property(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	int ret = 0;
+
+	if (!count) {
+		return -EINVAL;
+	}
+
+	if (strncmp(buf, "1", 1) == 0) {
+		pr_info("store demo enabled\n");
+		ret = store_demo_enabled_set(true);
+	} else if (strncmp(buf, "0", 1) == 0) {
+		pr_info("store demo disabled\n");
+		ret = store_demo_enabled_set(false);
+	}
+
+	ret = count;
+	return ret;
+}
+#endif
+
+
+#ifdef CONFIG_LGE_PM_FACTORY_TESTMODE
+static ssize_t at_chg_complete_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+
+	ssize_t ret;
+	struct power_supply *psy = dev_get_drvdata(dev);
+	const ptrdiff_t off = attr - power_supply_attrs;
+	union power_supply_propval value;
+
+	ret = psy->get_property(psy, off, &value);
+
+	if (value.intval == 100) {
+		ret = snprintf(buf, 3, "%d\n", 0);
+		pr_info("[Diag] buf = %s, gauge==100\n", buf);
+	} else {
+		ret = snprintf(buf, 3, "%d\n", 1);
+		pr_info("[Diag] buf = %s, gauge<=100\n", buf);
+	}
+
+	return ret;
+}
+
+static ssize_t at_chg_status_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+
+	struct power_supply *psy = dev_get_drvdata(dev);
+	const ptrdiff_t off = attr - power_supply_attrs;
+	union power_supply_propval value;
+
+	ret = psy->get_property(psy, off, &value);
+
+	if (value.intval == 1) {
+		ret = snprintf(buf, 3, "%d\n", 1);
+		pr_info("[Diag] true ! buf = %s, charging=1\n", buf);
+	} else {
+		ret = snprintf(buf, 3, "%d\n", 0);
+		pr_info("[Diag] false ! buf = %s, charging=0\n", buf);
+	}
+
+	return ret;
+}
+
+extern int chg_status_set(int value);
+
+static ssize_t at_chg_status_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	int ret = 0;
+
+	if (!count) {
+		pr_err("[Diag] count 0 error\n");
+		return -EINVAL;
+	}
+
+	if (strncmp(buf, "0", 1) == 0) {
+		/* stop charging */
+		pr_info("[Diag] stop charging start\n");
+		ret = chg_status_set(false);
+
+	} else if (strncmp(buf, "1", 1) == 0) {
+		/* start charging */
+		pr_info("[Diag] start charging start\n");
+		ret = chg_status_set(true);
+	}
+
+	ret = count;
+
+	return ret;
+}
+#endif
+
 /* Must be in the same order as POWER_SUPPLY_PROP_* */
 static struct device_attribute power_supply_attrs[] = {
 	/* Properties of type `int' */
 	POWER_SUPPLY_ATTR(status),
+#ifdef CONFIG_LGE_PM
+	POWER_SUPPLY_ATTR(status_original),
+#endif
 	POWER_SUPPLY_ATTR(charge_type),
 	POWER_SUPPLY_ATTR(health),
 	POWER_SUPPLY_ATTR(present),
@@ -175,8 +439,10 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(capacity),
 	POWER_SUPPLY_ATTR(capacity_level),
 	POWER_SUPPLY_ATTR(temp),
+#ifndef CONFIG_LGE_PM
 	POWER_SUPPLY_ATTR(temp_cool),
 	POWER_SUPPLY_ATTR(temp_warm),
+#endif
 	POWER_SUPPLY_ATTR(temp_ambient),
 	POWER_SUPPLY_ATTR(time_to_empty_now),
 	POWER_SUPPLY_ATTR(time_to_empty_avg),
@@ -184,8 +450,48 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(time_to_full_avg),
 	POWER_SUPPLY_ATTR(type),
 	POWER_SUPPLY_ATTR(scope),
+#if defined (CONFIG_MACH_MSM8226_E7WIFI) || defined (CONFIG_MACH_MSM8226_E9WIFI) || defined (CONFIG_MACH_MSM8226_E9WIFIN) || defined (CONFIG_MACH_MSM8926_E9LTE)
+	POWER_SUPPLY_ATTR(battery_dualization),
+#endif
+#ifndef CONFIG_LGE_PM
 	POWER_SUPPLY_ATTR(system_temp_level),
+#endif
 	POWER_SUPPLY_ATTR(resistance),
+#ifdef CONFIG_LGE_PM_FACTORY_TESTMODE
+	DIAG_CHCOMP_ATTR(chcomp),
+	DIAG_CHARGE_ATTR(charge),
+	POWER_SUPPLY_ATTR(hw_rev),
+	POWER_SUPPLY_ATTR(usb_id),
+#endif
+#ifdef CONFIG_LGE_PM_FACTORY_PSEUDO_BATTERY
+	PSEUDO_BATT_ATTR(pseudo_batt),
+#endif
+#ifdef CONFIG_LGE_PM_BATTERY_ID_CHECKER
+	POWER_SUPPLY_ATTR(valid_batt_id),
+#endif
+#ifdef CONFIG_LGE_PM_VZW_FAST_CHG
+	POWER_SUPPLY_ATTR(vzw_chg),
+#endif
+#ifdef CONFIG_LGE_PM_VZW_LLK
+	STORE_DEMO_ENABLED_ATTR(store_demo_enabled),
+#endif
+#ifdef CONFIG_MAX17048_FUELGAUGE
+	POWER_SUPPLY_ATTR(use_fuelgauge),
+#endif
+#ifdef CONFIG_CHG_DETECTOR_MAX14656
+	POWER_SUPPLY_ATTR(usb_chg_detect_done),
+	POWER_SUPPLY_ATTR(usb_chg_type),
+	POWER_SUPPLY_ATTR(usb_dcd_timeout),
+#endif
+#ifdef CONFIG_LGE_WIRELESS_CHARGER_RT9536
+	POWER_SUPPLY_ATTR(enabled),
+#endif
+#ifdef CONFIG_LGE_PM
+	POWER_SUPPLY_ATTR(charger_timer),
+#endif
+#ifdef CONFIG_LGE_PM_FIX_CEC_FAIL
+POWER_SUPPLY_ATTR(cv_lock),
+#endif
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_ATTR(model_name),
 	POWER_SUPPLY_ATTR(manufacturer),

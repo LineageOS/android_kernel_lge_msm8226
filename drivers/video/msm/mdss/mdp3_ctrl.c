@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,10 +20,14 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 #include <linux/delay.h>
+#if defined(CONFIG_MACH_MSM8X10_L70P)
+#include <linux/gpio.h>
+#endif
 
 #include "mdp3_ctrl.h"
 #include "mdp3.h"
 #include "mdp3_ppp.h"
+
 
 #define VSYNC_EXPIRE_TICK	4
 
@@ -348,12 +352,17 @@ static int mdp3_ctrl_res_req_bus(struct msm_fb_data_type *mfd, int status)
 {
 	int rc = 0;
 	if (status) {
+#if defined(CONFIG_MACH_MSM8X10_L70P)
+		int ab = 0x7FFFFFFF;
+		int ib = 0x7FFFFFFF;
+#else
 		struct mdss_panel_info *panel_info = mfd->panel_info;
 		u64 ab = 0;
 		u64 ib = 0;
 		ab = panel_info->xres * panel_info->yres * 4;
 		ab *= panel_info->mipi.frame_rate;
-		ib = (ab * 3) / 2;
+		ib = (ab * 5) / 2;
+#endif
 		rc = mdp3_bus_scale_set_quota(MDP3_CLIENT_DMA_P, ab, ib);
 	} else {
 		rc = mdp3_bus_scale_set_quota(MDP3_CLIENT_DMA_P, 0, 0);
@@ -571,7 +580,7 @@ static int mdp3_ctrl_on(struct msm_fb_data_type *mfd)
 	struct mdp3_session_data *mdp3_session;
 	struct mdss_panel_data *panel;
 
-	pr_debug("mdp3_ctrl_on\n");
+	pr_info("mdp3_ctrl_on++\n");
 	mdp3_session = (struct mdp3_session_data *)mfd->mdp.private1;
 	if (!mdp3_session || !mdp3_session->panel || !mdp3_session->dma ||
 		!mdp3_session->intf) {
@@ -649,7 +658,7 @@ static int mdp3_ctrl_off(struct msm_fb_data_type *mfd)
 	struct mdp3_session_data *mdp3_session;
 	struct mdss_panel_data *panel;
 
-	pr_debug("mdp3_ctrl_off\n");
+	pr_info("mdp3_ctrl_off++\n");
 	mdp3_session = (struct mdp3_session_data *)mfd->mdp.private1;
 	if (!mdp3_session || !mdp3_session->panel || !mdp3_session->dma ||
 		!mdp3_session->intf) {
@@ -670,19 +679,26 @@ static int mdp3_ctrl_off(struct msm_fb_data_type *mfd)
 
 	mdp3_ctrl_clk_enable(mfd, 1);
 
-	mdp3_histogram_stop(mdp3_session, MDP_BLOCK_DMA_P);
-
+#if defined(CONFIG_MACH_MSM8X10_L70P)
 	if (panel->event_handler)
 		rc = panel->event_handler(panel, MDSS_EVENT_PANEL_OFF, NULL);
 	if (rc)
 		pr_err("fail to turn off the panel\n");
+#endif
+
+	mdp3_histogram_stop(mdp3_session, MDP_BLOCK_DMA_P);
+
+#if !defined(CONFIG_MACH_MSM8X10_L70P)
+	if (panel->event_handler)
+		rc = panel->event_handler(panel, MDSS_EVENT_PANEL_OFF, NULL);
+	if (rc)
+		pr_err("fail to turn off the panel\n");
+#endif
 
 	rc = mdp3_session->dma->stop(mdp3_session->dma, mdp3_session->intf);
 	if (rc)
 		pr_debug("fail to stop the MDP3 dma\n");
 	msleep(20);
-
-	mfd->panel_info->cont_splash_enabled = 0;
 
 	mdp3_irq_deregister();
 
@@ -762,7 +778,6 @@ static int mdp3_ctrl_reset_cmd(struct msm_fb_data_type *mfd)
 		mdp3_dma->vsync_enable(mdp3_dma, &vsync_client);
 
 	mdp3_session->first_commit = true;
-	mfd->panel_info->cont_splash_enabled = 0;
 	mdp3_session->in_splash_screen = 0;
 
 reset_error:
@@ -851,8 +866,15 @@ static int mdp3_ctrl_reset(struct msm_fb_data_type *mfd)
 	if (vsync_client.handler)
 		mdp3_dma->vsync_enable(mdp3_dma, &vsync_client);
 
+#if defined(CONFIG_MACH_MSM8X10_L70P)
+	if (mfd->panel_power_on) {
+		printk(KERN_INFO"[%s][%d][touch] mdp reset ======", __func__, __LINE__);
+		gpio_set_value(0, 0);
+		mdelay(200);
+		gpio_set_value(0, 1);
+	}
+#endif
 	mdp3_session->first_commit = true;
-	mfd->panel_info->cont_splash_enabled = 0;
 	mdp3_session->in_splash_screen = 0;
 
 reset_error:
@@ -878,6 +900,15 @@ static int mdp3_overlay_get(struct msm_fb_data_type *mfd,
 	return rc;
 }
 
+#if defined (CONFIG_MACH_MSM8X10_W5) || defined (CONFIG_MACH_MSM8X10_W6) || defined (CONFIG_MACH_MSM8X10_L70P)
+/* At booting up, Between LG Logo and Operation Animation showing, abnormal LG Logo is appearing one time.
+Because LG Logo image format is RGB888, Android side image format is RGBA8888, both Image formats are mismatched.
+So, We add the code to change MDP_RGBA_8888 to MDP_RGB_888 when is_done_drawing_logo is not "1".
+is_done_drawing_logo is set to 1 at mdss_dsi_panel_off.
+*/
+extern char is_done_drawing_logo;
+#endif
+
 static int mdp3_overlay_set(struct msm_fb_data_type *mfd,
 				struct mdp_overlay *req)
 {
@@ -890,6 +921,18 @@ static int mdp3_overlay_set(struct msm_fb_data_type *mfd,
 	int format;
 
 	fix = &fbi->fix;
+
+#if defined (CONFIG_MACH_MSM8X10_W5) || defined (CONFIG_MACH_MSM8X10_W6) || defined (CONFIG_MACH_MSM8X10_L70P)
+/* At booting up, Between LG Logo and Operation Animation showing, abnormal LG Logo is appearing one time.
+Because LG Logo image format is RGB888, Android side image format is RGBA8888, both Image formats are mismatched.
+So, We add the code to change MDP_RGBA_8888 to MDP_RGB_888 when is_done_drawing_logo is not "1".
+is_done_drawing_logo is set to 1 at mdss_dsi_panel_off.
+*/
+	if (!is_done_drawing_logo) {
+		req->src.format = MDP_RGB_888;
+	}
+#endif
+
 	stride = req->src.width * ppp_bpp(req->src.format);
 	format = mdp3_ctrl_get_source_format(req->src.format);
 
@@ -975,7 +1018,7 @@ static int mdp3_overlay_play(struct msm_fb_data_type *mfd,
 
 	mutex_lock(&mdp3_session->lock);
 
-	if (mdss_fb_is_power_on(mfd))
+	if (mfd->panel_power_on)
 		rc = mdp3_overlay_queue_buffer(mfd, req);
 	else
 		rc = -EPERM;
@@ -1066,8 +1109,12 @@ static int mdp3_ctrl_display_commit_kickoff(struct msm_fb_data_type *mfd,
 	}
 
 	mdp3_session->vsync_before_commit = 0;
-	if (reset_done && (panel && panel->set_backlight))
+	if (reset_done && (panel && panel->set_backlight)) {
+#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT) || defined(CONFIG_MACH_MSM8X10_L70P)
+		msleep(1);
+#endif
 		panel->set_backlight(panel, panel->panel_info.bl_max);
+	}
 
 	mutex_unlock(&mdp3_session->lock);
 
@@ -1085,6 +1132,11 @@ static void mdp3_ctrl_pan_display(struct msm_fb_data_type *mfd)
 	struct mdss_panel_info *panel_info;
 	int rc;
 
+#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT) || defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+	bool reset_done = false;
+	struct mdss_panel_data *panel;
+#endif
+
 	pr_debug("mdp3_ctrl_pan_display\n");
 	if (!mfd || !mfd->mdp.private1)
 		return;
@@ -1094,12 +1146,18 @@ static void mdp3_ctrl_pan_display(struct msm_fb_data_type *mfd)
 	if (!mdp3_session || !mdp3_session->dma)
 		return;
 
+#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT) || defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+	panel = mdp3_session->panel;
+#endif
 	if (mdp3_session->in_splash_screen) {
 		pr_debug("continuous splash screen, IOMMU not attached\n");
 		rc = mdp3_ctrl_reset(mfd);
 		if (rc) {
 			pr_err("fail to reset display\n");
 			return;
+#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT) || defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+		reset_done = true;
+#endif
 		}
 	}
 
@@ -1155,6 +1213,12 @@ static void mdp3_ctrl_pan_display(struct msm_fb_data_type *mfd)
 		msleep(1000 / panel_info->mipi.frame_rate);
 		mdp3_session->first_commit = false;
 	}
+
+#if defined(CONFIG_FB_MSM_MIPI_TIANMA_CMD_HVGA_PT) || defined(CONFIG_MACH_MSM8X10_W5) || defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+	if (reset_done && (panel && panel->set_backlight)) {
+		panel->set_backlight(panel, panel->panel_info.bl_max);
+    }
+#endif
 
 	mdp3_session->vsync_before_commit = 0;
 

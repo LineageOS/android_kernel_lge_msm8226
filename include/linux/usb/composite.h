@@ -145,6 +145,9 @@ struct usb_function {
 	int			(*get_status)(struct usb_function *);
 	int			(*func_suspend)(struct usb_function *,
 						u8 suspend_opt);
+#ifdef CONFIG_USB_G_LGE_MULTIPLE_CONFIGURATION
+	int			(*desc_change)(struct usb_function *, bool is_mac);
+#endif
 	/* private: */
 	/* internals */
 	struct list_head		list;

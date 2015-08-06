@@ -26,7 +26,11 @@
 #include "mdss_fb.h"
 
 #define MDP_VSYNC_CLK_RATE	19200000
+#if defined(CONFIG_MACH_MSM8X10_L70P)
+#define MDP_CORE_CLK_RATE	200000000
+#else
 #define MDP_CORE_CLK_RATE	100000000
+#endif
 #define KOFF_TIMEOUT msecs_to_jiffies(84)
 
 enum  {
