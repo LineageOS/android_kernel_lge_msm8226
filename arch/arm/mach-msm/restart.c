@@ -332,6 +332,8 @@ static void msm_restart_prepare(const char *cmd)
         } else if (!strncmp(cmd, "LCD off", 7)) {
             __raw_writel(0x77665560, restart_reason);
 #endif
+		} else if (!strncmp(cmd, "laf", 14)) {
+			__raw_writel(0x6C616664, restart_reason);
 		} else if (!strcmp(cmd, "rtc")) {
 			__raw_writel(0x77665503, restart_reason);
 		} else if (!strncmp(cmd, "oem-", 4)) {
