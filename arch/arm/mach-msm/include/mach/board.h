@@ -189,8 +189,7 @@ struct msm_gpio_set_tbl {
 };
 
 struct msm_camera_gpio_num_info {
-	uint16_t gpio_num[11]; //hyungtae.lee@lge.com, 2014-04-21 : must check the SENSOR_GPIO_MAX in msm_cam_sensor.h
-	uint8_t valid[10];
+	uint16_t gpio_num[7];
 };
 
 struct msm_camera_gpio_conf {
@@ -291,6 +290,7 @@ struct msm_camera_board_info {
 };
 
 int msm_get_cam_resources(struct msm_camera_sensor_info *);
+
 
 struct clk_lookup;
 

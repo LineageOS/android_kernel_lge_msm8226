@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -188,6 +188,7 @@ static void msm_isp_unprepare_v4l2_buf(
 					mapped_info->handle,
 					buf_mgr->iommu_domain_num, 0);
 				ion_free(buf_mgr->client, mapped_info->handle);
+
 				list_del_init(&buf_pending->list);
 				kfree(buf_pending);
 				break;
@@ -308,9 +309,11 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 	struct msm_isp_buffer *temp_buf_info;
 	struct msm_isp_bufq *bufq = NULL;
 	struct vb2_buffer *vb2_buf = NULL;
+/* LGE_CHANGE_S, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582, [STARTS HERE] */
 	struct buffer_cmd *buf_pending = NULL;
 	struct msm_isp_buffer_mapped_info *mped_info_tmp1;
 	struct msm_isp_buffer_mapped_info *mped_info_tmp2;
+/* LGE_CHANGE_E, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582,  [ENDS HERE] */
 	bufq = msm_isp_get_bufq(buf_mgr, bufq_handle);
 	if (!bufq) {
 		pr_err("%s: Invalid bufq\n", __func__);
@@ -350,6 +353,12 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 		list_for_each_entry(temp_buf_info, &bufq->head, list) {
 			if (temp_buf_info->state ==
 					MSM_ISP_BUFFER_STATE_QUEUED) {
+/* LGE_CHANGE_S, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582, [STARTS HERE] */
+#if 0 //QCT original
+				/* found one buf */
+				list_del_init(&temp_buf_info->list);
+				*buf_info = temp_buf_info;
+#else
 
 				list_for_each_entry(buf_pending, &buf_mgr->buffer_q, list) {
 					if (!buf_pending)
@@ -366,6 +375,8 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 						break;
 					}
 				}
+#endif
+/* LGE_CHANGE_E, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582,  [ENDS HERE] */
 				break;
 			}
 		}
@@ -374,7 +385,12 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 			bufq->session_id, bufq->stream_id);
 		if (vb2_buf) {
 			if (vb2_buf->v4l2_buf.index < bufq->num_bufs) {
-
+/* LGE_CHANGE_S, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582, [STARTS HERE] */
+#if 0 //QCT Original
+				*buf_info =
+					&bufq->bufs[vb2_buf->v4l2_buf.index];
+				(*buf_info)->vb2_buf = vb2_buf;
+#else
 				list_for_each_entry(buf_pending, &buf_mgr->buffer_q, list) {
 					if (!buf_pending)
 						break;
@@ -390,6 +406,8 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 						break;
 					}
 				}
+#endif
+/* LGE_CHANGE_E, jaehan.jeong, 2014.1.15, check buffer validity in isp buf mgr, CN#01398582,  [ENDS HERE] */
 			} else {
 				pr_err("%s: Incorrect buf index %d\n",
 					__func__, vb2_buf->v4l2_buf.index);
@@ -402,14 +420,11 @@ static int msm_isp_get_buf(struct msm_isp_buf_mgr *buf_mgr, uint32_t id,
 		if (bufq->buf_type == ISP_SHARE_BUF) {
 			temp_buf_info = kzalloc(
 			   sizeof(struct msm_isp_buffer), GFP_ATOMIC);
-			if (temp_buf_info) {
-				temp_buf_info->buf_reuse_flag = 1;
-				temp_buf_info->buf_used[id] = 1;
-				temp_buf_info->buf_get_count = 1;
-				list_add_tail(&temp_buf_info->share_list,
-							  &bufq->share_head);
-			} else
-				rc = -ENOMEM;
+			temp_buf_info->buf_reuse_flag = 1;
+			temp_buf_info->buf_used[id] = 1;
+			temp_buf_info->buf_get_count = 1;
+			list_add_tail(&temp_buf_info->share_list,
+						  &bufq->share_head);
 		}
 	} else {
 		(*buf_info)->state = MSM_ISP_BUFFER_STATE_DEQUEUED;
@@ -675,7 +690,7 @@ static int msm_isp_request_bufq(struct msm_isp_buf_mgr *buf_mgr,
 	struct msm_isp_bufq *bufq = NULL;
 	CDBG("%s: E\n", __func__);
 
-	if (!buf_request->num_buf || buf_request->num_buf > VIDEO_MAX_FRAME) {
+	if (!buf_request->num_buf) {
 		pr_err("Invalid buffer request\n");
 		return rc;
 	}

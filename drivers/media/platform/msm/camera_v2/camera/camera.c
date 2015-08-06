@@ -64,13 +64,9 @@ static int camera_check_event_status(struct v4l2_event *event)
 	struct msm_v4l2_event_data *event_data =
 		(struct msm_v4l2_event_data *)&event->u.data[0];
 
-	if (event_data->status > MSM_CAMERA_ERR_EVT_BASE) {
-		pr_err("%s : event_data status out of bounds\n",
-				__func__);
-		pr_err("%s : Line %d event_data->status 0X%x\n",
-				__func__, __LINE__, event_data->status);
+	if (event_data->status > MSM_CAMERA_ERR_EVT_BASE)
 		return -EFAULT;
-	}
+
 	return 0;
 }
 
@@ -85,12 +81,8 @@ static int camera_v4l2_querycap(struct file *filep, void *fh,
 		MSM_CAMERA_PRIV_QUERY_CAP, -1, &event);
 
 	rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-	if (rc < 0){
-		pr_err("%s:%d camera_v4l2_querycap failed\n", __func__, __LINE__);
+	if (rc < 0)
 		return rc;
-	}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 	rc = camera_check_event_status(&event);
 
@@ -109,12 +101,8 @@ static int camera_v4l2_s_crop(struct file *filep, void *fh,
 			MSM_CAMERA_PRIV_S_CROP, -1, &event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0){
-			pr_err("%s:%d camera_v4l2_s_crop failed\n", __func__, __LINE__);
+		if (rc < 0)
 			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 		rc = camera_check_event_status(&event);
 	}
@@ -133,12 +121,8 @@ static int camera_v4l2_g_crop(struct file *filep, void *fh,
 			MSM_CAMERA_PRIV_G_CROP, -1, &event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0){
-			pr_err("%s:%d camera_v4l2_g_crop failed\n", __func__, __LINE__);
+		if (rc < 0)
 			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 		rc = camera_check_event_status(&event);
 	}
@@ -158,12 +142,8 @@ static int camera_v4l2_queryctrl(struct file *filep, void *fh,
 			ctrl->id, -1, &event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0){
-			pr_err("%s:%d camera_v4l2_queryctrl failed\n", __func__, __LINE__);
+		if (rc < 0)
 			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 		rc = camera_check_event_status(&event);
 	}
@@ -182,12 +162,8 @@ static int camera_v4l2_g_ctrl(struct file *filep, void *fh,
 			&event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0){
-			pr_err("%s:%d camera_v4l2_g_ctrl failed\n", __func__, __LINE__);
+		if (rc < 0)
 			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 		rc = camera_check_event_status(&event);
 	}
@@ -206,12 +182,8 @@ static int camera_v4l2_s_ctrl(struct file *filep, void *fh,
 		ctrl->value, &event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0){
-			pr_err("%s:%d camera_v4l2_s_ctrl failed\n", __func__, __LINE__);
+		if (rc < 0)
 			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 		event_data = (struct msm_v4l2_event_data *)event.u.data;
 		ctrl->value = event_data->ret_value;
 		rc = camera_check_event_status(&event);
@@ -289,12 +261,8 @@ static int camera_v4l2_streamon(struct file *filep, void *fh,
 		MSM_CAMERA_PRIV_STREAM_ON, -1, &event);
 
 	rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-	if (rc < 0){
-		pr_err("%s:%d camera_v4l2_streamon failed\n", __func__, __LINE__);
+	if (rc < 0)
 		return rc;
-	}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 	rc = camera_check_event_status(&event);
 	return rc;
@@ -311,12 +279,8 @@ static int camera_v4l2_streamoff(struct file *filep, void *fh,
 		MSM_CAMERA_PRIV_STREAM_OFF, -1, &event);
 
 	rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-	if (rc < 0){
-		pr_err("%s:%d camera_v4l2_streamoff failed\n", __func__, __LINE__);
+	if (rc < 0)
 		return rc;
-	}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 	rc = camera_check_event_status(&event);
 	vb2_streamoff(&sp->vb2_q, buf_type);
@@ -335,12 +299,8 @@ static int camera_v4l2_g_fmt_vid_cap_mplane(struct file *filep, void *fh,
 			MSM_CAMERA_PRIV_G_FMT, -1, &event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0){
-			pr_err("%s:%d camera_v4l2_g_fmt_vid_cap_mplane failed\n", __func__, __LINE__);
+		if (rc < 0)
 			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 		rc = camera_check_event_status(&event);
 	}
@@ -380,22 +340,21 @@ static int camera_v4l2_s_fmt_vid_cap_mplane(struct file *filep, void *fh,
 			MSM_CAMERA_PRIV_S_FMT, -1, &event);
 
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		if (rc < 0) {
-			pr_err("%s:%d camera_v4l2_s_fmt_vid_cap_mplane failed\n", __func__, __LINE__);
-			return rc;
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
+		if (rc < 0)
+			goto set_fmt_fail;
 
 		rc = camera_check_event_status(&event);
 		if (rc < 0)
-			return rc;
-
+			goto set_fmt_fail;
 		sp->is_vb2_valid = 1;
 	}
 
 	return rc;
 
+set_fmt_fail:
+	kzfree(sp->vb2_q.drv_priv);
+	sp->vb2_q.drv_priv = NULL;
+	return rc;
 }
 
 static int camera_v4l2_try_fmt_vid_cap_mplane(struct file *filep, void *fh,
@@ -430,12 +389,8 @@ static int camera_v4l2_s_parm(struct file *filep, void *fh,
 		return rc;
 
 	rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-	if (rc < 0){
-		pr_err("%s:%d camera_v4l2_s_parm failed\n", __func__, __LINE__);
+	if (rc < 0)
 		goto error;
-	}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 
 	rc = camera_check_event_status(&event);
 	if (rc < 0)
@@ -506,11 +461,9 @@ static int camera_v4l2_fh_open(struct file *filep)
 	struct camera_v4l2_private *sp;
 
 	sp = kzalloc(sizeof(*sp), GFP_KERNEL);
-
-	if (!sp) {
-		pr_err("%s : memory not available\n", __func__);
+	if (!sp)
 		return -ENOMEM;
-	}
+
 	filep->private_data = &sp->fh;
 
 	/* stream_id = open id */
@@ -545,10 +498,9 @@ static int camera_v4l2_vb2_q_init(struct file *filep)
 	/* free up this buffer when stream is done */
 	q->drv_priv =
 		kzalloc(sizeof(struct msm_v4l2_format_data), GFP_KERNEL);
-	if (!q->drv_priv) {
-		pr_err("%s : memory not available\n", __func__);
+	if (!q->drv_priv)
 		return -ENOMEM;
-	}
+
 	q->mem_ops = msm_vb2_get_q_mem_ops();
 	q->ops = msm_vb2_get_q_ops();
 
@@ -578,60 +530,38 @@ static int camera_v4l2_open(struct file *filep)
 	BUG_ON(!pvdev);
 
 	rc = camera_v4l2_fh_open(filep);
-
-	if (rc < 0) {
-		pr_err("%s : camera_v4l2_fh_open failed Line %d rc %d\n",
-				__func__, __LINE__, rc);
+	if (rc < 0)
 		goto fh_open_fail;
-	}
+
 	/* every stream has a vb2 queue */
 	rc = camera_v4l2_vb2_q_init(filep);
-
-	if (rc < 0) {
-		pr_err("%s : vb2 queue init fails Line %d rc %d\n",
-				__func__, __LINE__, rc);
+	if (rc < 0)
 		goto vb2_q_fail;
-	}
+
 	if (!atomic_read(&pvdev->opened)) {
 		pm_stay_awake(&pvdev->vdev->dev);
 
 		/* create a new session when first opened */
 		rc = msm_create_session(pvdev->vdev->num, pvdev->vdev);
-		if (rc < 0) {
-			pr_err("%s : session creation failed Line %d rc %d\n",
-					__func__, __LINE__, rc);
+		if (rc < 0)
 			goto session_fail;
-		}
 		rc = msm_create_command_ack_q(pvdev->vdev->num, 0);
-
-		if (rc < 0) {
-			pr_err("%s : creation of command_ack queue failed\n",
-					__func__);
-			pr_err("%s : Line %d rc %d\n", __func__, __LINE__, rc);
+		if (rc < 0)
 			goto command_ack_q_fail;
-		}
+
 		camera_pack_event(filep, MSM_CAMERA_NEW_SESSION, 0, -1, &event);
 		rc = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-		if (rc < 0) {
-			pr_err("%s : posting of NEW_SESSION event failed\n",
-					__func__);
-			pr_err("%s : Line %d rc %d\n", __func__, __LINE__, rc);
+		if (rc < 0)
 			goto post_fail;
-		}
+
 		rc = camera_check_event_status(&event);
-		if (rc < 0) {
-			pr_err("%s : checking event status fails Line %d rc %d\n",
-					__func__, __LINE__, rc);
+		if (rc < 0)
 			goto post_fail;
-		}
 	} else {
 		rc = msm_create_command_ack_q(pvdev->vdev->num,
 			atomic_read(&pvdev->stream_cnt));
-		if (rc < 0) {
-			pr_err("%s : creation of command_ack queue failed Line %d rc %d\n",
-					__func__, __LINE__, rc);
+		if (rc < 0)
 			goto session_fail;
-		}
 	}
 
 	atomic_add(1, &pvdev->opened);
@@ -669,9 +599,6 @@ static unsigned int camera_v4l2_poll(struct file *filep,
 static int camera_v4l2_close(struct file *filep)
 {
 	int rc = 0;
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-	int ret = 0;
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
 	struct v4l2_event event;
 	struct msm_video_device *pvdev = video_drvdata(filep);
 	struct camera_v4l2_private *sp = fh_to_private(filep->private_data);
@@ -685,12 +612,7 @@ static int camera_v4l2_close(struct file *filep)
 			MSM_CAMERA_PRIV_DEL_STREAM, -1, &event);
 
 		/* Donot wait, imaging server may have crashed */
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		ret = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-		if(ret < 0){
-			pr_err("%s:%d camera_v4l2_close_1 failed\n", __func__, __LINE__);
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
+		msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
 
 		camera_pack_event(filep, MSM_CAMERA_DEL_SESSION, 0, -1, &event);
 
@@ -709,12 +631,7 @@ static int camera_v4l2_close(struct file *filep)
 			MSM_CAMERA_PRIV_DEL_STREAM, -1, &event);
 
 		/* Donot wait, imaging server may have crashed */
-/* LGE_CHANGE_S [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
-		ret = msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
-		if(ret < 0){
-			pr_err("%s:%d camera_v4l2_close_2 failed\n", __func__, __LINE__);
-		}
-/* LGE_CHANGE_E [20130624][youngbae.choi@lge.com] to know the post timeout reason clearly */
+		msm_post_event(&event, MSM_POST_EVT_TIMEOUT);
 		msm_delete_command_ack_q(pvdev->vdev->num,
 			sp->stream_id);
 
@@ -727,22 +644,12 @@ static int camera_v4l2_close(struct file *filep)
 	return rc;
 }
 
-#ifdef CONFIG_COMPAT
-long camera_v4l2_compat_ioctl(struct file *file, unsigned int cmd,
-	unsigned long arg)
-{
-	return -ENOIOCTLCMD;
-}
-#endif
 static struct v4l2_file_operations camera_v4l2_fops = {
 	.owner   = THIS_MODULE,
 	.open	= camera_v4l2_open,
 	.poll	= camera_v4l2_poll,
 	.release = camera_v4l2_close,
 	.ioctl   = video_ioctl2,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl32 = camera_v4l2_compat_ioctl,
-#endif
 };
 
 int camera_init_v4l2(struct device *dev, unsigned int *session)

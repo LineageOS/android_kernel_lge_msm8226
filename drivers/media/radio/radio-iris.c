@@ -1645,7 +1645,7 @@ static int hci_fm_set_cal_req_proc(struct radio_hci_dev *hdev,
 	opcode = hci_opcode_pack(HCI_OGF_FM_COMMON_CTRL_CMD_REQ,
 		HCI_OCF_FM_SET_CALIBRATION);
 	return radio_hci_send_cmd(hdev, opcode,
-		sizeof(struct hci_fm_set_cal_req_proc), cal_req);
+		sizeof(hci_fm_set_cal_req_proc), cal_req);
 }
 
 static int hci_fm_do_cal_req(struct radio_hci_dev *hdev,
@@ -1892,6 +1892,13 @@ static void hci_cc_fm_enable_rsp(struct radio_hci_dev *hdev,
 		return;
 	}
 
+	if (radio->mode == FM_RECV_TURNING_ON) {
+		radio->mode = FM_RECV;
+		iris_q_event(radio, IRIS_EVT_RADIO_READY);
+	} else if (radio->mode == FM_TRANS_TURNING_ON) {
+		radio->mode = FM_TRANS;
+		iris_q_event(radio, IRIS_EVT_RADIO_READY);
+	}
 	radio_hci_req_complete(hdev, rsp->status);
 }
 
@@ -3721,6 +3728,7 @@ static int iris_vidioc_s_ctrl(struct file *file, void *priv,
 		}
 		saved_val = radio->mute_mode.hard_mute;
 		radio->mute_mode.hard_mute = ctrl->value;
+		radio->mute_mode.soft_mute = IOC_SFT_MUTE;
 		retval = hci_set_fm_mute_mode(
 				&radio->mute_mode,
 				radio->fm_hdev);
@@ -3769,19 +3777,7 @@ static int iris_vidioc_s_ctrl(struct file *file, void *priv,
 				radio->mode = FM_OFF;
 				goto END;
 			} else {
-				retval = initialise_recv(radio);
-				if (retval < 0) {
-					FMDERR("Error while initialising"\
-						"radio %d\n", retval);
-					hci_cmd(HCI_FM_DISABLE_RECV_CMD,
-							radio->fm_hdev);
-					radio->mode = FM_OFF;
-					goto END;
-				}
-			}
-			if (radio->mode == FM_RECV_TURNING_ON) {
-				radio->mode = FM_RECV;
-				iris_q_event(radio, IRIS_EVT_RADIO_READY);
+				initialise_recv(radio);
 			}
 			break;
 		case FM_TRANS:
@@ -3798,19 +3794,7 @@ static int iris_vidioc_s_ctrl(struct file *file, void *priv,
 				radio->mode = FM_OFF;
 				goto END;
 			} else {
-				retval = initialise_trans(radio);
-				if (retval < 0) {
-					FMDERR("Error while initialising"\
-							"radio %d\n", retval);
-					hci_cmd(HCI_FM_DISABLE_TRANS_CMD,
-								radio->fm_hdev);
-					radio->mode = FM_OFF;
-					goto END;
-				}
-			}
-			if (radio->mode == FM_TRANS_TURNING_ON) {
-				radio->mode = FM_TRANS;
-				iris_q_event(radio, IRIS_EVT_RADIO_READY);
+				initialise_trans(radio);
 			}
 			break;
 		case FM_OFF:
@@ -5092,10 +5076,26 @@ static const struct v4l2_ioctl_ops iris_ioctl_ops = {
 	.vidioc_g_ext_ctrls           = iris_vidioc_g_ext_ctrls,
 };
 
+static int is_initialized = 0;
+static int video_open(struct file *file) {
+	int retval;
+	if(!is_initialized) {
+		retval = hci_fm_smd_register();
+		if (retval) {
+			FMDERR(": hci_fm_smd_register failed\n");
+			return retval;
+		}
+		is_initialized = 1;
+	}
+
+	return 0;
+}
+
 static const struct v4l2_file_operations iris_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = video_ioctl2,
 	.release        = iris_fops_release,
+	.open = video_open,
 };
 
 static struct video_device iris_viddev_template = {
@@ -5215,6 +5215,9 @@ static int __devexit iris_remove(struct platform_device *pdev)
 		FMDERR(":radio is null");
 		return -EINVAL;
 	}
+
+	hci_fm_smd_deregister();
+
 	video_unregister_device(radio->videodev);
 
 	for (i = 0; i < IRIS_BUF_MAX; i++)
