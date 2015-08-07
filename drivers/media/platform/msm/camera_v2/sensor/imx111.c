@@ -260,7 +260,7 @@ static int __init imx111_init_module(void)
 			imx111_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx111_power_setting_rev_0);
 			break;
 		case HW_REV_A:
-#if defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM)
+#if defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM)
 			printk("%s: Sensor power is set as Rev. %d\n", __func__,rev_type);
 			imx111_s_ctrl.power_setting_array.power_setting = imx111_power_setting_rev_a;
 			imx111_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx111_power_setting_rev_a);

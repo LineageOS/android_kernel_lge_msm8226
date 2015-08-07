@@ -3,6 +3,18 @@
 
 #include "msm_sensor.h"
 
+static struct msm_camera_i2c_reg_conf hi351_start_settings_in_case_of_init[] = {
+	{ 0x03, 0x00},
+	{ 0x01, 0xf0},
+	{ 0x0C, 0xf0},
+
+	{ 0x03, 0xcf}, //Adaptive On
+	{ 0x10, 0xaf},
+	{ 0x03, 0xc0},
+	{ 0x33, 0x00},
+	{ 0x32, 0x01}, //DMA On
+};
+
 static struct msm_camera_i2c_reg_conf hi351_start_settings[] = {
 	{ 0x03, 0x00},
 	{ 0x01, 0xf0},
@@ -15,23 +27,361 @@ static struct msm_camera_i2c_reg_conf hi351_start_settings[] = {
 //	{ 0x32, 0x01}, //DMA On
 };
 
+
 static struct msm_camera_i2c_reg_conf hi351_stop_settings[] = {
 	{ 0x03, 0x00},
 //	{ 0x01, 0xf1},
 	{ 0x0C, 0xf1},
 };
 
-/* LGE_CHANGE_E, Kernel Driver Modifying on MR2 for turning off, youngwook.song@lge.com, 2013.08.29 */
-/*static struct msm_camera_i2c_reg_conf hi351_sleep_settings[] = {
-	{0x03, 0x00},
-	{0x01, 0xf1},
-	{0x03, 0x02},
-	{0x55, 0x10},
-	{0x01, 0xf1},
-	{0x01, 0xf3},
-	{0x01, 0xf1},
-};*/
-/* LGE_CHANGE_E, Kernel Driver Modifying on MR2 for turning off, youngwook.song@lge.com, 2013.08.29 */
+static struct msm_camera_i2c_reg_conf hi351_prev_settings_in_case_of_init[2][144] = {
+	{//60hz
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 0	//Flicker 50Hz
+		{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE OFF   (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA}, //flicker_60hz
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},	//Metering - Center
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1411
+		{0xb3, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1412
+		{0xb5, 0x40, MSM_CAMERA_I2C_BYTE_DATA}, //Top H_Clip
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1413
+		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
+		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
+		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
+		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
+		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
+		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
+		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
+		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Scaler Setting
+		{0x10, 0x87, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_WIDTH_H
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_WIDTH_L
+		{0x22, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_HEIGHT_H
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_HEIGHT_L
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STX_H
+		{0x25, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STX_L 	 STEVE00 value changed : 0x03 -) 0x01
+		{0x26, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STY_H
+		{0x27, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STY_L
+		{0x28, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENX_H
+		{0x29, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENX_L 	 STEVE00 value changed : 0x83 -) 0x81
+		{0x2a, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENY_H
+		{0x2b, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENY_L
+		{0x2c, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_VER_STEP_H
+		{0x2d, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_VER_STEP_L
+		{0x2e, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_HOR_STEP_H
+		{0x2f, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_HOR_STEP_L
+		{0x30, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_FIFO_DELAY
+		{0x30, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_FIFO_DELAY
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Sub1/2 + Pre2
+		{0x13, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //Fix AE Set Off
+		{0x14, 0x70, MSM_CAMERA_I2C_BYTE_DATA}, // for Pre2mode
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x0A, MSM_CAMERA_I2C_BYTE_DATA}, //Delay STEVE DV2 MUST WAIT 10msec
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x21, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //preview row start set.
+		{0x03, 0x15, MSM_CAMERA_I2C_BYTE_DATA},  //Shading
+		{0x10, 0x81, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x04, MSM_CAMERA_I2C_BYTE_DATA},  //Shading Width 1024 (pre2)
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x03, MSM_CAMERA_I2C_BYTE_DATA},  //Shading Height 768
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On	 //	{0x16, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE Non First Vsync
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //640 * 2
+		{0x31, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE for 1024x768 5-)8
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //Preview set
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+		{0x03, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xf0, 0x0d, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE Dark mode for Sawtooth
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA}, //AE Static en
+		{0x10, 0x84, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE en
+#if 0	//Flicker 50Hz
+		{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+		{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#endif
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},	//f
+//		{0x0c, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On ~f
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+	//50hz
+	{
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 1	//Flicker 50Hz
+		{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE OFF   (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},		//Metering - Center
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1411
+		{0xb3, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1412
+		{0xb5, 0x40, MSM_CAMERA_I2C_BYTE_DATA}, //Top H_Clip
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1413
+		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
+		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
+		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
+		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
+		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
+		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
+		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
+		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Scaler Setting
+		{0x10, 0x87, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_WIDTH_H
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_WIDTH_L
+		{0x22, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_HEIGHT_H
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_DST_HEIGHT_L
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STX_H
+		{0x25, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STX_L 	 STEVE00 value changed : 0x03 -) 0x01
+		{0x26, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STY_H
+		{0x27, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_STY_L
+		{0x28, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENX_H
+		{0x29, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENX_L 	 STEVE00 value changed : 0x83 -) 0x81
+		{0x2a, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENY_H
+		{0x2b, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_WIN_ENY_L
+		{0x2c, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_VER_STEP_H
+		{0x2d, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_VER_STEP_L
+		{0x2e, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_HOR_STEP_H
+		{0x2f, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_HOR_STEP_L
+		{0x30, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_FIFO_DELAY
+		{0x30, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //ZOOM_FIFO_DELAY
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Sub1/2 + Pre2
+		{0x13, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //Fix AE Set Off
+		{0x14, 0x70, MSM_CAMERA_I2C_BYTE_DATA}, // for Pre2mode
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x0A, MSM_CAMERA_I2C_BYTE_DATA}, //Delay STEVE DV2 MUST WAIT 10msec
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x21, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //preview row start set.
+		{0x03, 0x15, MSM_CAMERA_I2C_BYTE_DATA},  //Shading
+		{0x10, 0x81, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x04, MSM_CAMERA_I2C_BYTE_DATA},  //Shading Width 1024 (pre2)
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x03, MSM_CAMERA_I2C_BYTE_DATA},  //Shading Height 768
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On 	//	{0x16, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE Non First Vsync
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //640 * 2
+		{0x31, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE for 1024x768 5-)8
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //Preview set
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+		{0x03, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xf0, 0x0d, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE Dark mode for Sawtooth
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA}, //AE Static en
+		{0x10, 0x84, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE en
+#if 1	//Flicker 50Hz
+	{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+	{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+	//f
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x0c, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+		//~f
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	}
+};
 
 static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 	{//60hz
@@ -109,7 +459,7 @@ static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters 
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
 		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
 		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
@@ -122,15 +472,15 @@ static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
 		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi 
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
 		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi 
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
 		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
 		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi 
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
 		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi 
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
 		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
 		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
@@ -280,7 +630,7 @@ static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters 
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
 		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
 		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
@@ -293,15 +643,15 @@ static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
 		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi 
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
 		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi 
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
 		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
 		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi 
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
 		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
-		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi 
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
 		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
 		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
@@ -360,7 +710,7 @@ static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 #else
 	{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA},
 #endif
-	
+
 		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xFE, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
 
@@ -382,6 +732,7 @@ static struct msm_camera_i2c_reg_conf hi351_prev_settings[2][160] = {
 		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
 	}
 };
+
 
 static struct msm_camera_i2c_reg_conf hi351_snap_settings[2][61] = {
 	//60hz
@@ -477,8 +828,8 @@ static struct msm_camera_i2c_reg_conf hi351_snap_settings[2][61] = {
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 	//	{0x01, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
 		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
-		
-		
+
+
 		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
 		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
 
@@ -621,7 +972,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_wb_auto[] = {
     	{0xaf, 0x81}, //aInRgTgtOfs_a05_n00
     	{0xb0, 0x84}, //aInRgTgtOfs_a06_n00
     	{0xb1, 0x85}, //aInRgTgtOfs_a07_n00
-    
+
     	//AWB target BG angle
     	{0xb2, 0x9e}, //aInBgTgtOfs_a00_n00
     	{0xb3, 0x94}, //aInBgTgtOfs_a01_n00
@@ -637,12 +988,12 @@ static struct msm_camera_i2c_reg_conf hi351_reg_wb_auto[] = {
 		{0x19, 0xf0}, // steve InRgainMax
 		{0x1a, 0x40}, // steve InBgainMin
 		{0x1b, 0x9f}, // steve InBgainMax
-                     
+
     	{0xb9, 0x60}, // steve OutRgainMin
     	{0xba, 0x88}, // steve OutRgainMax
     	{0xbb, 0x4c}, // steve OutBgainMin
     	{0xbc, 0x6c}, // steve OutBgainMax
-	
+
 		{0x03, 0xc5},
 		{0x10, 0xb1},//AWB On
 
@@ -768,17 +1119,17 @@ static struct msm_camera_i2c_reg_conf hi351_reg_wb_office[] = {
     	{0xab, 0x14}, //aInRgTgtOfs_a01_n00
     	{0xac, 0x0a}, //aInRgTgtOfs_a02_n00
     	{0xad, 0x00}, //aInRgTgtOfs_a03_n00
-    	{0xae, 0x00}, //aInRgTgtOfs_a04_n00     
+    	{0xae, 0x00}, //aInRgTgtOfs_a04_n00
     	{0xaf, 0x81}, //aInRgTgtOfs_a05_n00
     	{0xb0, 0x84}, //aInRgTgtOfs_a06_n00
     	{0xb1, 0x85}, //aInRgTgtOfs_a07_n00
-    
+
     	//AWB target BG angle
     	{0xb2, 0x9e}, //aInBgTgtOfs_a00_n00
     	{0xb3, 0x94}, //aInBgTgtOfs_a01_n00
     	{0xb4, 0x8a}, //aInBgTgtOfs_a02_n00
     	{0xb5, 0x00}, //aInBgTgtOfs_a03_n00
-    	{0xb6, 0x00}, //aInBgTgtOfs_a04_n00     
+    	{0xb6, 0x00}, //aInBgTgtOfs_a04_n00
     	{0xb7, 0x01}, //aInBgTgtOfs_a05_n00
     	{0xb8, 0x04}, //aInBgTgtOfs_a06_n00
     	{0xb9, 0x05}, //aInBgTgtOfs_a07_n00
@@ -844,7 +1195,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_wb_sunny[] = {
     	{0xaf, 0x81}, //aInRgTgtOfs_a05_n00
     	{0xb0, 0x84}, //aInRgTgtOfs_a06_n00
     	{0xb1, 0x85}, //aInRgTgtOfs_a07_n00
-    
+
     	//AWB target BG angle
     	{0xb2, 0x9e}, //aInBgTgtOfs_a00_n00
     	{0xb3, 0x94}, //aInBgTgtOfs_a01_n00
@@ -854,7 +1205,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_wb_sunny[] = {
     	{0xb7, 0x01}, //aInBgTgtOfs_a05_n00
     	{0xb8, 0x04}, //aInBgTgtOfs_a06_n00
     	{0xb9, 0x05}, //aInBgTgtOfs_a07_n00
-    	
+
 		{0x03, 0xc6},
 		{0x18, 0x4B},//bInRgainMin_a00_n00
 		{0x19, 0x6A},//bInRgainMax_a00_n00
@@ -910,24 +1261,24 @@ static struct msm_camera_i2c_reg_conf hi351_reg_wb_cloudy[] = {
 		{0x10, 0x30},
 
     	//AWB target RG angle
-    	{0xaa, 0x1e}, //aInRgTgtOfs_a00_n00  
-    	{0xab, 0x14}, //aInRgTgtOfs_a01_n00  
-    	{0xac, 0x0a}, //aInRgTgtOfs_a02_n00  
-    	{0xad, 0x00}, //aInRgTgtOfs_a03_n00  
-    	{0xae, 0x00}, //aInRgTgtOfs_a04_n00  
-    	{0xaf, 0x81}, //aInRgTgtOfs_a05_n00  
-    	{0xb0, 0x84}, //aInRgTgtOfs_a06_n00  
-    	{0xb1, 0x85}, //aInRgTgtOfs_a07_n00  
+    	{0xaa, 0x1e}, //aInRgTgtOfs_a00_n00
+    	{0xab, 0x14}, //aInRgTgtOfs_a01_n00
+    	{0xac, 0x0a}, //aInRgTgtOfs_a02_n00
+    	{0xad, 0x00}, //aInRgTgtOfs_a03_n00
+    	{0xae, 0x00}, //aInRgTgtOfs_a04_n00
+    	{0xaf, 0x81}, //aInRgTgtOfs_a05_n00
+    	{0xb0, 0x84}, //aInRgTgtOfs_a06_n00
+    	{0xb1, 0x85}, //aInRgTgtOfs_a07_n00
 
-    	//AWB target BG angle                
-    	{0xb2, 0x9e}, //aInBgTgtOfs_a00_n00  
-    	{0xb3, 0x94}, //aInBgTgtOfs_a01_n00  
-    	{0xb4, 0x8a}, //aInBgTgtOfs_a02_n00  
-    	{0xb5, 0x00}, //aInBgTgtOfs_a03_n00  
-    	{0xb6, 0x00}, //aInBgTgtOfs_a04_n00  
-    	{0xb7, 0x01}, //aInBgTgtOfs_a05_n00  
-    	{0xb8, 0x04}, //aInBgTgtOfs_a06_n00  
-    	{0xb9, 0x05}, //aInBgTgtOfs_a07_n00  
+    	//AWB target BG angle
+    	{0xb2, 0x9e}, //aInBgTgtOfs_a00_n00
+    	{0xb3, 0x94}, //aInBgTgtOfs_a01_n00
+    	{0xb4, 0x8a}, //aInBgTgtOfs_a02_n00
+    	{0xb5, 0x00}, //aInBgTgtOfs_a03_n00
+    	{0xb6, 0x00}, //aInBgTgtOfs_a04_n00
+    	{0xb7, 0x01}, //aInBgTgtOfs_a05_n00
+    	{0xb8, 0x04}, //aInBgTgtOfs_a06_n00
+    	{0xb9, 0x05}, //aInBgTgtOfs_a07_n00
 
 		{0x03, 0xc6},
 		{0x18, 0x75},//bInRgainMin_a00_n00
@@ -1002,6 +1353,1699 @@ static struct msm_camera_i2c_reg_conf hi351_reg_iso[][2] = {
 		{0x10, 0x36}, // ISO 3 control
 	},   /*ISO_400*/
 
+};
+
+static struct msm_camera_i2c_reg_conf hi351_720p_settings[2][250] = {
+//60hz
+	{
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x64, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 100ms
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+		
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA}, //AE Off//
+		
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //AE weight off
+		
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off//
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x14, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //zoom off
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0x25, MSM_CAMERA_I2C_BYTE_DATA}, //24/(5+1)=4Mhz
+		{0x08, 0x56, MSM_CAMERA_I2C_BYTE_DATA}, //86Mhz
+		{0x09, 0x82, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x09, 0xa2, MSM_CAMERA_I2C_BYTE_DATA}, //clock divider enable
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x0b, MSM_CAMERA_I2C_BYTE_DATA}, //MCU 1/4
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // Full
+		{0x12, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, // pixel windowing on
+		{0xc3, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // normal mode -> 0xa0, 720p mode -> 0x00
+		
+		//Windowing setting
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_h
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_l
+		{0x22, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h
+		{0x23, 0x88, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h // normal:0x0188 / xflip:0x00F0 (xflip on/off에 따라 다르게 set 해야 함)
+		
+		{0x24, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_h //720
+		{0x25, 0xd0, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_l
+		{0x26, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h //1280
+		{0x27, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h
+		
+		//Bayer windowing setting
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // 추가 필요
+		{0x30, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //01 pxl_row_start_h (1568-720)/2+1
+		{0x31, 0xa9, MSM_CAMERA_I2C_BYTE_DATA}, //98 pxl_row_start_l
+		{0x32, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_h //=row start when Y flip
+		{0x33, 0x89, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_l
+		{0x34, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_h
+		{0x35, 0xE0, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_l
+		
+		//Sync setting
+		{0x50, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Hblank
+		{0x51, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x52, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Vblank
+		{0x53, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x17, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync clipping on
+		{0x54, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync elapse line = 12 line
+		
+		//Test windowing setting
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2b, 0x26, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2c, 0xe0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2d, 0xE0, MSM_CAMERA_I2C_BYTE_DATA}, // 8'h90 set(?) => 0xE0 _ywpark99 ==> 1760(16'h6e0, + 20(HB) + 70(PXL_MARGIN) ==> 1850))
+		{0x38, 0x46, MSM_CAMERA_I2C_BYTE_DATA}, // change pixel margin (70)
+		
+		{0x03, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xf0, 0x0d, MSM_CAMERA_I2C_BYTE_DATA}, //LPF status: only Dark2 mode
+		
+		//Shading setting
+		{0x03, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Shading
+		{0x10, 0x81, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Width 2048
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Height 1536
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_h
+		{0x31, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_l
+		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_h //408
+		{0x33, 0x98, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_l
+		
+		//SSD block setting
+		{0x03, 0x1F, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0xFE, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start X _ywpark99
+		{0x21, 0x0C, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start Y
+		{0x22, 0x5C, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block width(RGB channel) _ywpark99
+		{0x23, 0x4A, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block height(RGB, Y common) //Full size는 2의 배수, //Pre2는 4의 배수
+		{0x3C, 0x5C, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block widith(YC channel) => 0x1F22번지와 동일하게 설정해 줘야함. _ywpark99
+		
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On
+		{0x16, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE	EOT - SOT - payload
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //1280 * 2
+		{0x31, 0x0a, MSM_CAMERA_I2C_BYTE_DATA},
+		//=====================================================
+		{0x36, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x37, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x34, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare 50ns
+		{0x32, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare + zero 300ns
+		{0x35, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, // clk trail 68ns
+		{0x38, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // clk post 158ns
+		
+		{0x1c, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, // clk pre 16ns
+		{0x1d, 0x0e, MSM_CAMERA_I2C_BYTE_DATA}, // ths lp01 57ns
+		{0x1e, 0x0b, MSM_CAMERA_I2C_BYTE_DATA}, // ths prepare 54ns + zero 126ns
+		{0x1f, 0x07, MSM_CAMERA_I2C_BYTE_DATA}, // ths trail 89ns
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//=====================================================
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+		
+		//50
+		//{0x24, 0x00}, //EXP Max 24fps//
+		//{0x25, 0x1a},
+		//{0x26, 0x2f},
+		//{0x27, 0x20},
+		
+		//60
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24fps//
+		{0x25, 0x1b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0xf0, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin
+		{0x29, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x2a, 0x98, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		{0x30, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x8b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x33, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x70, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit 
+		{0x37, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x38, 0x98, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		//{0x3c, 0x00}, //EXP Fix 30.0 fps//
+		//{0x3d, 0x15},
+		//{0x3e, 0xD5}, 
+		
+		{0x3f, 0x3A, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x40, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP 10000
+		{0x41, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x42, 0x8b, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		//Metering - Matrix
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 10fps, AG 0xA0
+		{0x14, 0xB0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, // dark2
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb3, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb7, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb9, 0x3c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbb, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbd, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbf, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc1, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc3, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc5, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x19, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //band1 gain
+		{0x1e, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band1 min exposure time 1/33.33s
+		{0x1f, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x21, 0x58, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1a, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //band2 gain
+		{0x22, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band2 min exposure time 1/20s
+		{0x23, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0xba, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x25, 0xe8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1b, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //band3 gain
+		{0x26, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band3 min exposure time  1/12.5s
+		{0x27, 0x34, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x28, 0x5e, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x29, 0x40, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x13, 0xa8}, //Fix AE Set On
+		{0x11, 0x90, MSM_CAMERA_I2C_BYTE_DATA}, //Fix Off/ 1f skip / X,Y flip
+		 
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xef, MSM_CAMERA_I2C_BYTE_DATA}, //AE en & reset
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x2c, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en//
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off//
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x0A, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 10ms
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+//50hz
+	{
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x64, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 100ms
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+		
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA}, //AE Off//
+		
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //AE weight off
+		
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off//
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x14, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //zoom off
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0x25, MSM_CAMERA_I2C_BYTE_DATA}, //24/(5+1)=4Mhz
+		{0x08, 0x56, MSM_CAMERA_I2C_BYTE_DATA}, //86Mhz
+		{0x09, 0x82, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x09, 0xa2, MSM_CAMERA_I2C_BYTE_DATA}, //clock divider enable
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x0b, MSM_CAMERA_I2C_BYTE_DATA}, //MCU 1/4
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // Full
+		{0x12, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, // pixel windowing on
+		{0xc3, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // normal mode -> 0xa0, 720p mode -> 0x00
+		
+		//Windowing setting
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_h
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_l
+		{0x22, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h
+		{0x23, 0x88, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h // normal:0x0188 / xflip:0x00F0 (xflip on/off에 따라 다르게 set 해야 함)
+		
+		{0x24, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_h //720
+		{0x25, 0xd0, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_l
+		{0x26, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h //1280
+		{0x27, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h
+		
+		//Bayer windowing setting
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // 추가 필요
+		{0x30, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //01 pxl_row_start_h (1568-720)/2+1
+		{0x31, 0xa9, MSM_CAMERA_I2C_BYTE_DATA}, //98 pxl_row_start_l
+		{0x32, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_h //=row start when Y flip
+		{0x33, 0x89, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_l
+		{0x34, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_h
+		{0x35, 0xE0, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_l
+		
+		//Sync setting
+		{0x50, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Hblank
+		{0x51, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x52, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Vblank
+		{0x53, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x17, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync clipping on
+		{0x54, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync elapse line = 12 line
+		
+		//Test windowing setting
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2b, 0x26, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2c, 0xe0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2d, 0xE0, MSM_CAMERA_I2C_BYTE_DATA}, // 8'h90 set(?) => 0xE0 _ywpark99 ==> 1760(16'h6e0, + 20(HB) + 70(PXL_MARGIN) ==> 1850))
+		{0x38, 0x46, MSM_CAMERA_I2C_BYTE_DATA}, // change pixel margin (70)
+		
+		{0x03, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xf0, 0x0d, MSM_CAMERA_I2C_BYTE_DATA}, //LPF status: only Dark2 mode
+		
+		//Shading setting
+		{0x03, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Shading
+		{0x10, 0x81, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Width 2048
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Height 1536
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_h
+		{0x31, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_l
+		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_h //408
+		{0x33, 0x98, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_l
+		
+		//SSD block setting
+		{0x03, 0x1F, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0xFE, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start X _ywpark99
+		{0x21, 0x0C, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start Y
+		{0x22, 0x5C, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block width(RGB channel) _ywpark99
+		{0x23, 0x4A, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block height(RGB, Y common) //Full size는 2의 배수, //Pre2는 4의 배수
+		{0x3C, 0x5C, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block widith(YC channel) => 0x1F22번지와 동일하게 설정해 줘야함. _ywpark99
+		
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On
+		{0x16, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE	EOT - SOT - payload
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //1280 * 2
+		{0x31, 0x0a, MSM_CAMERA_I2C_BYTE_DATA},
+		//=====================================================
+		{0x36, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x37, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x34, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare 50ns
+		{0x32, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare + zero 300ns
+		{0x35, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, // clk trail 68ns
+		{0x38, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // clk post 158ns
+		
+		{0x1c, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, // clk pre 16ns
+		{0x1d, 0x0e, MSM_CAMERA_I2C_BYTE_DATA}, // ths lp01 57ns
+		{0x1e, 0x0b, MSM_CAMERA_I2C_BYTE_DATA}, // ths prepare 54ns + zero 126ns
+		{0x1f, 0x07, MSM_CAMERA_I2C_BYTE_DATA}, // ths trail 89ns
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//=====================================================
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+		
+		//50
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24fps//
+		{0x25, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0x2f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		//60
+		//{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24fps//
+		//{0x25, 0x1b, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x26, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x27, 0xf0, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin
+		{0x29, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x2a, 0x98, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		{0x30, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x8b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x33, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x70, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit 
+		{0x37, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x38, 0x98, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		//{0x3c, 0x00}, //EXP Fix 30.0 fps//
+		//{0x3d, 0x15},
+		//{0x3e, 0xD5}, 
+		
+		{0x3f, 0x3A, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x40, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP 10000
+		{0x41, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x42, 0x8b, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		//Metering - Matrix
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 10fps, AG 0xA0
+		{0x14, 0xB0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, // dark2
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb3, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb7, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb9, 0x3c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbb, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbd, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbf, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc1, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc3, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc5, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x19, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //band1 gain
+		{0x1e, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band1 min exposure time 1/33.33s
+		{0x1f, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x21, 0x58, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1a, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //band2 gain
+		{0x22, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band2 min exposure time 1/20s
+		{0x23, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0xba, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x25, 0xe8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1b, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //band3 gain
+		{0x26, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band3 min exposure time  1/12.5s
+		{0x27, 0x34, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x28, 0x5e, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x29, 0x40, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x13, 0xa8}, //Fix AE Set On
+		{0x11, 0x90, MSM_CAMERA_I2C_BYTE_DATA}, //Fix Off/ 1f skip / X,Y flip
+		 
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xef, MSM_CAMERA_I2C_BYTE_DATA}, //AE en & reset
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x2c, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en//
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off//
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x0A, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 10ms
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+};
+
+static struct msm_camera_i2c_reg_conf hi351_recover_from720P_settings[2][250] = {
+//60hz
+	{
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //sleep on
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x64, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 100ms
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA}, //AE Off//
+
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //AE weight off
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off//
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x14, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x87, MSM_CAMERA_I2C_BYTE_DATA}, //zoom on
+
+		///////////////////////////////////////////
+		// 0 Page PLL setting
+		///////////////////////////////////////////
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0x25, MSM_CAMERA_I2C_BYTE_DATA}, //24/(5+1) = 4Mhz
+		{0x08, 0x48, MSM_CAMERA_I2C_BYTE_DATA}, // 72Mhz
+		{0x09, 0x82, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x09, 0xa2, MSM_CAMERA_I2C_BYTE_DATA}, //clock divider enable
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, //MCU 1/2
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // Pre2
+		{0x12, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // pixel windowing on
+		{0x14, 0x70, MSM_CAMERA_I2C_BYTE_DATA}, // for Pre2mode
+		{0xc3, 0xa0, MSM_CAMERA_I2C_BYTE_DATA}, // normal mode -> 0xa0, 720p mode -> 0x00
+
+		//Windowing setting
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_h
+		{0x21, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_l
+		{0x22, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h
+		{0x23, 0x0a, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h // normal:0x0188 / xflip:0x00F0 (xflip on/off에 따라 다르게 set 해야 함)
+
+		{0x24, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_h 
+		{0x25, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_l
+		{0x26, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h 
+		{0x27, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h
+
+		//Bayer windowing Recevery 
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // 
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //01 pxl_row_start_h (1568-720)/2+1
+		{0x31, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //98 pxl_row_start_l
+		{0x32, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_h //=row start when Y flip
+		{0x33, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_l
+		{0x34, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_h
+		{0x35, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_l
+
+		//Sync setting
+		{0x50, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // HBLANK 1140 + 288 = 1428
+		{0x51, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x52, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Vblank = 50
+		{0x53, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x17, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync clipping on
+		{0x54, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync elapse line = 12 line
+
+		//Test windowing setting
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2b, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2c, 0x0c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2d, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, // 8'h90 set(?) => 0xE0 _ywpark99 ==> 1760(16'h6e0, + 20(HB) + 70(PXL_MARGIN) ==> 1850))
+		{0x38, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, // change pixel margin (70)
+
+		{0x03, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xf0, 0x0b, MSM_CAMERA_I2C_BYTE_DATA}, //LPF status: only Indoor mode
+
+		//Shading setting
+		{0x03, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Shading
+		{0x10, 0x81, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Width 2048
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Height 1536
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_h
+		{0x31, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_l
+		{0x32, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_h //408
+		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_l
+
+		//SSD block setting
+		{0x03, 0x1F, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start X _ywpark99
+		{0x21, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start Y
+		{0x22, 0x8c, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block width(RGB channel) _ywpark99
+		{0x23, 0x9c, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block height(RGB, Y common) //Full size는 2의 배수, //Pre2는 4의 배수
+		{0x3C, 0x8c, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block widith(YC channel) => 0x1F22번지와 동일하게 설정해 줘야함. _ywpark99
+
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On
+		{0x16, 0x04, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //1280 * 2
+		{0x31, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+
+		//=====================================================
+		{0x36, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x37, 0x07, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x34, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare 50ns
+		{0x32, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare + zero 300ns
+		{0x35, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // clk trail 68ns
+		{0x38, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, // clk post 158ns
+
+		{0x1c, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, // clk pre 16ns
+		{0x1d, 0x0e, MSM_CAMERA_I2C_BYTE_DATA}, // ths lp01 57ns
+		{0x1e, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, // ths prepare 54ns + zero 126ns
+		{0x1f, 0x07, MSM_CAMERA_I2C_BYTE_DATA}, // ths trail 89ns
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//=====================================================
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+
+		//50
+		//{0x24, 0x00}, //EXP Max 25.00 fps (50Hz)
+		//{0x25, 0x15},
+		//{0x26, 0xf6},
+		//{0x27, 0xc0},
+
+		//60
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps 
+		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+				
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit 
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA}, 
+
+		//{0x3c, 0x00}, //EXP Fix 30.0 fps//
+		//{0x3d, 0x15},
+		//{0x3e, 0xD5},	
+
+		{0x3f, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x40, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP 10000
+		{0x41, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x42, 0x93, MSM_CAMERA_I2C_BYTE_DATA}, 
+
+		//Metering - Center
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 8fps, AG 0xF0
+		{0x14, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters 
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1411
+		{0xb3, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1412
+		{0xb5, 0x40, MSM_CAMERA_I2C_BYTE_DATA}, //Top H_Clip
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1413
+		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
+		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
+		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
+		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
+		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
+		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
+		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
+		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x19, 0x42, MSM_CAMERA_I2C_BYTE_DATA}, //band1 gain
+		{0x1e, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band1 min exposure time	1/33.33s
+		{0x1f, 0x0d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0xba, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x21, 0x38, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1a, 0x5c, MSM_CAMERA_I2C_BYTE_DATA}, //band2 gain
+		{0x22, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band2 min exposure time	1/20s
+		{0x23, 0x1b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0x74, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x25, 0x70, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1b, 0x5c, MSM_CAMERA_I2C_BYTE_DATA}, //band3 gain
+		{0x26, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band3 min exposure time  1/12.5s
+		{0x27, 0x2d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x28, 0xc2, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x29, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x13, 0xa8}, //Fix AE Set On
+		{0x11, 0x90, MSM_CAMERA_I2C_BYTE_DATA}, //Fix Off/ 1f skip / X,Y flip
+		 
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xef, MSM_CAMERA_I2C_BYTE_DATA}, //AE en & reset
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x2c, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en//
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off//
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x0A, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 10ms
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+//50hz
+	{
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //sleep on
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x64, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 100ms
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x36, 0xA3, MSM_CAMERA_I2C_BYTE_DATA}, //DMA off//
+		
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA}, //AE Off//
+		
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //AE weight off
+		
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off//
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x14, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x87, MSM_CAMERA_I2C_BYTE_DATA}, //zoom on
+		
+		///////////////////////////////////////////
+		// 0 Page PLL setting
+		///////////////////////////////////////////
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0x25, MSM_CAMERA_I2C_BYTE_DATA}, //24/(5+1) = 4Mhz
+		{0x08, 0x48, MSM_CAMERA_I2C_BYTE_DATA}, // 72Mhz
+		{0x09, 0x82, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x07, 0xa5, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x09, 0xa2, MSM_CAMERA_I2C_BYTE_DATA}, //clock divider enable
+		
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, //MCU 1/2
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // Pre2
+		{0x12, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // pixel windowing on
+		{0x14, 0x70, MSM_CAMERA_I2C_BYTE_DATA}, // for Pre2mode
+		{0xc3, 0xa0, MSM_CAMERA_I2C_BYTE_DATA}, // normal mode -> 0xa0, 720p mode -> 0x00
+		
+		//Windowing setting
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_h
+		{0x21, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //row_start_l
+		{0x22, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h
+		{0x23, 0x0a, MSM_CAMERA_I2C_BYTE_DATA}, //col_start_h // normal:0x0188 / xflip:0x00F0 (xflip on/off에 따라 다르게 set 해야 함)
+		
+		{0x24, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_h 
+		{0x25, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //win_height_l
+		{0x26, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h 
+		{0x27, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //win_width_h
+		
+		//Bayer windowing Recevery 
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, // 
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //01 pxl_row_start_h (1568-720)/2+1
+		{0x31, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //98 pxl_row_start_l
+		{0x32, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_h //=row start when Y flip
+		{0x33, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_stop_l
+		{0x34, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_h
+		{0x35, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //pxl_row_height_l
+		
+		//Sync setting
+		{0x50, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // HBLANK 1140 + 288 = 1428
+		{0x51, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x52, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Vblank = 50
+		{0x53, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x17, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync clipping on
+		{0x54, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, //Vsync elapse line = 12 line
+		
+		//Test windowing setting
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2b, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2c, 0x0c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2d, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, // 8'h90 set(?) => 0xE0 _ywpark99 ==> 1760(16'h6e0, + 20(HB) + 70(PXL_MARGIN) ==> 1850))
+		{0x38, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, // change pixel margin (70)
+		
+		{0x03, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xf0, 0x0b, MSM_CAMERA_I2C_BYTE_DATA}, //LPF status: only Indoor mode
+		
+		//Shading setting
+		{0x03, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Shading
+		{0x10, 0x81, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Width 2048
+		{0x21, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //Shading Height 1536
+		{0x23, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_h
+		{0x31, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_startx_l
+		{0x32, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_h //408
+		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //lsc_starty_l
+		
+		//SSD block setting
+		{0x03, 0x1F, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start X _ywpark99
+		{0x21, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //SSD window start Y
+		{0x22, 0x8c, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block width(RGB channel) _ywpark99
+		{0x23, 0x9c, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block height(RGB, Y common) //Full size는 2의 배수, //Pre2는 4의 배수
+		{0x3C, 0x8c, MSM_CAMERA_I2C_BYTE_DATA}, //SSD block widith(YC channel) => 0x1F22번지와 동일하게 설정해 줘야함. _ywpark99
+		
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On
+		{0x16, 0x04, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //1280 * 2
+		{0x31, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		//=====================================================
+		{0x36, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x37, 0x07, MSM_CAMERA_I2C_BYTE_DATA}, // clk LP01 59ns
+		{0x34, 0x06, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare 50ns
+		{0x32, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, // clk prepare + zero 300ns
+		{0x35, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // clk trail 68ns
+		{0x38, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, // clk post 158ns
+		
+		{0x1c, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, // clk pre 16ns
+		{0x1d, 0x0e, MSM_CAMERA_I2C_BYTE_DATA}, // ths lp01 57ns
+		{0x1e, 0x09, MSM_CAMERA_I2C_BYTE_DATA}, // ths prepare 54ns + zero 126ns
+		{0x1f, 0x07, MSM_CAMERA_I2C_BYTE_DATA}, // ths trail 89ns
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//=====================================================
+		
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+		
+		//50
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 25.00 fps (50Hz)
+		{0x25, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0xf6, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		//60
+		//{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps 
+		//{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, 
+		//{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, 
+		//{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+				
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit 
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		//{0x3c, 0x00}, //EXP Fix 30.0 fps//
+		//{0x3d, 0x15},
+		//{0x3e, 0xD5}, 
+		
+		{0x3f, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x40, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP 10000
+		{0x41, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x42, 0x93, MSM_CAMERA_I2C_BYTE_DATA}, 
+		
+		//Metering - Center
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 8fps, AG 0xF0
+		{0x14, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //	For Camcording Spatial LPF design parameters 
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1411
+		{0xb3, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1412
+		{0xb5, 0x40, MSM_CAMERA_I2C_BYTE_DATA}, //Top H_Clip
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1413
+		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
+		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
+		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
+		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
+		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
+		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
+		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
+		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+				
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x19, 0x42, MSM_CAMERA_I2C_BYTE_DATA}, //band1 gain
+		{0x1e, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band1 min exposure time	1/33.33s
+		{0x1f, 0x0d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x20, 0xba, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x21, 0x38, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1a, 0x5c, MSM_CAMERA_I2C_BYTE_DATA}, //band2 gain
+		{0x22, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band2 min exposure time	1/20s
+		{0x23, 0x1b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0x74, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x25, 0x70, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x1b, 0x5c, MSM_CAMERA_I2C_BYTE_DATA}, //band3 gain
+		{0x26, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //band3 min exposure time  1/12.5s
+		{0x27, 0x2d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x28, 0xc2, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x29, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x13, 0xa8}, //Fix AE Set On
+		{0x11, 0x90, MSM_CAMERA_I2C_BYTE_DATA}, //Fix Off/ 1f skip / X,Y flip
+		 
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xef, MSM_CAMERA_I2C_BYTE_DATA}, //AE en & reset
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x2c, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 20ms
+		
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en//
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off//
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x0A, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 10ms
+		
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+		
+		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+		
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms							
+	},
+};
+
+
+static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings_in_case_of_init[2][145] = {
+//60hz
+	{
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+
+		//30~8fps
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf1}, //Sleep on
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 0	//Flicker 50Hz
+	{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF   (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF   (50Hz : 0x68, 60hz : 0x60)
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		//Metering - Center
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1411
+		{0xb3, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1412
+		{0xb5, 0x40, MSM_CAMERA_I2C_BYTE_DATA}, //Top H_Clip
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1413
+		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
+		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
+		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
+		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
+		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
+		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
+		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
+		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+#if 0	//Flicker 50Hz
+	{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 8.33 fps (STEVE FOR 50Hz)
+	{0x25, 0x41, MSM_CAMERA_I2C_BYTE_DATA},
+	{0x26, 0xe4, MSM_CAMERA_I2C_BYTE_DATA},
+	{0x27, 0x40, MSM_CAMERA_I2C_BYTE_DATA},
+#else
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 8.00 fps
+		{0x25, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x28, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x48},
+		{0x10, 0x1C}, //MIPI On
+//		{0x16, 0x04}, // STEVE  EOT - SOT - payload
+		{0x30, 0x00}, //640 * 2
+		{0x31, 0x08}, // STEVE for 1024x768 5-)8
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA},  // scale
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+		{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
+		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
+		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
+		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 0
+#if 0	//Flicker 50Hz
+	{0x90, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  // STEVE for 50Hz
+	{0x91, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF // STEVE for 50Hz
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    //// STEVE fixed AGC 0xD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   //// STEVE fixed AGC 0xD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON  // STEVE for 50Hz
+	{0xd5, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF // STEVE for 50Hz
+#else
+		{0x90, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  // STEVE fixed
+		{0x91, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF // STEVE fixed
+		{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    //// STEVE fixed AGC 0xD0
+		{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   //// STEVE fixed AGC 0xD0
+		//DCDC
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+		{0xd4, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON
+		{0xd5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF
+#endif
+		{0xd6, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_ON
+		{0xd7, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_OFF
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 8fps, AG 0xF0
+		{0x14, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x84, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+#if 0	//Flicker 50Hz
+		{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+		{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#endif
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x0c, 0xf0}, // Sleep off with Frame Sync
+
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE all on
+
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+//50hz
+	{
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+
+		//30~8fps
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf1}, //Sleep on
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 1	//Flicker 50Hz
+	{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF   (50Hz : 0x68, 60hz : 0x60)
+#else
+	{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		//Metering - Center
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x22, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x21, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1411
+		{0xb3, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1412
+		{0xb5, 0x40, MSM_CAMERA_I2C_BYTE_DATA}, //Top H_Clip
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1413
+		{0xb7, 0xc8, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1414
+		{0xb9, 0x50, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1415	//sharp positive hi
+		{0xbb, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1416	//sharp positive mi
+		{0xbd, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1417	//sharp positive low
+		{0xbf, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1418	//sharp negative hi
+		{0xc1, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1419	//sharp negative mi
+		{0xc3, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x141a	//sharp negative low
+		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+#if 1	//Flicker 50Hz
+	{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 8.33 fps (STEVE FOR 50Hz)
+	{0x25, 0x41, MSM_CAMERA_I2C_BYTE_DATA},
+	{0x26, 0xe4, MSM_CAMERA_I2C_BYTE_DATA},
+	{0x27, 0x40, MSM_CAMERA_I2C_BYTE_DATA},
+#else
+	{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 8.00 fps
+	{0x25, 0x44, MSM_CAMERA_I2C_BYTE_DATA},
+	{0x26, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+	{0x27, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x28, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x48},
+		{0x10, 0x1C}, //MIPI On
+//		{0x16, 0x04}, // STEVE  EOT - SOT - payload
+		{0x30, 0x00}, //640 * 2
+		{0x31, 0x08}, // STEVE for 1024x768 5-)8
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA},  // scale
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
+		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
+		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
+		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 0
+#if 1	//Flicker 50Hz
+	{0x90, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  // STEVE for 50Hz
+	{0x91, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF // STEVE for 50Hz
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    //// STEVE fixed AGC 0xD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   //// STEVE fixed AGC 0xD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON  // STEVE for 50Hz
+	{0xd5, 0x0c, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF // STEVE for 50Hz
+#else
+	{0x90, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  // STEVE fixed
+	{0x91, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF // STEVE fixed
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    //// STEVE fixed AGC 0xD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   //// STEVE fixed AGC 0xD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON
+	{0xd5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF
+#endif
+		{0xd6, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_ON
+		{0xd7, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_OFF
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 8fps, AG 0xF0
+		{0x14, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x84, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+#if 1 //Flicker 50Hz
+	{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+	{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#endif
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x0c, 0xf0}, // Sleep off with Frame Sync
+
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE all on
+
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
 };
 
 static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
@@ -1088,7 +3132,7 @@ static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
 		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
 
-		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters 
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
 		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //14 page
 		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1410
@@ -1115,7 +3159,7 @@ static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
 		{0xc5, 0x33, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Dark2 0x1420
 		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
-	  	
+
 		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
 #if 0	//Flicker 50Hz
 	{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 8.33 fps (STEVE FOR 50Hz)
@@ -1146,7 +3190,7 @@ static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
 		{0x16, 0x04}, // STEVE  EOT - SOT - payload
 		{0x30, 0x00}, //640 * 2
 		{0x31, 0x08}, // STEVE for 1024x768 5-)8
-		
+
 		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
 
@@ -1155,8 +3199,11 @@ static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA},  // scale
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
-
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
 		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
 		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
 		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
@@ -1370,8 +3417,11 @@ static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA},  // scale
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
-
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
 		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
 		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
 		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
@@ -1437,6 +3487,450 @@ static struct msm_camera_i2c_reg_conf hi351_auto_fps_settings[2][160] = {
 		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
 	},
 };
+
+static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings_in_case_of_init[2][145] = {
+//60hz
+	{
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	// CAMCODER MODE : 30 ~ 22FPS
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		//{0x01, 0xf1}, //Sleep on
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 0	//Flicker 50Hz
+		{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF	 (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF	 (50Hz : 0x68, 60hz : 0x60)
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		//Metering - Matrix
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+	    {0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+    	{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+	    {0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, // dark2
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb3, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb7, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb9, 0x3c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbb, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbd, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbf, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc1, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc3, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc5, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+#if 0	//Flicker 50Hz
+	    {0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 25.00 fps (50Hz)
+	    {0x25, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+	    {0x26, 0xf6, MSM_CAMERA_I2C_BYTE_DATA},
+	    {0x27, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+#else
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps
+		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x28, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x48},
+		{0x10, 0x1C}, //MIPI On
+//		{0x16, 0x04}, // STEVE  EOT - SOT - payload
+		{0x30, 0x00}, //640 * 2
+		{0x31, 0x08}, // STEVE for 1024x768 5-)8
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // scale
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
+		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
+		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
+		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 0
+#if 0	//Flicker 50Hz
+	{0x90, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  // STEVE for 50hz
+	{0x91, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF // STEVE for 50hz
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON  //STEVE AGC OxD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF //STEVE AGC OxD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON  // STEVE for 50hz
+	{0xd5, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF // STEVE for 50hz
+#else
+		{0x90, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON
+		{0x91, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF
+		{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON  //STEVE AGC OxD0
+		{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF //STEVE AGC OxD0
+
+		//DCDC
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+		{0xd4, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON
+		{0xd5, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF
+#endif
+		{0xd6, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_ON
+		{0xd7, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_OFF
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 10fps, AG 0xA0
+		{0x14, 0xB0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA}, //AE Static en
+		{0x10, 0x84, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+#if 0	//Flicker 50Hz
+	{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+		{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#endif
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x0c, 0xf0}, // Sleep off with Frame Sync
+
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+},
+//50hz,
+{
+//		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+		// CAMCODER MODE : 30 ~ 22FPS
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf1}, //Sleep on
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 1	//Flicker 50Hz
+		{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF	 (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		//Metering - Matrix
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x39, 0xFF, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x70, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x71, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x72, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x73, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x74, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x75, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x76, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x77, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x78, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x79, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x7F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x80, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x81, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x82, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x83, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x84, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x85, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x86, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x87, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x88, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x89, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x8F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x90, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x91, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x92, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x93, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x94, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x95, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x96, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x97, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x98, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x99, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9A, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9B, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9C, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9D, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9E, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x9F, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA0, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA1, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA3, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA4, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xA5, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xe4, MSM_CAMERA_I2C_BYTE_DATA}, //	For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, // dark2
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb3, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb7, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb9, 0x3c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbb, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbd, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbf, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc1, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc3, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc5, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+
+#if 1	//Flicker 50Hz
+	    {0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 25.00 fps (50Hz)
+	    {0x25, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+	    {0x26, 0xf6, MSM_CAMERA_I2C_BYTE_DATA},
+	    {0x27, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+#else
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps
+		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x28, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x48},
+		{0x10, 0x1C}, //MIPI On
+//		{0x16, 0x04}, // STEVE	EOT - SOT - payload
+		{0x30, 0x00}, //640 * 2
+		{0x31, 0x08}, // STEVE for 1024x768 5-)8
+
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // scale
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
+		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
+		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
+		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 0
+#if 1	//Flicker 50Hz
+		{0x90, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  // STEVE for 50hz
+		{0x91, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF // STEVE for 50hz
+		{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON	//STEVE AGC OxD0
+		{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF //STEVE AGC OxD0
+
+		//DCDC
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+		{0xd4, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON  // STEVE for 50hz
+		{0xd5, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF // STEVE for 50hz
+#else
+	{0x90, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON
+	{0x91, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON  //STEVE AGC OxD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF //STEVE AGC OxD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON
+	{0xd5, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF
+#endif
+		{0xd6, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_ON
+		{0xd7, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_OFF
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 94 b6 b4 [fixed frame : not enough int. time]
+		{0x13, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 10fps, AG 0xA0
+		{0x14, 0xB0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA}, //AE Static en
+		{0x10, 0x84, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+#if 1	//Flicker 50Hz
+	{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+	{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE en
+#endif
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x0c, 0xf0}, // Sleep off with Frame Sync
+
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+
+		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+};
+
 
 static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings[2][160] = {
 //60hz
@@ -1556,10 +4050,10 @@ static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings[2][160] = {
 	    {0x26, 0xf6, MSM_CAMERA_I2C_BYTE_DATA},
 	    {0x27, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
 #else
-		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps 
-		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, 
-		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, 
-		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps
+		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
 #endif
 		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
 		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
@@ -1588,8 +4082,11 @@ static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings[2][160] = {
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // scale
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
-
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
 		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
 		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
 		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
@@ -1773,10 +4270,10 @@ static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings[2][160] = {
 	    {0x26, 0xf6, MSM_CAMERA_I2C_BYTE_DATA},
 	    {0x27, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
 #else
-		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps 
-		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA}, 
-		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, 
-		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, 
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 24.00 fps
+		{0x25, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0xe1, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
 #endif
 
 		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
@@ -1806,8 +4303,11 @@ static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings[2][160] = {
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // scale
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
-
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, //
+#endif
 		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
 		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
 		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
@@ -1872,6 +4372,323 @@ static struct msm_camera_i2c_reg_conf hi351_fixed_fps_settings[2][160] = {
 
 		{0x03, 0xFE, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xFE, 0x1E, MSM_CAMERA_I2C_BYTE_DATA}, //Delay 30ms
+	},
+};
+
+static struct msm_camera_i2c_reg_conf hi351_attached_fps_settings_in_case_of_init[2][91] = {
+//60hz
+	{
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf1}, //Sleep on
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 0	//Flicker 50Hz
+		{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF	 (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF	 (50Hz : 0x68, 60hz : 0x60)
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xe3, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, // dark2
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb3, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb7, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb9, 0x3c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbb, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbd, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbf, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc1, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc3, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc5, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+#if 0	//Flicker 50Hz
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Normal 33.33 fps (STEVE for 50Hz)
+		{0x21, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x79, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x23, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 33.33 fps (STEVE for 50Hz)
+		{0x25, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0x79, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+#else
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Normal 30.00 fps
+		{0x21, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x4d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x23, 0xa0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 30.00 fps
+		{0x25, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0x4d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0xa0, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x28, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x3c, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Fix 15.01 fps
+		{0x3d, 0x23, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x3e, 0x6e, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x3f, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On
+//		{0x16, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE  EOT - SOT - payload
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //640 * 2
+		{0x31, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE for 1024x768 5-)8
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // scale
+		{0x11, 0x87, MSM_CAMERA_I2C_BYTE_DATA}, //bit2 on
+
+		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
+		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
+		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 0
+#if 0	//Flicker 50Hz
+	{0x90, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  //STEVE for 50hz
+	{0x91, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF //STEVE for 50hz
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    STEVE fixed AGC 0xD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   STEVE fixed AGC 0xD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON  //STEVE for 50hz
+	{0xd5, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF //STEVE for 50hz
+#else
+		{0x90, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  STEVE fixed
+		{0x91, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF STEVE fixed
+		{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    STEVE fixed AGC 0xD0
+		{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   STEVE fixed AGC 0xD0
+
+		//DCDC
+		{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+		{0xd4, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON
+		{0xd5, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF
+#endif
+		{0xd6, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_ON
+		{0xd7, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_OFF
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 76f890 [fixed frame : not enough int. time]
+		{0x13, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 10fps, AG 0xA0
+		{0x14, 0x88, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+#if 0	//Flicker 50Hz
+	{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+		{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#endif
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x0c, 0xf0}, //Sleep on with Frame Sync
+
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
+	},
+//50hz
+	{
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf1}, //Sleep on
+//		{0x0c, 0xf1, MSM_CAMERA_I2C_BYTE_DATA}, //Sleep on
+
+//		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //DMA&Adaptive Off
+//		{0x36, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA}, //AE off
+#if 1	//Flicker 50Hz
+		{0x10, 0x68, MSM_CAMERA_I2C_BYTE_DATA},  // STEVE AE OFF	 (50Hz : 0x68, 60hz : 0x60)
+#else
+		{0x10, 0x60, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB off
+		{0x10, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xe3, MSM_CAMERA_I2C_BYTE_DATA}, //  For Camcording Spatial LPF design parameters
+		{0xae, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, // dark2
+		{0xaf, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb0, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb1, 0x27, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb2, 0x11, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb3, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb4, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb5, 0x0f, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb6, 0x13, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb7, 0xa3, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb8, 0x14, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xb9, 0x3c, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xba, 0x15, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbb, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbc, 0x16, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbd, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbe, 0x17, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xbf, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc0, 0x18, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc1, 0x32, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc2, 0x19, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc3, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc4, 0x1a, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc5, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc6, 0x20, MSM_CAMERA_I2C_BYTE_DATA},
+		{0xc7, 0x80, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x20, MSM_CAMERA_I2C_BYTE_DATA}, //Page 20
+#if 1	//Flicker 50Hz
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Normal 33.33 fps (STEVE for 50Hz)
+		{0x21, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x79, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x23, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 33.33 fps (STEVE for 50Hz)
+		{0x25, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0x79, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0x10, MSM_CAMERA_I2C_BYTE_DATA},
+#else
+		{0x20, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Normal 30.00 fps
+		{0x21, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x22, 0x4d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x23, 0xa0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x24, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Max 30.00 fps
+		{0x25, 0x12, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x26, 0x4d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x27, 0xa0, MSM_CAMERA_I2C_BYTE_DATA},
+#endif
+		{0x28, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXPMin 25210.08 fps
+		{0x29, 0x0b, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x2a, 0x28, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x30, 0x05, MSM_CAMERA_I2C_BYTE_DATA}, //EXP100
+		{0x31, 0x7d, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x32, 0xb0, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x33, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //EXP120
+		{0x34, 0x93, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x35, 0x68, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x3c, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Fix 15.01 fps
+		{0x3d, 0x23, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x3e, 0x6e, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x3f, 0x08, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //EXP Unit
+		{0x37, 0x05, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x38, 0x94, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0x48, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI On
+//		{0x16, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE  EOT - SOT - payload
+		{0x30, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //640 * 2
+		{0x31, 0x08, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE for 1024x768 5-)8
+		{0x03, 0x30, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x36, 0x28, MSM_CAMERA_I2C_BYTE_DATA}, //preview function
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x10, 0x13, MSM_CAMERA_I2C_BYTE_DATA}, // scale
+		{0x11, 0x87, MSM_CAMERA_I2C_BYTE_DATA}, //bit2 on
+
+		{0x03, 0x18, MSM_CAMERA_I2C_BYTE_DATA}, //Page 18
+		{0xC4, 0x7e, MSM_CAMERA_I2C_BYTE_DATA}, //FLK200
+		{0xC5, 0x69, MSM_CAMERA_I2C_BYTE_DATA}, //FLK240
+
+		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 0
+#if 1	//Flicker 50Hz
+	{0x90, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  //STEVE for 50hz
+	{0x91, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF //STEVE for 50hz
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    STEVE fixed AGC 0xD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   STEVE fixed AGC 0xD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON  //STEVE for 50hz
+	{0xd5, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF //STEVE for 50hz
+#else
+	{0x90, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_ON  STEVE fixed
+	{0x91, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_TIME_TH_OFF STEVE fixed
+	{0x92, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_ON    STEVE fixed AGC 0xD0
+	{0x93, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //BLC_AG_TH_OFF   STEVE fixed AGC 0xD0
+
+	//DCDC
+	{0x03, 0x02, MSM_CAMERA_I2C_BYTE_DATA}, //PAGE 2
+	{0xd4, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_ON
+	{0xd5, 0x04, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_TIME_TH_OFF
+#endif
+		{0xd6, 0xe8, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_ON
+		{0xd7, 0xe0, MSM_CAMERA_I2C_BYTE_DATA}, //DCDC_AG_TH_OFF
+
+		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE : EV max -> 76f890 [fixed frame : not enough int. time]
+		{0x13, 0x00, MSM_CAMERA_I2C_BYTE_DATA}, //Y_LUM_MAX 10fps, AG 0xA0
+		{0x14, 0x88, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x15, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+		{0x16, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+
+		{0x03, 0xc4, MSM_CAMERA_I2C_BYTE_DATA},
+#if 1	//Flicker 50Hz
+	{0x10, 0xe9, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON    (50hz : 0xe9, 60hz : 0xe1)
+#else
+	{0x10, 0xe1, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE AE ON
+#endif
+
+		{0x03, 0xFE},
+		{0xFE, 0x0A}, //Delay 10ms
+
+		{0x03, 0xc5, MSM_CAMERA_I2C_BYTE_DATA}, //AWB en
+		{0x10, 0xb1, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+//		{0x0c, 0xf0}, //Sleep on with Frame Sync
+
+//		{0x03, 0xcf, MSM_CAMERA_I2C_BYTE_DATA}, //Adaptive On
+//		{0x10, 0xaf, MSM_CAMERA_I2C_BYTE_DATA},
+
+//		{0x03, 0xc0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA On
 	},
 };
 
@@ -3023,7 +5840,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_landscape[2][115] = {
 		{0x03, 0xc4},
 #if 1	//Flicker 50Hz
 		{0x10, 0x68}, // STEVE AE OFF	(50Hz : 0x68, 60hz : 0x60)
-	
+
 		//AWB OFF
 		{0x03, 0xc5},
 		{0x10, 0x30},
@@ -3500,7 +6317,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_sport[2][115] = {
 
 		{0x03, 0xc3}, //AE Static en
 		{0x10, 0x84},
-		
+
 		//AE On
 		{0x03, 0xc4},
 #if 1	//Flicker 50Hz
@@ -3667,7 +6484,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_sunset[2][116] = {
 
 		{0x03, 0xc3}, //AE Static en
 		{0x10, 0x84},
-		
+
 		//AE On
 		{0x03, 0xc4},
 #if 0	//Flicker 50Hz
@@ -3832,7 +6649,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_sunset[2][116] = {
 
 		{0x03, 0xc3}, //AE Static en
 		{0x10, 0x84},
-		
+
 		//AE On
 		{0x03, 0xc4},
 #if 1	//Flicker 50Hz
@@ -3936,7 +6753,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_night[2][115] = {
 		{0x19, 0xf0},//bInRgainMax_a00_n00
 		{0x1a, 0x40},//bInBgainMin_a00_n00
 		{0x1b, 0x9f},//bInBgainMax_a00_n00
-		                                  
+
 		{0xb9, 0x60}, // steve OutRgainMin
 		{0xba, 0x88}, // steve OutRgainMax
 		{0xbb, 0x4c}, // steve OutBgainMin
@@ -3988,7 +6805,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_night[2][115] = {
 
 		{0x03, 0xc3}, //AE Static en
 		{0x10, 0x84},
-		
+
 		//AE On
 		{0x03, 0xc4},
 #if 0	//Flicker 50Hz
@@ -4154,7 +6971,7 @@ static struct msm_camera_i2c_reg_conf hi351_reg_scene_night[2][115] = {
 	},
 };
 
-static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = {
+static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6262] = {
 	// Sunny_60hz, youngwook.song@lge.com
 	{
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
@@ -10238,19 +13055,19 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = 
 
 		{0x03, 0xe3, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x03, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 Page11
-		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0x12, 0x10, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1110
-		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x14, 0x11, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1111
-		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x16, 0x12, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1112
-		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},
 		{0x18, 0x13, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1113
-		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1a, 0x14, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1114
-		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1c, 0x30, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1130
-		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1e, 0x31, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1131
 		{0x1f, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x20, 0x32, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1132 //STEVE Lum. Level. in DLPF
@@ -11021,18 +13838,22 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = 
 		{0x39, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 	//	{0x39, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI ON
-		
+
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x0c, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //Parallel Line Off
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+		{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
 		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
-		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+#endif
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
 
-		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
+//		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
 		//////////////////////////////////////////////
 		// Delay
 		//////////////////////////////////////////////
@@ -13177,7 +15998,7 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = 
 		{0xA3, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0xA4, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0xA5, 0x11, MSM_CAMERA_I2C_BURST_DATA},
-		
+
 
 		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xe1, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //STEVE OUT AG MAX
@@ -17128,19 +19949,19 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = 
 
 		{0x03, 0xe3, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x03, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 Page11
-		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0x12, 0x10, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1110
-		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x14, 0x11, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1111
-		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x16, 0x12, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1112
-		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},
 		{0x18, 0x13, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1113
-		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1a, 0x14, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1114
-		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1c, 0x30, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1130
-		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1e, 0x31, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1131
 		{0x1f, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x20, 0x32, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1132 //STEVE Lum. Level. in DLPF
@@ -17912,18 +20733,22 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = 
 		{0x39, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 	//	{0x39, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI ON
-		
+
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x0c, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //Parallel Line Off
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
-		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
+#endif
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
 
-		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
+//		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
 		//////////////////////////////////////////////
 		// Delay
 		//////////////////////////////////////////////
@@ -17940,7 +20765,7 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_sunny[2][6267] = 
 	},
 };
 
-static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6267] = {
+static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6262] = {
 	// Cowell_60hz, youngwook.song@lge.com
 	{
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
@@ -24024,19 +26849,19 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6267] =
 
 		{0x03, 0xe3, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x03, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 Page11
-		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0x12, 0x10, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1110
-		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x14, 0x11, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1111
-		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x16, 0x12, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1112
-		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},
 		{0x18, 0x13, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1113
-		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1a, 0x14, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1114
-		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1c, 0x30, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1130
-		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1e, 0x31, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1131
 		{0x1f, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x20, 0x32, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1132 //STEVE Lum. Level. in DLPF
@@ -24807,18 +27632,22 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6267] =
 		{0x39, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 	//	{0x39, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI ON
-		
+
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x0c, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //Parallel Line Off
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
-		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
+#endif
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
 
-		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
+//		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
 		//////////////////////////////////////////////
 		// Delay
 		//////////////////////////////////////////////
@@ -26963,7 +29792,7 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6267] =
 		{0xA3, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0xA4, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0xA5, 0x11, MSM_CAMERA_I2C_BURST_DATA},
-		
+
 
 		{0x03, 0xc3, MSM_CAMERA_I2C_BYTE_DATA},
 		{0xe1, 0x30, MSM_CAMERA_I2C_BYTE_DATA}, //STEVE OUT AG MAX
@@ -30914,19 +33743,19 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6267] =
 
 		{0x03, 0xe3, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x10, 0x03, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 Page11
-		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x11, 0x11, MSM_CAMERA_I2C_BURST_DATA},
 		{0x12, 0x10, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1110
-		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x13, 0x1f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x14, 0x11, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1111
-		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x15, 0x3f, MSM_CAMERA_I2C_BURST_DATA},
 		{0x16, 0x12, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1112
-		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x17, 0x32, MSM_CAMERA_I2C_BURST_DATA},
 		{0x18, 0x13, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1113
-		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x19, 0x21, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1a, 0x14, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1114
-		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1b, 0x39, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1c, 0x30, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1130
-		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},  
+		{0x1d, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x1e, 0x31, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1131
 		{0x1f, 0x20, MSM_CAMERA_I2C_BURST_DATA},
 		{0x20, 0x32, MSM_CAMERA_I2C_BURST_DATA},  //Dark2 0x1132 //STEVE Lum. Level. in DLPF
@@ -31698,18 +34527,22 @@ static struct msm_camera_i2c_reg_conf hi351_recommend_settings_cowell[2][6267] =
 		{0x39, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 	//	{0x39, 0x03, MSM_CAMERA_I2C_BYTE_DATA}, //Drivability 00
 		{0x10, 0x1C, MSM_CAMERA_I2C_BYTE_DATA}, //MIPI ON
-		
+
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
 		{0x0c, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //Parallel Line Off
 
 		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
-		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
+#if defined(CONFIG_MACH_MSM8226_E7WIFI) || defined(CONFIG_MACH_MSM8226_E8WIFI)
+			{0x11, 0x80, MSM_CAMERA_I2C_BYTE_DATA}, //
+#else
+			{0x11, 0x83, MSM_CAMERA_I2C_BYTE_DATA}, // STEVE 0 skip Fix Frame Off, XY Flip
+#endif
+//		{0x03, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x01, 0xf0, MSM_CAMERA_I2C_BYTE_DATA}, //sleep off
 
-		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
-		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
+//		{0x03, 0xC0, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x33, 0x00, MSM_CAMERA_I2C_BYTE_DATA},
+//		{0x32, 0x01, MSM_CAMERA_I2C_BYTE_DATA}, //DMA on
 		//////////////////////////////////////////////
 		// Delay
 		//////////////////////////////////////////////

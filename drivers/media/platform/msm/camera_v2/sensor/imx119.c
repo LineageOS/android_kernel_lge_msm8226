@@ -165,8 +165,12 @@ static struct msm_sensor_power_setting imx119_power_setting_rev_c[] = {
 	},
 
 };
-#elif defined(CONFIG_MACH_MSM8926_B1L_ATT) || defined(CONFIG_MACH_MSM8926_B1L_VZW)
-static struct msm_sensor_power_setting imx119_power_setting_b1l[] = {
+#elif defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR) || defined(CONFIG_MACH_MSM8926_X10_VZW) \
+    || defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGN_KR) || defined(CONFIG_MACH_MSM8926_JAGC_SPR) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) \
+    || defined(CONFIG_MACH_MSM8926_JAGDSNM_CMCC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CTC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CUCC_CN) \
+    || defined(CONFIG_MACH_MSM8226_JAG3GSS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_JAG3GDS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_VFP_KR) \
+    || defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM8926_JAGNM_TLS) || defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL) || defined(CONFIG_MACH_MSM8926_JAGC_SPR)
+static struct msm_sensor_power_setting imx119_power_setting_b2l_b2m[] = {
 	 /* Set GPIO_RESET to low to disable power on reset*/
 	{
 		.seq_type = SENSOR_GPIO,
@@ -180,17 +184,17 @@ static struct msm_sensor_power_setting imx119_power_setting_b1l[] = {
 		.config_val = 0,
 		.delay = 0,
 	},
-	{								//VANA, GPIO 62
-		.seq_type = SENSOR_GPIO,
-		.seq_val = SENSOR_GPIO_VANA,
-		.config_val = GPIO_OUT_HIGH,
-		.delay = 1,
-	},
 	{								//VIO, GPIO 113
 		.seq_type = SENSOR_GPIO,
 		.seq_val = SENSOR_GPIO_VIO,
 		.config_val = GPIO_OUT_HIGH,
 		.delay = 30,
+	},
+	{								//VANA, GPIO 62
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
 	},
 	{
 		.seq_type = SENSOR_GPIO,
@@ -449,17 +453,21 @@ static void imx119_power_setting(void)
 	}
 
 }
-#elif defined(CONFIG_MACH_MSM8926_B1L_ATT) || defined(CONFIG_MACH_MSM8926_B1L_VZW)
+#elif defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR) || defined(CONFIG_MACH_MSM8926_X10_VZW) \
+    || defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGN_KR) || defined(CONFIG_MACH_MSM8926_JAGC_SPR) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) \
+    || defined(CONFIG_MACH_MSM8926_JAGDSNM_CMCC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CTC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CUCC_CN) \
+    || defined(CONFIG_MACH_MSM8226_JAG3GSS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_JAG3GDS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_VFP_KR) \
+    || defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM926_JAGNM_TLS) || defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL) || defined(CONFIG_MACH_MSM8926_JAGC_SPR)
 static void imx119_power_setting(void)
 {
-	pr_err("%s: Sensor power is set as imx119_power_setting_b1l[]\n", __func__);
-	imx119_s_ctrl.power_setting_array.power_setting = imx119_power_setting_b1l;
-	imx119_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx119_power_setting_b1l);
+	pr_err("%s: Sensor power is set as imx119_power_setting_b2l_b2m[]\n", __func__);
+	imx119_s_ctrl.power_setting_array.power_setting = imx119_power_setting_b2l_b2m;
+	imx119_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx119_power_setting_b2l_b2m);
 }
 #elif defined(CONFIG_MACH_MSM8X10_W5_TRF_US)
 static void imx119_power_setting(void)
 {
-	pr_err("%s: Sensor power is set as imx119_power_setting_b1l[]\n", __func__);
+	pr_err("%s: Sensor power is set as imx119_power_setting_w5[]\n", __func__);
 	imx119_s_ctrl.power_setting_array.power_setting = imx119_power_setting_w5;
 	imx119_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx119_power_setting_w5);
 }

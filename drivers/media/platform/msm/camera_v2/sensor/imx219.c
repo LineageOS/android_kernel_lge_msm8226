@@ -25,7 +25,12 @@
 DEFINE_MSM_MUTEX(imx219_mut);
 
 static struct msm_sensor_ctrl_t imx219_s_ctrl;
-#if defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_X10_VZW) || defined(CONFIG_MACH_MSM8926_JAGNM_ATT)
+#if defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR) || defined(CONFIG_MACH_MSM8926_X10_VZW) \
+ || defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGN_KR) || defined(CONFIG_MACH_MSM8926_JAGC_SPR) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) \
+ || defined(CONFIG_MACH_MSM8926_JAGDSNM_CMCC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CTC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CUCC_CN) \
+ || defined(CONFIG_MACH_MSM8226_JAG3GSS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_JAG3GDS_GLOBAL_COM)|| defined (CONFIG_MACH_MSM8926_VFP_KR) \
+ || defined(CONFIG_MACH_MSM8926_AKA_KR) || defined(CONFIG_MACH_MSM8926_AKA_CN) \
+ || defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM8926_JAGNM_TLS) || defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL) || defined(CONFIG_MACH_MSM8926_JAGC_SPR)
 static struct msm_sensor_power_setting imx219_power_setting[] = {
 	 /* Set GPIO_RESET to low to disable power on reset*/
 	{
@@ -35,15 +40,15 @@ static struct msm_sensor_power_setting imx219_power_setting[] = {
 		.delay = 1,
 	},
 	{
-		.seq_type = SENSOR_VREG,
-		.seq_val = CAM_VDIG,
-		.config_val = 0,
-		.delay = 0,
-	},
-	{
 		.seq_type = SENSOR_GPIO,
 		.seq_val = SENSOR_GPIO_VANA,
 		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VDIG,
+		.config_val = 0,
 		.delay = 0,
 	},
 	{
@@ -52,15 +57,17 @@ static struct msm_sensor_power_setting imx219_power_setting[] = {
 		.config_val = GPIO_OUT_HIGH,
 		.delay = 1,
 	},
+/* LGE_CHANGE_S, add gpio setting for ldaf-en, 2014-04-07, jungryoul.choi@lge.com */
 	{
 		.seq_type = SENSOR_GPIO,
-		.seq_val = SENSOR_GPIO_AF_PWDM,
+		.seq_val = SENSOR_GPIO_LDAF_EN,
 		.config_val = GPIO_OUT_HIGH,
-		.delay = 1,
+		.delay = 0,
 	},
+/* LGE_CHANGE_E, add gpio setting for ldaf-en, 2014-04-07, jungryoul.choi@lge.com */
 	{
 		.seq_type = SENSOR_GPIO,
-		.seq_val = SENSOR_GPIO_STANDBY,
+		.seq_val = SENSOR_GPIO_VAF,
 		.config_val = GPIO_OUT_HIGH,
 		.delay = 1,
 	},
@@ -83,7 +90,8 @@ static struct msm_sensor_power_setting imx219_power_setting[] = {
 		.delay = 0,
 	},
 };
-#endif
+
+#else // if not B2 Lite Or B2 Mini
 /* LGE_CHANGE_S, jaehan.jeong, 2013.7.30,  To separate power settings depending on HW revisions, [STARTS HERE] */
 static struct msm_sensor_power_setting imx219_power_setting_rev_0[] = {
 	{
@@ -142,7 +150,7 @@ static struct msm_sensor_power_setting imx219_power_setting_rev_0[] = {
 	},
 };
 
-#if !defined(CONFIG_MACH_MSM8X10_W6)
+#if !defined(CONFIG_MACH_MSM8X10_W6) && !defined(CONFIG_MACH_MSM8X10_L70P)
 static struct msm_sensor_power_setting imx219_power_setting_rev_a[] = {
 	 /* Set GPIO_RESET to low to disable power on reset*/
 	{
@@ -196,8 +204,8 @@ static struct msm_sensor_power_setting imx219_power_setting_rev_a[] = {
 	},
 };
 #endif
-#if defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM)|| defined(CONFIG_MACH_MSM8X10_W6)
-static struct msm_sensor_power_setting imx219_power_setting_rev_b[] = {
+#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM)|| defined(CONFIG_MACH_MSM8X10_W5TS_GLOBAL_COM)|| defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+static struct msm_sensor_power_setting imx219_power_setting_on_8x10[] = {
 	 /* Set GPIO_RESET to low to disable power on reset*/
 	{
 		.seq_type = SENSOR_GPIO,
@@ -219,12 +227,14 @@ static struct msm_sensor_power_setting imx219_power_setting_rev_b[] = {
 		.config_val = GPIO_OUT_HIGH,
 		.delay = 1,
 	},
+#if !defined(CONFIG_MACH_MSM8X10_L70P)
 	{
 		.seq_type = SENSOR_GPIO,
 		.seq_val = SENSOR_GPIO_STANDBY,
 		.config_val = GPIO_OUT_HIGH,
 		.delay = 0,
 	},
+#endif
 #if 0
 	{
 		.seq_type = SENSOR_GPIO,
@@ -254,6 +264,7 @@ static struct msm_sensor_power_setting imx219_power_setting_rev_b[] = {
 };
 #endif
 /* LGE_CHANGE_E, jaehan.jeong, 2013.7.30,  To separate power settings depending on HW revisions,  [ENDS HERE] */
+#endif // B2 Lite Or B2 Mini
 
 static struct v4l2_subdev_info imx219_subdev_info[] = {
 	{
@@ -311,40 +322,27 @@ static int32_t imx219_platform_probe(struct platform_device *pdev)
 
 	if(!match)
 		return -EINVAL;
-		
+
 	rc = msm_sensor_platform_probe(pdev, match->data);
 	return rc;
 }
-
-static int device_is_d415;
-
-static int __init device_model_name(char *s)
-{
-       if (s == NULL) {
-               device_is_d415 = 0;
-               return 1;
-       }
-
-       if (!strcmp(s,"LG-D415") || !strcmp(s,"LG-D405")) {
-               device_is_d415 = 1;
-       } else {
-               device_is_d415 = 0;
-       }
-
-       return 1;
-}
-__setup("model.name=", device_model_name);
 
 static int __init imx219_init_module(void)
 {
 	int32_t rc = 0;
 	hw_rev_type rev_type = 0;
 	pr_info("%s:%d\n", __func__, __LINE__);
-	if (device_is_d415) {
-		return 0;
-	}
 	rev_type = lge_get_board_revno();
-#if 1// defined(CONFIG_MACH_LGE)
+
+#if defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_B2LN_KR) || defined(CONFIG_MACH_MSM8926_X10_VZW) \
+ || defined(CONFIG_MACH_MSM8926_JAGNM_ATT) || defined(CONFIG_MACH_MSM8926_JAGN_KR) || defined(CONFIG_MACH_MSM8926_JAGC_SPR) || defined(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) \
+ || defined(CONFIG_MACH_MSM8926_JAGDSNM_CMCC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CTC_CN) || defined(CONFIG_MACH_MSM8926_JAGDSNM_CUCC_CN) \
+ || defined(CONFIG_MACH_MSM8226_JAG3GSS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_JAG3GDS_GLOBAL_COM)|| defined (CONFIG_MACH_MSM8926_VFP_KR) \
+ || defined(CONFIG_MACH_MSM8926_AKA_KR) || defined(CONFIG_MACH_MSM8926_AKA_CN) \
+ || defined(CONFIG_MACH_MSM8926_JAGNM_RGS) || defined(CONFIG_MACH_MSM8926_JAGNM_TLS) || defined(CONFIG_MACH_MSM8926_JAGNM_VTR) || defined(CONFIG_MACH_MSM8926_JAGNM_BELL) || defined(CONFIG_MACH_MSM8926_JAGC_SPR)
+	imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting;
+	imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting);
+#else
 	switch(rev_type) {
 		case HW_REV_0:
 			printk("%s: Sensor power is set as Rev.0\n", __func__);
@@ -352,25 +350,25 @@ static int __init imx219_init_module(void)
 			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_rev_0);
 			break;
 		case HW_REV_A:
-#if defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM)
+	#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM)|| defined(CONFIG_MACH_MSM8X10_W5TS_GLOBAL_COM)|| defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM)
 			printk("%s: Sensor power is set as Rev. %d\n", __func__,rev_type);
 			imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting_rev_a;
 			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_rev_a);
-#elif defined(CONFIG_MACH_MSM8X10_W6)
-			printk("%s: HW rev is %d. But sensor power is set as Rev.B \n", __func__,rev_type);
-			imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting_rev_b;
-			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_rev_b);
-#endif
+	#elif defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+			printk("%s: HW rev is %d. Sensor power is set as imx219_power_setting_on_8x10 \n", __func__,rev_type);
+			imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting_on_8x10;
+			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_on_8x10);
+	#endif
 		case HW_REV_B:
 		default:
 			printk("%s: Sensor power is set as Rev.%d(Line:%d)\n", __func__,rev_type, __LINE__);
-#if defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W6)
-			imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting_rev_b;
-			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_rev_b);
-#else
+#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM)|| defined(CONFIG_MACH_MSM8X10_W5TS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W6) || defined(CONFIG_MACH_MSM8X10_L70P)
+			imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting_on_8x10;
+			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_on_8x10);
+	#else
 			imx219_s_ctrl.power_setting_array.power_setting = imx219_power_setting_rev_a;
 			imx219_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx219_power_setting_rev_a);
-#endif
+	#endif
 			break;
 	}
 #endif
@@ -398,10 +396,8 @@ static void __exit imx219_exit_module(void)
 
 static struct msm_sensor_ctrl_t imx219_s_ctrl = {
 	.sensor_i2c_client = &imx219_sensor_i2c_client,
-#if defined(CONFIG_MACH_MSM8926_B2L_ATT) || defined(CONFIG_MACH_MSM8926_X10_VZW) || defined(CONFIG_MACH_MSM8926_JAGNM_ATT)
-	.power_setting_array.power_setting = imx219_power_setting,
-	.power_setting_array.size = ARRAY_SIZE(imx219_power_setting),
-#endif
+	//.power_setting_array.power_setting = imx219_power_setting,
+	//.power_setting_array.size = ARRAY_SIZE(imx219_power_setting),
 	.msm_sensor_mutex = &imx219_mut,
 	.sensor_v4l2_subdev_info = imx219_subdev_info,
 	.sensor_v4l2_subdev_info_size = ARRAY_SIZE(imx219_subdev_info),

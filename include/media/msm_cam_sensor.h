@@ -40,13 +40,24 @@
 #define MAX_ACTUATOR_REGION 5
 #define MAX_ACTUATOR_INIT_SET 12
 #define MAX_ACTUATOR_REG_TBL_SIZE 8
+#define MAX_ACTUATOR_AF_TOTAL_STEPS 1024
 
 #define MOVE_NEAR 0
 #define MOVE_FAR  1
 
+#define MSM_ACTUATOR_MOVE_SIGNED_FAR -1
+#define MSM_ACTUATOR_MOVE_SIGNED_NEAR  1
+
 #define MAX_EEPROM_NAME 32
 
 #define MAX_AF_ITERATIONS 3
+#define MAX_NUMBER_OF_STEPS 47
+#define MAX_POWER_CONFIG 12
+
+typedef enum sensor_stats_type {
+	YRGB,
+	YYYY,
+} sensor_stats_type_t;
 
 enum flash_type {
 	LED_FLASH = 1,
@@ -96,6 +107,12 @@ enum msm_sensor_power_seq_gpio_t {
 	SENSOR_GPIO_VANA,
 	SENSOR_GPIO_VDIG,
 	SENSOR_GPIO_VAF,
+	SENSOR_GPIO_FL_EN,
+	SENSOR_GPIO_FL_NOW,
+/* LGE_CHANGE_S, Camera bring-up : Add gpio to control LDO*/
+	SENSOR_GPIO_AF_MVDD,
+	SENSOR_GPIO_LDAF_EN,
+/* LGE_CHANGE_E, Camera bring-up : Add gpio to control LDO*/
 	SENSOR_GPIO_MAX,
 };
 
@@ -223,6 +240,8 @@ struct msm_sensor_power_setting {
 struct msm_sensor_power_setting_array {
 	struct msm_sensor_power_setting *power_setting;
 	uint16_t size;
+	struct msm_sensor_power_setting *power_down_setting;
+	uint16_t size_down;
 };
 
 struct msm_sensor_id_info_t {
@@ -230,12 +249,20 @@ struct msm_sensor_id_info_t {
 	uint16_t sensor_id;
 };
 
-struct msm_camera_sensor_slave_info {
-	uint16_t slave_addr;
-	enum msm_camera_i2c_reg_addr_type addr_type;
-	struct msm_sensor_id_info_t sensor_id_info;
-	struct msm_sensor_power_setting_array power_setting_array;
+enum msm_sensor_camera_id_t {
+	CAMERA_0,
+	CAMERA_1,
+	CAMERA_2,
+	CAMERA_3,
+	MAX_CAMERAS,
 };
+
+enum cci_i2c_master_t {
+	MASTER_0,
+	MASTER_1,
+	MASTER_MAX,
+};
+
 
 struct msm_camera_i2c_reg_array {
 	uint16_t reg_addr;
@@ -328,11 +355,38 @@ struct csi_lane_params_t {
 	uint8_t csi_phy_sel;
 };
 
-struct msm_sensor_info_t {
-	char sensor_name[MAX_SENSOR_NAME];
-	int32_t    session_id;
-	int32_t     subdev_id[SUB_MODULE_MAX];
+enum camb_position_t {
+	BACK_CAMERA_B,
+	FRONT_CAMERA_B,
+	INVALID_CAMERA_B,
 };
+
+struct msm_sensor_info_t {
+	char     sensor_name[MAX_SENSOR_NAME];
+	int32_t  session_id;
+	int32_t  subdev_id[SUB_MODULE_MAX];
+	uint8_t  is_mount_angle_valid;
+	uint32_t sensor_mount_angle;
+	int modes_supported;
+	enum camb_position_t position;
+	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
+	int					product_kor;
+	uint8_t 	module_id;   /*LGE_CHANGE,	To check module-vedorID for same sensor without any differences of HW, 2014-07-31, sujeong.kwon@lge.com*/
+};
+
+#if 1 /* LGE_FEATURE_APLUS */
+/* LGE_CHANGE_S, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
+struct msm_sensor_proxy_info_t{
+	uint16_t proxy_val;
+	uint32_t proxy_conv;
+	uint32_t proxy_sig;
+	uint32_t proxy_amb;
+	uint32_t proxy_raw;
+	uint32_t cal_count;
+	uint32_t cal_done;
+};
+/* LGE_CHANGE_E, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
+#endif
 
 struct camera_vreg_t {
 	const char *reg_name;
@@ -343,14 +397,10 @@ struct camera_vreg_t {
 	uint32_t delay;
 };
 
-enum camb_position_t {
-	BACK_CAMERA_B,
-	FRONT_CAMERA_B,
-};
-
 enum camerab_mode_t {
 	CAMERA_MODE_2D_B = (1<<0),
-	CAMERA_MODE_3D_B = (1<<1)
+	CAMERA_MODE_3D_B = (1<<1),
+	CAMERA_MODE_INVALID = (1<<2),
 };
 
 struct msm_sensor_init_params {
@@ -361,6 +411,20 @@ struct msm_sensor_init_params {
 	/* sensor mount angle */
 	uint32_t            sensor_mount_angle;
 	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
+	int					product_kor;
+};
+
+struct msm_camera_sensor_slave_info {
+	char sensor_name[32];
+	char eeprom_name[32];
+	char actuator_name[32];
+	enum msm_sensor_camera_id_t camera_id;
+	uint16_t slave_addr;
+	enum msm_camera_i2c_reg_addr_type addr_type;
+	struct msm_sensor_id_info_t sensor_id_info;
+	struct msm_sensor_power_setting_array power_setting_array;
+	uint8_t  is_init_params_valid;
+	struct msm_sensor_init_params sensor_init_params;
 };
 
 struct sensorb_cfg_data {
@@ -368,6 +432,10 @@ struct sensorb_cfg_data {
 	union {
 		struct msm_sensor_info_t      sensor_info;
 		struct msm_sensor_init_params sensor_init_params;
+#if 1  /* LGE_FEATURE_APLUS */
+		struct msm_sensor_proxy_info_t	proxy_info;	/* LGE_CHANGE, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
+		uint16_t proxy_data;	/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+#endif
 		void                         *setting;
 	} cfg;
 };
@@ -393,6 +461,7 @@ enum eeprom_cfg_type_t {
 	CFG_EEPROM_GET_CAL_DATA,
 	CFG_EEPROM_READ_CAL_DATA,
 	CFG_EEPROM_WRITE_DATA,
+	CFG_EEPROM_GET_MM_INFO,
 };
 
 struct eeprom_get_t {
@@ -409,6 +478,12 @@ struct eeprom_write_t {
 	uint32_t num_bytes;
 };
 
+struct eeprom_get_mm_t {
+	uint32_t mm_support;
+	uint32_t mm_compression;
+	uint32_t mm_size;
+};
+
 struct msm_eeprom_cfg_data {
 	enum eeprom_cfg_type_t cfgtype;
 	uint8_t is_supported;
@@ -417,6 +492,7 @@ struct msm_eeprom_cfg_data {
 		struct eeprom_get_t get_data;
 		struct eeprom_read_t read_data;
 		struct eeprom_write_t write_data;
+		struct eeprom_get_mm_t get_mm_data;
 	} cfg;
 };
 
@@ -424,7 +500,7 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_SLAVE_INFO,
 	CFG_SLAVE_READ_I2C,
 	CFG_WRITE_I2C_ARRAY,
-    CFG_READ_I2C_ARRAY_LG,
+	CFG_READ_I2C_ARRAY_LG,	  /*LGE_CHANGE,  add bank register for imx219, 2014-02-19, younjung.park.kim@lge.com*/
 	CFG_SLAVE_WRITE_I2C_ARRAY,
 	CFG_WRITE_I2C_SEQ_ARRAY,
 	CFG_POWER_UP,
@@ -453,7 +529,19 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_AEC_ROI,
 	CFG_SET_AWB_LOCK,
 	CFG_SET_AEC_LOCK,
+	CFG_SET_INIT_SETTING_VT,
 /* LGE_CHANGE_E, Enable touch AE in soc sensor , 2013-11-12, dongsu.bag@lge.com */
+	CFG_SET_REGISTER_UPDATE,		/* LGE_CHANGE . To fast tune register. sujeong.kwon@lge.com 2014.03.22*/
+#if 1  /* LGE_FEATURE_APLUS */
+	CFG_PROXY_ON,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+	CFG_PROXY_OFF,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+	CFG_GET_PROXY,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_ON,				/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_PAUSE,			/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_RESTART,			/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_THREAD_OFF,				/* LGE_CHANGE, For laser sensor, 2014-03-24, sungmin.woo@lge.com */
+	CFG_PROXY_CAL,
+#endif
 };
 
 enum msm_actuator_cfg_type_t {
@@ -461,6 +549,9 @@ enum msm_actuator_cfg_type_t {
 	CFG_SET_ACTUATOR_INFO,
 	CFG_SET_DEFAULT_FOCUS,
 	CFG_MOVE_FOCUS,
+	CFG_SET_POSITION,
+	CFG_ACTUATOR_POWERDOWN,
+	CFG_ACTUATOR_POWERUP,
 };
 
 enum actuator_type {
@@ -478,9 +569,18 @@ enum msm_actuator_addr_type {
 	MSM_ACTUATOR_WORD_ADDR,
 };
 
+enum msm_actuator_i2c_operation {
+	MSM_ACT_WRITE = 0,
+	MSM_ACT_POLL,
+};
+
 struct reg_settings_t {
 	uint16_t reg_addr;
+	enum msm_actuator_addr_type addr_type;
 	uint16_t reg_data;
+	enum msm_actuator_data_type data_type;
+	enum msm_actuator_i2c_operation i2c_operation;
+	uint32_t delay;
 };
 
 struct region_params_t {
@@ -502,6 +602,7 @@ struct msm_actuator_move_params_t {
 	int8_t sign_dir;
 	int16_t dest_step_pos;
 	int32_t num_steps;
+	uint16_t curr_lens_pos;
 	struct damping_params_t *ringing_params;
 };
 
@@ -552,9 +653,18 @@ enum af_camera_name {
 	ACTUATOR_MAIN_CAM_3,
 	ACTUATOR_MAIN_CAM_4,
 	ACTUATOR_MAIN_CAM_5,
+	ACTUATOR_MAIN_CAM_6,
+	ACTUATOR_MAIN_CAM_7,
 	ACTUATOR_WEB_CAM_0,
 	ACTUATOR_WEB_CAM_1,
 	ACTUATOR_WEB_CAM_2,
+};
+
+
+struct msm_actuator_set_position_t {
+	uint16_t number_of_steps;
+	uint16_t pos[MAX_NUMBER_OF_STEPS];
+	uint16_t delay[MAX_NUMBER_OF_STEPS];
 };
 
 struct msm_actuator_cfg_data {
@@ -564,6 +674,7 @@ struct msm_actuator_cfg_data {
 		struct msm_actuator_move_params_t move;
 		struct msm_actuator_set_info_t set_info;
 		struct msm_actuator_get_info_t get_info;
+		struct msm_actuator_set_position_t setpos;
 		enum af_camera_name cam_name;
 	} cfg;
 };
@@ -595,6 +706,20 @@ struct msm_camera_led_cfg_t {
 	uint32_t flash_current[2];
 };
 
+/* sensor init structures and enums */
+enum msm_sensor_init_cfg_type_t {
+	CFG_SINIT_PROBE,
+	CFG_SINIT_PROBE_DONE,
+	CFG_SINIT_PROBE_WAIT_DONE,
+};
+
+struct sensor_init_cfg_data {
+	enum msm_sensor_init_cfg_type_t cfgtype;
+	union {
+		void *setting;
+	} cfg;
+};
+
 #define VIDIOC_MSM_SENSOR_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 1, struct sensorb_cfg_data)
 
@@ -605,10 +730,10 @@ struct msm_camera_led_cfg_t {
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 3, uint32_t)
 
 #define VIDIOC_MSM_CSIPHY_IO_CFG \
-	_IOWR('V', BASE_VIDIOC_PRIVATE + 4, struct csid_cfg_data)
+	_IOWR('V', BASE_VIDIOC_PRIVATE + 4, struct csiphy_cfg_data)
 
 #define VIDIOC_MSM_CSID_IO_CFG \
-	_IOWR('V', BASE_VIDIOC_PRIVATE + 5, struct csiphy_cfg_data)
+	_IOWR('V', BASE_VIDIOC_PRIVATE + 5, struct csid_cfg_data)
 
 #define VIDIOC_MSM_ACTUATOR_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 6, struct msm_actuator_cfg_data)
@@ -621,6 +746,9 @@ struct msm_camera_led_cfg_t {
 
 #define VIDIOC_MSM_SENSOR_GET_AF_STATUS \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 9, uint32_t)
+
+#define VIDIOC_MSM_SENSOR_INIT_CFG \
+	_IOWR('V', BASE_VIDIOC_PRIVATE + 10, struct sensor_init_cfg_data)
 
 #define MSM_V4L2_PIX_FMT_META v4l2_fourcc('M', 'E', 'T', 'A') /* META */
 

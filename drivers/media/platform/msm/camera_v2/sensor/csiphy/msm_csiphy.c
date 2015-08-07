@@ -15,6 +15,7 @@
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/module.h>
+#include <linux/ratelimit.h>
 #include <linux/irqreturn.h>
 #include <mach/vreg.h>
 #include "msm_csiphy.h"
@@ -22,7 +23,6 @@
 #include "msm_csiphy_hwreg.h"
 #include "msm_camera_io_util.h"
 #define DBG_CSIPHY 0
-//#define CONFIG_MSMB_CAMERA_DEBUG
 
 #define V4L2_IDENT_CSIPHY                        50003
 #define CSIPHY_VERSION_V22                        0x01
@@ -129,19 +129,17 @@ static int msm_csiphy_lane_config(struct csiphy_device *csiphy_dev,
 
 /*LGE_CHANGE_S, qct_patch for fixing abnormal signal in tclk_trail section, 2013-03-14, kwangsik83.kim@lge.com*/
 /*LGE_CHANGE_S, seperately.. use csiphy register depend on csiphy_ver, 2013-10-15, kwangsik83.kim@lge.com*/
-#if defined (CONFIG_HI351) || defined (CONFIG_HI543)
+#if defined (CONFIG_HI351) || defined (CONFIG_HI543) || defined (CONFIG_HI544)
 	pr_err("%s padding the offset\n", __func__);
 	if(csiphy_dev->pdev->id == 0){//main camera
 		if(csiphy_dev->hw_version < CSIPHY_VERSION_V30){	//8x10, hi351
+			msm_camera_io_w(0xc, csiphy_dev->base + MIPI_CSIPHY_LNCK_CFG4_ADDR);			/*LGE_CHANGE, change 0x28->0xc(recommended value from hynix), 2014-02-05, kwangsik83.kim@lge.com*/
 			irq2 = msm_camera_io_r(csiphy_dev->base + MIPI_CSIPHY_LNCK_CFG4_ADDR);
 			pr_err("%s MIPI_CSIPHY_LNCK_CFG4_ADDR = 0x%x hw_ver : 0x%x\n", __func__, irq2, csiphy_dev->hw_version);
-
-			msm_camera_io_w(40, csiphy_dev->base + MIPI_CSIPHY_LNCK_CFG4_ADDR);
 		}else{	//8x26, hi543
-			irq2 = msm_camera_io_r(csiphy_dev->base + MIPI_CSIPHY_LNn_CFG4_ADDR);
+			msm_camera_io_w(0xc, csiphy_dev->base + MIPI_CSIPHY_LNn_CFG4_ADDR + 0x40);		/*LGE_CHANGE, change mipi_clk's address, 2014-02-05, kwangsik83.kim@lge.com*/
+			irq2 = msm_camera_io_r(csiphy_dev->base + MIPI_CSIPHY_LNn_CFG4_ADDR + 0x40);
 			pr_err("%s MIPI_CSIPHY_LNn_CFG4_ADDR = 0x%x hw_ver : 0x%x\n", __func__, irq2, csiphy_dev->hw_version);
-
-			msm_camera_io_w(40, csiphy_dev->base + MIPI_CSIPHY_LNn_CFG4_ADDR);
 		}
 	}else{
 		irq2 = 0;
@@ -201,13 +199,12 @@ static struct msm_cam_clk_info csiphy_8960_clk_info[] = {
 	{"csiphy_timer_src_clk", 177780000},
 	{"csiphy_timer_clk", -1},
 };
-/*LGE_CHANGE_S, By QCT SR#01360225, this is added by youngwook.song@lge.com 2013.11.16 */ /* LGE_CHANGE, jaehan.jeong, 2013.11.29, Applied on msm8x10*/
+
 static struct msm_cam_clk_info csiphy_8610_clk_info[] = {
 	{"csiphy_timer_src_clk", 200000000},
 	{"csiphy_timer_clk", -1},
 	{"csi_ahb_clk", -1},
 };
-/*LGE_CHANGE_E, By QCT SR#01360225, this is added by youngwook.song@lge.com 2013.11.16 */
 
 static struct msm_cam_clk_info csiphy_8974_clk_info[] = {
 	{"camss_top_ahb_clk", -1},
@@ -628,7 +625,7 @@ static long msm_csiphy_cmd(struct csiphy_device *csiphy_dev, void *arg)
 		rc = msm_csiphy_release(csiphy_dev, &csi_lane_params);
 		break;
 	default:
-		pr_err("%s: %d failed\n", __func__, __LINE__);
+		pr_err_ratelimited("%s: %d failed\n", __func__, __LINE__);
 		rc = -ENOIOCTLCMD;
 		break;
 	}

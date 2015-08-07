@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -60,13 +60,28 @@ static int msm_buf_mngr_buf_done(struct msm_buf_mngr_device *buf_mngr_dev,
 		if ((bufs->session_id == buf_info->session_id) &&
 			(bufs->stream_id == buf_info->stream_id) &&
 			(bufs->vb2_buf->v4l2_buf.index == buf_info->index)) {
+/* LGE_CHANGE_S, Crash rb_tree 2, 2013-12-09, yousung.kang@lge.com */
+#if 0
 			bufs->vb2_buf->v4l2_buf.sequence  = buf_info->frame_id;
 			bufs->vb2_buf->v4l2_buf.timestamp = buf_info->timestamp;
 			bufs->vb2_buf->v4l2_buf.reserved = 0;
+#endif
+/* LGE_CHANGE_E, Crash rb_tree 2, 2013-12-09, yousung.kang@lge.com */
 			ret = buf_mngr_dev->vb2_ops.buf_done
 					(bufs->vb2_buf,
 						buf_info->session_id,
 						buf_info->stream_id);
+/* LGE_CHANGE_S, Crash rb_tree 2, 2013-12-09, yousung.kang@lge.com */
+#if 1
+			if (!ret) {
+						bufs->vb2_buf->v4l2_buf.sequence  = buf_info->frame_id;
+						bufs->vb2_buf->v4l2_buf.timestamp = buf_info->timestamp;
+						bufs->vb2_buf->v4l2_buf.reserved = 0;
+			} else {
+						pr_err("%s:vb2_ops failed %d type= %d\n", __func__, ret,bufs->vb2_buf->v4l2_buf.type);
+            }
+#endif
+/* LGE_CHANGE_E, Crash rb_tree 2, 2013-12-09, yousung.kang@lge.com */
 			list_del_init(&bufs->entry);
 			kfree(bufs);
 			break;
@@ -109,16 +124,9 @@ static void msm_buf_mngr_sd_shutdown(struct msm_buf_mngr_device *buf_mngr_dev)
 	if (!list_empty(&buf_mngr_dev->buf_qhead)) {
 		list_for_each_entry_safe(bufs,
 			save, &buf_mngr_dev->buf_qhead, entry) {
-/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
-#if 0
-			pr_err("%s: Delete invalid bufs =%x\n", __func__,
-				(unsigned int)bufs);
-#else
 			pr_err("%s: Error delete invalid bufs =%x, ses_id=%d, str_id=%d, idx=%d\n",
 				__func__, (unsigned int)bufs, bufs->session_id,
 				bufs->stream_id, bufs->vb2_buf->v4l2_buf.index);
-#endif
-/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 			list_del_init(&bufs->entry);
 			kfree(bufs);
 		}
@@ -126,7 +134,6 @@ static void msm_buf_mngr_sd_shutdown(struct msm_buf_mngr_device *buf_mngr_dev)
 	spin_unlock_irqrestore(&buf_mngr_dev->buf_q_spinlock, flags);
 }
 
-/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 static int msm_generic_buf_mngr_open(struct v4l2_subdev *sd,
 	struct v4l2_subdev_fh *fh)
 {
@@ -137,7 +144,6 @@ static int msm_generic_buf_mngr_open(struct v4l2_subdev *sd,
 		rc = -ENODEV;
 		return rc;
 	}
-	buf_mngr_dev->msm_buf_mngr_open_cnt++;
 	return rc;
 }
 
@@ -151,12 +157,8 @@ static int msm_generic_buf_mngr_close(struct v4l2_subdev *sd,
 		rc = -ENODEV;
 		return rc;
 	}
-	buf_mngr_dev->msm_buf_mngr_open_cnt--;
-	if (buf_mngr_dev->msm_buf_mngr_open_cnt == 0)
-		msm_buf_mngr_sd_shutdown(buf_mngr_dev);
 	return rc;
 }
-/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 
 static long msm_buf_mngr_subdev_ioctl(struct v4l2_subdev *sd,
 	unsigned int cmd, void *arg)
@@ -181,14 +183,12 @@ static long msm_buf_mngr_subdev_ioctl(struct v4l2_subdev *sd,
 	case VIDIOC_MSM_BUF_MNGR_PUT_BUF:
 		rc = msm_buf_mngr_put_buf(buf_mngr_dev, argp);
 		break;
-/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 	case VIDIOC_MSM_BUF_MNGR_INIT:
 		rc = msm_generic_buf_mngr_open(sd, NULL);
 		break;
 	case VIDIOC_MSM_BUF_MNGR_DEINIT:
 		rc = msm_generic_buf_mngr_close(sd, NULL);
 		break;
-/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 	case MSM_SD_SHUTDOWN:
 		msm_buf_mngr_sd_shutdown(buf_mngr_dev);
 		break;
@@ -202,13 +202,11 @@ static struct v4l2_subdev_core_ops msm_buf_mngr_subdev_core_ops = {
 	.ioctl = msm_buf_mngr_subdev_ioctl,
 };
 
-/* LGE_CHANGE_S, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling, [STARTS HERE] */
 static const struct v4l2_subdev_internal_ops
 	msm_generic_buf_mngr_subdev_internal_ops = {
 	.open  = msm_generic_buf_mngr_open,
 	.close = msm_generic_buf_mngr_close,
 };
-/* LGE_CHANGE_E, jaehan.jeong, 2013.12.29, Cleanup msm generic buf queue handling,  [ENDS HERE] */
 
 static const struct v4l2_subdev_ops msm_buf_mngr_subdev_ops = {
 	.core = &msm_buf_mngr_subdev_core_ops,
@@ -216,6 +214,7 @@ static const struct v4l2_subdev_ops msm_buf_mngr_subdev_ops = {
 
 static const struct of_device_id msm_buf_mngr_dt_match[] = {
 	{.compatible = "qcom,msm_buf_mngr"},
+	{}
 };
 
 static int __init msm_buf_mngr_init(void)
@@ -240,7 +239,7 @@ static int __init msm_buf_mngr_init(void)
 	msm_buf_mngr_dev->subdev.sd.entity.group_id =
 		MSM_CAMERA_SUBDEV_BUF_MNGR;
 	msm_buf_mngr_dev->subdev.sd.internal_ops =
-		&msm_generic_buf_mngr_subdev_internal_ops;  /* LGE_CHANGE, jaehan.jeong, 2013.12.29, QCT PATCH, Cleanup msm generic buf queue handling */
+		&msm_generic_buf_mngr_subdev_internal_ops;
 	msm_buf_mngr_dev->subdev.close_seq = MSM_SD_CLOSE_4TH_CATEGORY;
 	rc = msm_sd_register(&msm_buf_mngr_dev->subdev);
 	if (rc != 0) {
