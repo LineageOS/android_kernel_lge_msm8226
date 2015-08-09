@@ -20,188 +20,16 @@ fw-external-y := $(subst ",,$(CONFIG_EXTRA_FIRMWARE))
 # accurate. In the latter case it doesn't matter -- it'll use $(fw-shipped-all).
 # But be aware that the config file might not be included at all.
 
+touch_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/*.ihex)))
+touch_fw_files := $(foreach var, $(touch_fw_list), atmel/$(var))
+fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_S336) += $(touch_fw_files)
+
 ifdef CONFIG_ACENIC_OMIT_TIGON_I
 acenic-objs := acenic/tg2.bin
 fw-shipped- += acenic/tg1.bin
 else
 acenic-objs := acenic/tg1.bin acenic/tg2.bin
 endif
-# LGE_CHANGE
-# add synaptics touch firmware to be updated
-# this firmware will be used on synaptics_fw_update.c and this name matching with defined on touch dtsi file
-# 2013-04-29 kenneth.kang@lge.com
-ifdef CONFIG_MACH_MSM8X26_LGPS14
-fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4) += synaptics/PR1237618-DS4.3.5.0.16.img
-endif
-
-touch_limit_txt := $(wildcard $(srctree)/firmware/melfas/$(TARGET_PRODUCT)/*.txt)
-$(shell objcopy -I binary -O ihex $(touch_limit_txt) $(touch_limit_txt).ihex)
-
-ifdef CONFIG_MACH_MSM8926_VFP_KR
-touch_fw_mfsb := $(wildcard $(srctree)/firmware/melfas/$(TARGET_PRODUCT)/*.mfsb)
-$(shell objcopy -I binary -O ihex $(touch_fw_mfsb) $(touch_fw_mfsb).ihex)
-endif
-
-touch_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/melfas/$(TARGET_PRODUCT)/*.ihex)))
-touch_fw_files := $(foreach var, $(touch_fw_list), melfas/$(TARGET_PRODUCT)/$(var))
-
-# LGE_CHANGE - START
-# KR only for same DTS usage,  2013-11-28 kyle.jeon@lge.com
-ifdef TOUCH_FIRMWARE_KOR_DIR
-touch_limit_txt := $(wildcard $(srctree)/firmware/melfas/$(TOUCH_FIRMWARE_KOR_DIR)/*.txt)
-$(shell objcopy -I binary -O ihex $(touch_limit_txt) $(touch_limit_txt).ihex)
-touch_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/melfas/$(TOUCH_FIRMWARE_KOR_DIR)/*.ihex)))
-touch_fw_files := $(foreach var, $(touch_fw_list), melfas/$(TOUCH_FIRMWARE_KOR_DIR)/$(var))
-endif
-# LGE_CHANGE - END
-
-# LGE_CHANGE - START
-# Jaguar SPR/ATT classify Atmel Firmware files for Kernel Memory.
-# 2014-03-13 donghyun.yoon@lge.com
-# LGE_CHANGE - END
-
-ifdef CONFIG_MACH_MSM8926_JAGNM_ATT
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else 
-ifdef CONFIG_MACH_MSM8926_JAGNM_BELL
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else 
-ifdef CONFIG_MACH_MSM8926_JAGC_SPR
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else 
-ifdef CONFIG_MACH_MSM8926_JAGC_SPR
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else 
-ifdef CONFIG_MACH_MSM8926_JAGNM_RGS
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else 
-ifdef CONFIG_MACH_MSM8926_JAGNM_TLS
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else 
-ifdef CONFIG_MACH_MSM8926_JAGNM_VTR
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/$(TARGET_PRODUCT)/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(TARGET_PRODUCT)/$(var))
-else
-ifdef CONFIG_MACH_MSM8926_T8LTE
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/t8lte/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/t8lte/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/t8lte/$(var))
-else 
-atmel_fw_file := $(wildcard $(srctree)/firmware/atmel/*.fw)
-$(foreach var, $(atmel_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-atmel_ihex_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/*.ihex)))
-atmel_ihex_files := $(foreach var, $(atmel_ihex_list), atmel/$(var))
-endif
-endif
-endif
-endif
-endif
-endif
-endif
-endif
-fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_S336) += $(atmel_ihex_files)
-fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_T641) += $(atmel_ihex_files)
-fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_T1664) += $(atmel_ihex_files)
-fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_T1066) += $(atmel_ihex_files)
-
-ifdef CONFIG_TOUCHSCREEN_LGE_AIT_MELFAS
-ifdef CONFIG_MACH_MSM8X10_L70P
-ait_fw_file := $(wildcard $(srctree)/firmware/melfas/mit200/l70p/*.fw)
-$(foreach var, $(ait_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-
-ait_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/melfas/mit200/l70p/*.ihex)))
-ait_fw_files := $(foreach var, $(ait_fw_list), melfas/mit200/l70p/$(var))
-fw-shipped-$(CONFIG_TOUCHSCREEN_LGE_AIT_MELFAS) += $(ait_fw_files)
-else
-ait_limit_txt := $(wildcard $(srctree)/firmware/melfas/mit200/*.txt)
-$(shell objcopy -I binary -O ihex $(ait_limit_txt) $(ait_limit_txt).ihex)
-ait_fw_file := $(wildcard $(srctree)/firmware/melfas/mit200/*.fw)
-$(foreach var, $(ait_fw_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-
-ait_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/melfas/mit200/*.ihex)))
-ait_fw_files := $(foreach var, $(ait_fw_list), melfas/mit200/$(var))
-fw-shipped-$(CONFIG_TOUCHSCREEN_LGE_AIT_MELFAS) += $(ait_fw_files)
-endif
-else
-fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_MMS136) += melfas/mms100a_core54_v01.mfsb
-fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_MMS136) += $(touch_fw_files)
-
-fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_MMS100S) += melfas/mms100s_core32_v01.mfsb
-fw-shipped-$(CONFIG_TOUCHSCREEN_MELFAS_MMS100S) += $(touch_fw_files)
-ifdef CONFIG_MACH_MSM8926_VFP_KR
-fw-shipped-$(CONFIG_TOUCHSCREEN_LGE_MELFAS) += melfas/$(TARGET_PRODUCT)/vfp_lgu_kr_rev_a_v001.mfsb
-else
-fw-shipped-$(CONFIG_TOUCHSCREEN_LGE_MELFAS) += melfas/mms100a_core54_v01.mfsb
-fw-shipped-$(CONFIG_TOUCHSCREEN_LGE_MELFAS) += melfas/mms100s_core32_v01.mfsb
-endif
-fw-shipped-$(CONFIG_TOUCHSCREEN_LGE_MELFAS) += $(touch_fw_files)
-endif
-
-fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX) += $(synaptics_fw_files)
-
-ifdef CONFIG_TOUCHSCREEN_APS_MIT200_E2
-mit200_fw_file := $(wildcard $(srctree)/firmware/melfas/mit200/e2/*)
-mit200_firmware := $(subst $(srctree)/firmware/,,$(mit200_fw_file))
-fw-shipped-$(CONFIG_TOUCHSCREEN_APS_MIT200_E2) += $(mit200_firmware)
-endif
-
-synaptics_img_file := $(wildcard $(srctree)/firmware/synaptics/$(TARGET_PRODUCT)/*.img)
-$(foreach var, $(synaptics_img_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-synaptics_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/synaptics/$(TARGET_PRODUCT)/*.ihex)))
-synaptics_fw_files := $(foreach var, $(synaptics_fw_list), synaptics/$(TARGET_PRODUCT)/$(var))
-
-touch_synap_limit_txt := $(wildcard $(srctree)/firmware/synaptics/$(TARGET_PRODUCT)/*.txt)
-$(foreach var, $(touch_synap_limit_txt),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-
-# LGE_CHANGE - START
-# KR only for same DTS usage,  2013-11-28 kyle.jeon@lge.com
-ifdef TOUCH_FIRMWARE_KOR_DIR
-touch_synap_limit_txt := $(wildcard $(srctree)/firmware/synaptics/$(TOUCH_FIRMWARE_KOR_DIR)/*.txt)
-$(shell objcopy -I binary -O ihex $(touch_synap_limit_txt) $(touch_synap_limit_txt).ihex)
-synaptics_img_file := $(wildcard $(srctree)/firmware/synaptics/$(TOUCH_FIRMWARE_KOR_DIR)/*.img)
-$(foreach var, $(synaptics_img_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-synaptics_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/synaptics/$(TOUCH_FIRMWARE_KOR_DIR)/*.ihex)))
-synaptics_fw_files := $(foreach var, $(synaptics_fw_list), synaptics/$(TOUCH_FIRMWARE_KOR_DIR)/$(var))
-endif
-ifdef TOUCH_FIRMWARE_CN_DIR
-touch_synap_limit_txt := $(wildcard $(srctree)/firmware/synaptics/$(TOUCH_FIRMWARE_CN_DIR)/*.txt)
-$(shell objcopy -I binary -O ihex $(touch_synap_limit_txt) $(touch_synap_limit_txt).ihex)
-synaptics_img_file := $(wildcard $(srctree)/firmware/synaptics/$(TOUCH_FIRMWARE_CN_DIR)/*.img)
-$(foreach var, $(synaptics_img_file),  $(shell objcopy -I binary -O ihex $(var) $(var).ihex))
-synaptics_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/synaptics/$(TOUCH_FIRMWARE_CN_DIR)/*.ihex)))
-synaptics_fw_files := $(foreach var, $(synaptics_fw_list), synaptics/$(TOUCH_FIRMWARE_CN_DIR)/$(var))
-endif
-
-# LGE_CHANGE - END
-
-fw-shipped-$(CONFIG_LGE_TOUCH_SYNAPTICS) += $(synaptics_fw_files)
-
-# ATMF04
-ifdef CONFIG_MACH_MSM8926_T8LTE
-fw-shipped-$(CONFIG_SENSOR_ATMF04) += atmf04/atmf04_T8_0_42.fw
-endif
-
 fw-shipped-$(CONFIG_3C359) += 3com/3C359.bin
 fw-shipped-$(CONFIG_ACENIC) += $(acenic-objs)
 fw-shipped-$(CONFIG_ADAPTEC_STARFIRE) += adaptec/starfire_rx.bin \
@@ -328,9 +156,6 @@ quiet_cmd_mkdir = MKDIR   $(patsubst $(objtree)/%,%,$@)
 quiet_cmd_ihex  = IHEX    $@
       cmd_ihex  = $(OBJCOPY) -Iihex -Obinary $< $@
 
-quiet_cmd_copy  = COPY    $@
-      cmd_copy  = cp $(srctree)/$@ $@
-
 quiet_cmd_ihex2fw  = IHEX2FW $@
       cmd_ihex2fw  = $(objtree)/$(obj)/ihex2fw $< $@
 
@@ -393,9 +218,6 @@ $(patsubst %,$(obj)/%.gen.o, $(fw-external-y)): $(obj)/%.gen.o: $(fwdir)/%
 # where binaries are frowned upon. They are directly converted with objcopy.
 $(obj)/%: $(obj)/%.ihex | $(objtree)/$(obj)/$$(dir %)
 	$(call cmd,ihex)
-
-#$(obj)/%.fw: $(objtree)/$(obj)/$$(dir %.fw)
-#	$(call cmd,copy)
 
 # Don't depend on ihex2fw if we're installing and it already exists.
 # Putting it after | in the dependencies doesn't seem sufficient when
