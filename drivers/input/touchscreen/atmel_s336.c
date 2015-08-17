@@ -1882,12 +1882,12 @@ static void mxt_proc_t9_message(struct mxt_data *data, u8 *message)
 
 		input_mt_slot(input_dev, id);
 		input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, 0);
-
+/*
 		if (data->lockscreen)
 			TOUCH_INFO_MSG("touch_release    <%d> : x[XXX] y[XXX]\n", id);
 		else
 			TOUCH_INFO_MSG("touch_release    <%d> : x[%3d] y[%3d]\n", id, x, y);
-
+*/
 		data->fingers[id].state = MXT_STATE_RELEASE;
 		data->ts_data.curr_data[id].status = MXT_STATE_RELEASE;
 		data->ts_data.curr_data[id].pressure = 0;
