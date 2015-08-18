@@ -56,8 +56,6 @@
 			atmel,t15_key_array = <0 0 1 0 2 0 3 0>;
 
 			atmel,fw_name = "atmel/E4A47P2_2_07.fw";
-			atmel,fw_name_d415 = "atmel/E2A47P2_2_07.fw";
-
 			atmel,panel_check = <1>;
 			atmel,t15_extra_key_state = <2 128 8 1>;
 			atmel,t15_extra_key_array = <11 0 8 0 4 0 1 0>;

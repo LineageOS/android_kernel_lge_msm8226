@@ -103,25 +103,6 @@ static void send_uevent(char *string[2])
 		t_ex_debug[TIME_EX_KNOCK_INT_TIME].tv_sec, t_ex_debug[TIME_EX_KNOCK_INT_TIME].tv_usec);
 }
 
-static int device_is_d415 = 0;
-
-static int __init device_model_name(char *s)
-{
-       if (s == NULL) {
-               device_is_d415 = 0;
-               return 1;
-       }
-
-       if (!strcmp(s,"LG-D415")) {
-               device_is_d415 = 1;
-       } else {
-               device_is_d415 = 0;
-       }
-
-       return 1;
-}
-__setup("model.name=", device_model_name);
-
 #if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
 struct tci_abs g_tci_press[MAX_POINT_SIZE_FOR_LPWG];
 struct tci_abs g_tci_report[MAX_POINT_SIZE_FOR_LPWG];
@@ -5363,11 +5344,8 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 		pdata->auto_fw_update = temp_val;
 		TOUCH_INFO_MSG("DT : auto_fw_update = %d\n", pdata->auto_fw_update);
 	}
-	if (!device_is_d415) {
-		rc = of_property_read_string(node, "atmel,fw_name",  &pdata->fw_name[0]);
-	} else {
-		rc = of_property_read_string(node, "atmel,fw_name_d415",  &pdata->fw_name[0]);
-	}
+
+	rc = of_property_read_string(node, "atmel,fw_name",  &pdata->fw_name[0]);
 	if (rc && (rc != -EINVAL)) {
 		TOUCH_INFO_MSG("DT : atmel,fw_name error \n");
 		pdata->fw_name[0] = NULL;
@@ -5382,8 +5360,9 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 	} else {
 		TOUCH_INFO_MSG("DT : fw2_name : %s \n", pdata->fw_name[1]);
 	}
+
 	rc = of_property_read_u32(node, "atmel,panel_check", &temp_val);
-	if (rc || device_is_d415) {
+	if (rc) {
 		pdata->panel_check = 0;
 	} else {
 		pdata->panel_check = temp_val;
@@ -5422,7 +5401,7 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 		TOUCH_INFO_MSG("DT : ref_reg_weight_val = %d\n", pdata->ref_reg_weight_val);
 	}
 
-	if (pdata->panel_check && !device_is_d415) {
+	if (pdata->panel_check) {
 		rc = of_property_read_string(node, "atmel,extra_fw_name",  &pdata->extra_fw_name);
 		if (rc && (rc != -EINVAL)) {
 			TOUCH_INFO_MSG("DT : atmel,extra_fw_name error \n");
