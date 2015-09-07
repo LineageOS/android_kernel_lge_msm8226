@@ -744,6 +744,12 @@ config LGE_EVENT_LOCK
       Support for keylock cmd using evdev.
       If you need feature for keylock cmd using evdev, use this.
 
+config UID_CPUTIME
+	tristate "Per-UID cpu time statistics"
+	depends on PROFILING
+	help
+	  Per UID based cpu time statistics exported to /proc/uid_cputime
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
