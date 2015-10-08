@@ -1,7 +1,7 @@
 /*
  * Broadcom Dongle Host Driver (DHD), common DHD core.
  *
- * Copyright (C) 1999-2014, Broadcom Corporation
+ * Copyright (C) 1999-2015, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd_common.c 515169 2014-11-13 13:19:49Z $
+ * $Id: dhd_common.c 520555 2014-12-12 07:18:27Z $
  */
 #include <typedefs.h>
 #include <osl.h>
@@ -261,6 +261,21 @@ const bcm_iovar_t dhd_iovars[] = {
 };
 
 #define DHD_IOVAR_BUF_SIZE	128
+
+void dhd_save_fwdump(dhd_pub_t *dhd_pub, void * buffer, uint32 length)
+{
+
+	if (dhd_pub->soc_ram == NULL) {
+		dhd_pub->soc_ram = (uint8*) MALLOCZ(dhd_pub->osh, length);
+		if (dhd_pub->soc_ram == NULL) {
+			DHD_ERROR(("%s: Failed to allocate memory for fw crash snap shot.\n",
+				__FUNCTION__));
+			return;
+		}
+	}
+	dhd_pub->soc_ram_length = length;
+	memcpy(dhd_pub->soc_ram, buffer, length);
+}
 
 /* to NDIS developer, the structure dhd_common is redundant,
  * please do NOT merge it back from other branches !!!

@@ -5076,9 +5076,9 @@ static const struct v4l2_ioctl_ops iris_ioctl_ops = {
 	.vidioc_g_ext_ctrls           = iris_vidioc_g_ext_ctrls,
 };
 
-static int is_initialized = 0;
+//static int is_initialized = 0;
 static int video_open(struct file *file) {
-	int retval;
+/*	int retval;
 	if(!is_initialized) {
 		retval = hci_fm_smd_register();
 		if (retval) {
@@ -5087,7 +5087,7 @@ static int video_open(struct file *file) {
 		}
 		is_initialized = 1;
 	}
-
+*/
 	return 0;
 }
 
@@ -5216,7 +5216,7 @@ static int __devexit iris_remove(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	hci_fm_smd_deregister();
+//	hci_fm_smd_deregister();
 
 	video_unregister_device(radio->videodev);
 
