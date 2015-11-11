@@ -108,6 +108,7 @@ static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
 				i2c_byte2 = value;
 				/* LGE_CHANGE_S, jaehan.jeong, 2014.2.13, To apply  the change I2C order for DW9718, [STARTS HERE] */
 				switch (actuator_name) {
+					case ACTUATOR_MAIN_CAM_7: /* LGE_CHANGE, add actuator7 for ov8858, 2015-01-09, donghyun.kwon@lge.com */
 					case ACTUATOR_MAIN_CAM_5: // this is for imx219 actuator
 					case ACTUATOR_MAIN_CAM_3: // reserved.
 					case ACTUATOR_MAIN_CAM_2:
@@ -536,7 +537,7 @@ static int32_t msm_actuator_init_step_table(struct msm_actuator_ctrl_t *a_ctrl,
 		{
 
 			/* LGE_CHANGE_S, Remove log for reducing current,  donghyun.kwon@lge.com, 2014-04-27  */
-			if ((actuator_name == ACTUATOR_MAIN_CAM_5) || (actuator_name == ACTUATOR_MAIN_CAM_6))
+			if ((actuator_name == ACTUATOR_MAIN_CAM_5) || (actuator_name == ACTUATOR_MAIN_CAM_6) || (actuator_name == ACTUATOR_MAIN_CAM_7))
 			{
 				if ( (step_index>=0 && step_index<=4) || (step_index>=848) )
 					pr_err("step_position_table[%d] = %d", step_index,

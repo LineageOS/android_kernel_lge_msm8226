@@ -258,6 +258,15 @@ config OV8825
 		snapshot config = 3264 * 2448 at 18 fps.
 		2 lanes max fps is 18, 4 lanes max fps is 24.
 
+config OV8858
+	bool "Sensor ov8858 (BAYER 8MP)"
+	depends on MSMB_CAMERA
+	---help---
+		OmniVision 8 MP Bayer Sensor, use 4 mipi lane,
+		preview config = 1632*1224 30 fps,
+		snapshot config = 3264 * 2448 at 30 fps.
+		This sensor driver support auto focus.
+
 config OV8865
 	bool "OmniVision OV8865 (BAYER 8MP)"
 	depends on MSMB_CAMERA
