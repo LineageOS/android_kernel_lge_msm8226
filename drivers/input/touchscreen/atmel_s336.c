@@ -2180,8 +2180,8 @@ static void mxt_proc_t93_messages(struct mxt_data *data, u8 *message)
 				hrtimer_start(&data->multi_tap_timer, ktime_set(0, MS_TO_NS(MXT_WAITED_UDF_TIME)), HRTIMER_MODE_REL);
 		} else if (data->lpwg_mode == LPWG_DOUBLE_TAP) {
 			send_uevent(knockon_event);
-			input_report_key(input_dev, KEY_DOUBLE_TAP, 1);
-			input_report_key(input_dev, KEY_DOUBLE_TAP, 0);
+			input_report_key(input_dev, KEY_POWER, 1);
+			input_report_key(input_dev, KEY_POWER, 0);
 			input_sync(input_dev);
 		}
 	}
@@ -2214,8 +2214,8 @@ static void mxt_proc_t24_messages(struct mxt_data *data, u8 *message)
 		wake_lock_timeout(&touch_wake_lock, msecs_to_jiffies(2000));
 		TOUCH_INFO_MSG("Knock On detected x[%3d] y[%3d] \n", x, y);
 		kobject_uevent_env(&lge_touch_sys_device.kobj, KOBJ_CHANGE, knockon_event);
-		input_report_key(input_dev, KEY_DOUBLE_TAP, 1);
-		input_report_key(input_dev, KEY_DOUBLE_TAP, 0);
+		input_report_key(input_dev, KEY_POWER, 1);
+		input_report_key(input_dev, KEY_POWER, 0);
 		input_sync(input_dev);
 	} else {
 		TOUCH_INFO_MSG("%s msg = %d \n", __func__, msg);
@@ -4936,6 +4936,29 @@ static ssize_t store_lpwg_notify(struct mxt_data *data, const char *buf, size_t 
 		}
 	return count;
 }
+
+/* 
+ * Sysfs - DoubleTap to wake
+ */
+static ssize_t store_double_tap(struct mxt_data *data, const char *buf, size_t count) 
+{
+	int value[1] = {0};
+
+	if (mutex_is_locked(&i2c_suspend_lock)) {
+		TOUCH_INFO_MSG("%s mutex_is_locked \n", __func__);
+	}
+
+	sscanf(buf, "%d", &value[0]);
+
+	if (value[0] > 1) {
+		TOUCH_INFO_MSG("%s Incorrect double tap value. %d\n", __func__, value[0]);
+	} else { 
+		atmel_ts_lpwg(data->client, LPWG_ENABLE, value[0], NULL);
+	}
+
+	return count;
+}
+
 #endif
 
 static ssize_t store_incoming_call(struct mxt_data *data, const char *buf, size_t count)
@@ -5040,6 +5063,7 @@ static LGE_TOUCH_ATTR(knock_on_type, S_IRUGO, mxt_get_knockon_type, NULL);
 #if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
 static LGE_TOUCH_ATTR(lpwg_data, S_IRUGO | S_IWUSR, show_lpwg_data, store_lpwg_data);
 static LGE_TOUCH_ATTR(lpwg_notify, S_IRUGO | S_IWUSR, NULL, store_lpwg_notify);
+static LGE_TOUCH_ATTR(dt2w_enable, S_IRUGO | S_IWUSR, NULL, store_double_tap);
 #else
 static LGE_TOUCH_ATTR(touch_gesture, S_IRUGO | S_IWUSR, NULL, mxt_knock_on_store);
 #endif
@@ -5077,6 +5101,7 @@ static struct attribute *lge_touch_attribute_list[] = {
 #if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
 	&lge_touch_attr_lpwg_data.attr,
 	&lge_touch_attr_lpwg_notify.attr,
+	&lge_touch_attr_dt2w_enable.attr,
 #else
 	&lge_touch_attr_touch_gesture.attr,
 #endif
@@ -5707,7 +5732,7 @@ int mxt_initialize_t9_input_device(struct mxt_data *data)
 	}
 
 	set_bit(EV_KEY, input_dev->evbit);
-	set_bit(KEY_DOUBLE_TAP, input_dev->keybit);
+	set_bit(KEY_POWER, input_dev->keybit);
 
 	input_set_drvdata(input_dev, data);
 
