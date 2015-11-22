@@ -79,3 +79,5 @@ obj-$(CONFIG_S5717) += pm8xxx-cradle.o
 obj-$(CONFIG_BU52033NVX_CARKIT) += pm8xxx-carkit.o
 obj-$(CONFIG_TSPDRV) += tspdrv/
 obj-$(CONFIG_LGE_EVENT_LOCK) += lge_factory_misc.o
+obj-$(CONFIG_UID_CPUTIME) += uid_cputime.o
+
