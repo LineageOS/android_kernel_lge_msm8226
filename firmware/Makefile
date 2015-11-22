@@ -20,10 +20,6 @@ fw-external-y := $(subst ",,$(CONFIG_EXTRA_FIRMWARE))
 # accurate. In the latter case it doesn't matter -- it'll use $(fw-shipped-all).
 # But be aware that the config file might not be included at all.
 
-touch_fw_list := $(subst .ihex, , $(notdir $(wildcard $(srctree)/firmware/atmel/*.ihex)))
-touch_fw_files := $(foreach var, $(touch_fw_list), atmel/$(var))
-fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_S336) += $(touch_fw_files)
-
 ifdef CONFIG_ACENIC_OMIT_TIGON_I
 acenic-objs := acenic/tg2.bin
 fw-shipped- += acenic/tg1.bin
@@ -145,6 +141,13 @@ fw-shipped-$(CONFIG_USB_VICAM) += vicam/firmware.fw
 fw-shipped-$(CONFIG_VIDEO_CPIA2) += cpia2/stv0672_vp4.bin
 fw-shipped-$(CONFIG_YAM) += yam/1200.bin yam/9600.bin
 
+fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_S336) += atmel/E2A47P1_2_04.fw \
+						 atmel/E2A47P2_2_04.fw \
+						 atmel/E2A47P2_2_07.fw \
+						 atmel/E4A47P1_2_04.fw \
+						 atmel/E4A47P2_2_04.fw \
+						 atmel/E4A47P2_2_07.fw
+
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 
 # Directories which we _might_ need to create, so we have a rule for them.
@@ -155,6 +158,9 @@ quiet_cmd_mkdir = MKDIR   $(patsubst $(objtree)/%,%,$@)
 
 quiet_cmd_ihex  = IHEX    $@
       cmd_ihex  = $(OBJCOPY) -Iihex -Obinary $< $@
+
+quiet_cmd_copy  = COPY    $@
+      cmd_copy  = cp $(srctree)/$@ $@
 
 quiet_cmd_ihex2fw  = IHEX2FW $@
       cmd_ihex2fw  = $(objtree)/$(obj)/ihex2fw $< $@
@@ -219,6 +225,12 @@ $(patsubst %,$(obj)/%.gen.o, $(fw-external-y)): $(obj)/%.gen.o: $(fwdir)/%
 $(obj)/%: $(obj)/%.ihex | $(objtree)/$(obj)/$$(dir %)
 	$(call cmd,ihex)
 
+$(obj)/%.fw: $(objtree)/$(obj)/$$(dir %.fw)
+	$(call cmd,copy)
+
+$(obj)/%.txt: $(objtree)/$(obj)/$$(dir %.txt)
+	$(call cmd,copy)
+
 # Don't depend on ihex2fw if we're installing and it already exists.
 # Putting it after | in the dependencies doesn't seem sufficient when
 # we're installing after a cross-compile, because ihex2fw has dependencies
@@ -258,3 +270,4 @@ targets := $(patsubst $(obj)/%,%, \
 obj-n := dummy
 
 hostprogs-y := ihex2fw
+
