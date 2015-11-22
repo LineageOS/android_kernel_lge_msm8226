@@ -3469,6 +3469,10 @@ static struct clk_lookup msm_clocks_8226[] = {
 	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "34.qcom,camera_rev_c"),
 	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "34.qcom,camera_rev_d"),	
 #endif
+#ifdef CONFIG_OV8858
+	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "6c.qcom,camera_ov8858"),
+	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "20.qcom,camera_ov8858"),
+#endif
 #ifdef CONFIG_HI543	/* LGE_CHANGE,  Added for HI543 clock source */
 	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "40.qcom,camera"),
 	CLK_LOOKUP("cam_src_clk", mclk0_clk_src.c, "40.qcom,camera_rev_0"),
@@ -3543,6 +3547,10 @@ static struct clk_lookup msm_clocks_8226[] = {
 	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "34.qcom,camera_rev_b"),/*LGE_CHANGE_S, younjung.park, 2014.1.3, for X5 SPR*/
 	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "34.qcom,camera_rev_c"),
 	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "34.qcom,camera_rev_d"),
+#endif
+#ifdef CONFIG_OV8858
+	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "6c.qcom,camera_ov8858"),
+	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "20.qcom,camera_ov8858"),
 #endif
 #ifdef CONFIG_HI543	/* LGE_CHANGE,  Added for HI543 clock source */
 	CLK_LOOKUP("cam_clk", camss_mclk0_clk.c, "40.qcom,camera"),

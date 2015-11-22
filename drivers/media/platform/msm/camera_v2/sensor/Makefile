@@ -14,6 +14,7 @@ obj-$(CONFIG_HI543)  += hi543.o
 obj-$(CONFIG_HI544)  += hi544.o
 obj-$(CONFIG_IMX134) += imx134.o
 obj-$(CONFIG_OV8825) += ov8825.o
+obj-$(CONFIG_OV8858) += ov8858.o
 obj-$(CONFIG_OV8865) += ov8865.o
 obj-$(CONFIG_s5k4e1) += s5k4e1.o
 obj-$(CONFIG_OV12830) += ov12830.o
