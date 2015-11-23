@@ -47,8 +47,6 @@ endif
 
 # MSM8974
 ifeq ($(CONFIG_MACH_LGE),y)
-        dtb-$(CONFIG_MACH_MSM8226_W7DS_GLOBAL_COM) += msm8226-w7ds_global_com-v1.dtb \
-							msm8226-w7ds_global_com-v2.dtb
 else
    zreladdr-$(CONFIG_ARCH_MSM8974)	:= 0x00008000
         dtb-$(CONFIG_ARCH_MSM8974)	+= msm8974-v1-cdp.dtb
@@ -106,6 +104,8 @@ endif
 # MSM8226
    zreladdr-$(CONFIG_ARCH_MSM8226)	:= 0x00008000
 ifeq ($(CONFIG_MACH_LGE),y)
+	dtb-$(CONFIG_MACH_MSM8226_W7DS_GLOBAL_COM) += msm8226-w7ds_global_com-v1.dtb \
+							msm8226-w7ds_global_com-v2.dtb
 else # not CONFIG_MACH_LGE
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-sim.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-fluid.dtb
