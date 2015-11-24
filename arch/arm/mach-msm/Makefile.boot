@@ -104,8 +104,11 @@ endif
 # MSM8226
    zreladdr-$(CONFIG_ARCH_MSM8226)	:= 0x00008000
 ifeq ($(CONFIG_MACH_LGE),y)
-	dtb-$(CONFIG_MACH_MSM8226_W7DS_GLOBAL_COM) += msm8226-w7ds_global_com-v1.dtb \
-							msm8226-w7ds_global_com-v2.dtb
+	dtb-$(CONFIG_MACH_MSM8226_W7DS_GLOBAL_COM) +=    msm8226-w7ds_global_com-v1.dtb \
+							 msm8226-w7ds_global_com-v2.dtb
+	dtb-$(CONFIG_MACH_MSM8926_JAGNM_GLOBAL_COM) +=   msm8226-v1-jagnm.dtb \
+							 msm8226-v2-jagnm.dtb
+	dtb-$(CONFIG_MACH_MSM8226_JAG3GDS_GLOBAL_COM) += msm8226-jag3gds.dtb
 else # not CONFIG_MACH_LGE
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-sim.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-fluid.dtb
