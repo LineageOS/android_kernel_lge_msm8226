@@ -560,6 +560,13 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return rc;
 	}
 
+	/* LGE_CHANGE_S, to use another fab id soojong.jin@lge.com*/
+	if(s_ctrl->sensordata->slave_info->sensor_id == 0x179) {
+		chipid &= 0xFFF; //enable lower 12bit to remove fab code
+       	pr_err("%s : sensor id %x",__func__, s_ctrl->sensordata->slave_info->sensor_id);
+	}
+	/* LGE_CHANGE_E, to use another fab id soojong.jin@lge.com*/
+
 	CDBG("%s: read id: %x expected id %x:\n", __func__, chipid,
 		slave_info->sensor_id);
 	if (chipid != slave_info->sensor_id) {
