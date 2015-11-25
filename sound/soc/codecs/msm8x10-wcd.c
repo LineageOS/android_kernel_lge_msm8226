@@ -3331,6 +3331,7 @@ static int spk_rcv_get_route_enable_value(struct snd_kcontrol *kcontrol,
   dev_dbg(codec->dev, "spk_rcv_get_route_enable_value= %d\n",
      gpio_get_value_cansleep(gpio_spk_rcv_en));
   return 0;
+}
 static int spk_rcv_put_route_enable_value(struct snd_kcontrol *kcontrol,
 				       struct snd_ctl_elem_value *ucontrol)
 {
