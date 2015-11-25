@@ -2769,7 +2769,7 @@ static int calculate_state_of_charge(struct qpnp_bms_chip *chip,
 					int batt_temp)
 {
 	struct soc_params params;
-	int soc, previous_soc, shutdown_soc, new_calculated_soc;
+	int soc = 0, previous_soc, shutdown_soc, new_calculated_soc;
 	int remaining_usable_charge_uah;
 #ifdef CONFIG_MAX17048_FUELGAUGE
 	union power_supply_propval ret = {0,};

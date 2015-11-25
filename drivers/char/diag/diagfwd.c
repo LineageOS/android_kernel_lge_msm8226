@@ -43,19 +43,6 @@
 #include "diag_masks.h"
 #include "diagfwd_bridge.h"
 
-//2013-09-27 kyuhyung.lee [D6/RFSW] RSSI TEST[START]
-#if defined ( CONFIG_LGE_RSSI_DEBUG )
-#include <linux/moduleparam.h>
-#include <linux/syscalls.h>
-#include <linux/fcntl.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#endif  
-//2013-09-27 kyuhyung.lee [D6/RFSW] RSSI TEST[END]
-#ifdef CONFIG_LGE_ACG_CARRIER_CODE
-#include "diag_acg.h"
-#endif
-
 #define STM_CMD_VERSION_OFFSET	4
 #define STM_CMD_MASK_OFFSET	5
 #define STM_CMD_DATA_OFFSET	6
@@ -69,59 +56,6 @@
 #define STM_COMMAND_VALID 1
 
 #define SMD_DRAIN_BUF_SIZE 4096
-
-#ifdef CONFIG_LGE_DM_APP
-#include "lg_dm_tty.h"
-#endif
-
-#ifdef CONFIG_LGE_DIAG_ENABLE
-#if defined(CONFIG_MACH_MSM8X10_W5C_TRF_US) || defined(CONFIG_MACH_MSM8X10_W5C_TRF_US)
-#define DIAG_ENABLE_DEBUG 1
-#else
-#define DIAG_ENABLE_DEBUG 0
-#endif
-static int diag_enable_status = 0;
- typedef struct {
-    unsigned int hw_rev; /* rev_type */
-    char model_name[10]; /* MODEL NAME */
-    char diag_enable; /* diag enable for TRF/SPR */
-} lge_hw_smem_id0_type;
-
-int lge_diag_get_smem_value(void)
-{
-	int smem_size = 0;
-	lge_hw_smem_id0_type* lge_hw_smem_id0_ptr = (lge_hw_smem_id0_type *)
-		(smem_get_entry(SMEM_ID_VENDOR0, &smem_size));
-	//pr_info("cable type: %d", lge_hw_smem_id1_ptr->cable_type);
-	//pr_info("QEM: %d", lge_hw_smem_id1_ptr->qem); 
-#if DIAG_ENABLE_DEBUG
-    printk("Diag enable status: %d", lge_hw_smem_id0_ptr->diag_enable);
-#endif
-
-	if (lge_hw_smem_id0_ptr != NULL) {
-	//pr_info("SMEM_SIZE: %d", smem_size); 
-		return lge_hw_smem_id0_ptr->diag_enable;
-	} else {
-		return 0;
-	}
-}
-
-int set_diag_enable_status(int enable) 
-{
-#if DIAG_ENABLE_DEBUG
-	pr_info("%s, enable: %d", __func__, enable);
-#endif
-	diag_enable_status = enable;
-
-	return 0;
-}
-#endif
-
-// skip crc check because of MITS Test - WX-BSP-Factory@lge.com
-#ifdef CONFIG_LGE_PM
-#include <mach/board_lge.h>
-static int skip_crc_chk = 0;
-#endif
 
 int diag_debug_buf_idx;
 unsigned char diag_debug_buf[1024];
@@ -597,13 +531,10 @@ int diag_process_smd_read_data(struct diag_smd_info *smd_info, void *buf,
 
 	return 0;
 err:
-	if (driver->logging_mode == MEMORY_DEVICE_MODE)
+	if ((smd_info->type == SMD_DATA_TYPE ||
+	     smd_info->type == SMD_CMD_TYPE) &&
+	     driver->logging_mode == MEMORY_DEVICE_MODE)
 		diag_ws_on_read(0);
-
-#ifdef CONFIG_LGE_DM_APP
-    if (driver->logging_mode == DM_APP_MODE)
-        diag_ws_on_read(0);
-#endif
 
 	return 0;
 }
@@ -612,6 +543,12 @@ void diag_smd_queue_read(struct diag_smd_info *smd_info)
 {
 	if (!smd_info || !smd_info->ch)
 		return;
+
+	if ((smd_info->type == SMD_DATA_TYPE ||
+	     smd_info->type == SMD_CMD_TYPE) &&
+	     driver->logging_mode == MEMORY_DEVICE_MODE) {
+		diag_ws_on_notify();
+	}
 
 	switch (smd_info->type) {
 	case SMD_DCI_TYPE:
@@ -631,19 +568,12 @@ void diag_smd_queue_read(struct diag_smd_info *smd_info)
 	default:
 		pr_err("diag: In %s, invalid type: %d\n", __func__,
 			smd_info->type);
+		if ((smd_info->type == SMD_DATA_TYPE ||
+		     smd_info->type == SMD_CMD_TYPE) &&
+		     driver->logging_mode == MEMORY_DEVICE_MODE)
+			diag_ws_on_read(0);
 		return;
 	}
-
-	if (driver->logging_mode == MEMORY_DEVICE_MODE &&
-	    smd_info->type == SMD_DATA_TYPE)
-		diag_ws_on_notify();
-
-#ifdef CONFIG_LGE_DM_APP
-    if (driver->logging_mode == DM_APP_MODE &&
-        smd_info->type == SMD_DATA_TYPE)
-        diag_ws_on_notify();
-#endif
-
 }
 
 static int diag_smd_resize_buf(struct diag_smd_info *smd_info, void **buf,
@@ -866,15 +796,11 @@ void diag_smd_send_req(struct diag_smd_info *smd_info)
 				}
 			}
 		}
-		if (smd_info->type == SMD_DATA_TYPE &&
-		    driver->logging_mode == MEMORY_DEVICE_MODE)
-			diag_ws_on_read(pkt_len);
 
-#ifdef CONFIG_LGE_DM_APP
-        if (smd_info->type == SMD_DATA_TYPE &&
-            driver->logging_mode == DM_APP_MODE)
-            diag_ws_on_read(pkt_len);
-#endif
+		if ((smd_info->type == SMD_DATA_TYPE ||
+		     smd_info->type == SMD_CMD_TYPE) &&
+		     driver->logging_mode == MEMORY_DEVICE_MODE)
+			diag_ws_on_read(total_recd);
 
 		if (total_recd > 0) {
 			if (!buf) {
@@ -899,35 +825,20 @@ void diag_smd_send_req(struct diag_smd_info *smd_info)
 	} else if (smd_info->ch && !buf &&
 		(driver->logging_mode == MEMORY_DEVICE_MODE)) {
 			chk_logging_wakeup();
-	}
-
-#ifdef CONFIG_LGE_DM_APP
-    else if (smd_info->ch && (driver->logging_mode == DM_APP_MODE)) {
-		chk_logging_wakeup();
-		if( buf != NULL && smd_info->in_busy_1 == 0){
-			smd_info->in_busy_1 = 1;
+	} else {
+		if ((smd_info->type == SMD_DATA_TYPE ||
+		     smd_info->type == SMD_CMD_TYPE) &&
+		     driver->logging_mode == MEMORY_DEVICE_MODE) {
+			diag_ws_on_read(0);
 		}
-		else if(buf != NULL && smd_info->in_busy_2 == 0){
-			smd_info->in_busy_2 = 1;
-		}
-
-		lge_dm_tty->set_logging = 1;
-		wake_up_interruptible(&lge_dm_tty->waitq);
 	}
-#endif
-
 	return;
 
 fail_return:
-	if (smd_info->type == SMD_DATA_TYPE &&
-	    driver->logging_mode == MEMORY_DEVICE_MODE)
+	if ((smd_info->type == SMD_DATA_TYPE ||
+	     smd_info->type == SMD_CMD_TYPE) &&
+	     driver->logging_mode == MEMORY_DEVICE_MODE)
 		diag_ws_on_read(0);
-
-#ifdef CONFIG_LGE_DM_APP
-    if (smd_info->type == SMD_DATA_TYPE &&
-        driver->logging_mode == DM_APP_MODE)
-        diag_ws_on_read(0);
-#endif
 
 	if (smd_info->type == SMD_DCI_TYPE ||
 					smd_info->type == SMD_DCI_CMD_TYPE)
@@ -942,10 +853,6 @@ void diag_read_smd_work_fn(struct work_struct *work)
 							diag_read_smd_work);
 	diag_smd_send_req(smd_info);
 }
-
-#ifdef CONFIG_MACH_LGE
-extern int wait_mts_read_complete(void);
-#endif
 
 #ifdef CONFIG_DIAG_OVER_USB
 static int diag_write_to_usb(struct usb_diag_ch *ch,
@@ -1111,9 +1018,6 @@ int diag_device_write(void *buf, int data_type, struct diag_request *write_ptr)
 					   " USB: ", 16, 1, DUMP_PREFIX_ADDRESS,
 					    buf, write_ptr->length, 1);
 #endif /* DIAG DEBUG */
-#ifdef CONFIG_MACH_LGE
-			if (!wait_mts_read_complete())
-#endif
 			err = diag_write_to_usb(driver->legacy_ch, write_ptr);
 		}
 #ifdef CONFIG_DIAG_SDIO_PIPE
@@ -1173,37 +1077,6 @@ int diag_device_write(void *buf, int data_type, struct diag_request *write_ptr)
 		APPEND_DEBUG('d');
 	}
 #endif /* DIAG OVER USB */
-
-#ifdef CONFIG_LGE_DM_APP
-	if (driver->logging_mode == DM_APP_MODE) {
-		/* only diag cmd #250 for supporting testmode tool */
-		if (data_type == APPS_DATA) {
-			driver->write_ptr_svc = (struct diag_request *)
-			(diagmem_alloc(driver, sizeof(struct diag_request),
-				 POOL_TYPE_WRITE_STRUCT));
-			if (driver->write_ptr_svc) {
-				driver->write_ptr_svc->length = driver->used;
-				driver->write_ptr_svc->buf = buf;
-
-				queue_work(lge_dm_tty->dm_wq,
-					&(lge_dm_tty->dm_usb_work));
-				flush_work(&(lge_dm_tty->dm_usb_work));
-
-			} else {
-				err = -1;
-			}
-
-			return err;
-
-		}
-
-		lge_dm_tty->set_logging = 1;
-		wake_up_interruptible(&lge_dm_tty->waitq);
-
-	}
-#endif
-
-
     return err;
 }
 
@@ -1433,51 +1306,6 @@ int diag_apps_responds()
 	return 0;
 }
 
-#if defined(CONFIG_LGE_DIAG_USB_ACCESS_LOCK)
-extern int get_diag_enable(void);
-#define DIAG_ENABLE			1
-#define DIAG_DISABLE			0
-#define COMMAND_PORT_LOCK		0xA1
-#define COMMAND_WEB_DOWNLOAD		0xEF
-#define COMMAND_ASYNC_HDLC_FLAG		0x7E
-#define COMMAND_DLOAD_RESET		0x3A
-#define COMMAND_TEST_MODE		0xFA
-#define COMMAND_TEST_MODE_RESET		0x29
-
-int is_filtering_command(char *buf)
-{
-    int ret=0;
-    if(buf == NULL)
-	return -EFAULT;
-
-    switch(buf[0]) {
-	case COMMAND_PORT_LOCK :
-	    ret = 1;
-	    break;
-	case COMMAND_WEB_DOWNLOAD :
-	    ret = 1;
-	    break;
-	case COMMAND_ASYNC_HDLC_FLAG :
-	    ret = 1;
-	    break;
-	case COMMAND_DLOAD_RESET :
-	    ret = 1;
-	    break;
-	case COMMAND_TEST_MODE :
-	    ret = 1;
-	    break;
-	case COMMAND_TEST_MODE_RESET :
-	    ret = 1;
-	    break;
-	default:
-	    ret = 0;
-	    break;
-    }
-
-    return ret;
-}
-#endif
-
 int diag_process_apps_pkt(unsigned char *buf, int len)
 {
 	uint16_t subsys_cmd_code;
@@ -1489,29 +1317,6 @@ int diag_process_apps_pkt(unsigned char *buf, int len)
 	int status = 0;
 #if defined(CONFIG_DIAG_OVER_USB)
 	unsigned char *ptr;
-#endif
-
-#ifdef CONFIG_LGE_ACG_CARRIER_CODE
-	int carrier_code = 0;
-	int result = 0;
-#endif
-
-#ifdef CONFIG_LGE_DIAG_ENABLE
-    if (diag_enable_status != 1 && buf[0] != 0xA1 ) {
-#if DIAG_ENABLE_DEBUG
-        pr_info("%s: diag_enable_status = %d \n",__func__,diag_enable_status);
-#endif
-        driver->apps_rsp_buf[0] = 24;
-        encode_rsp_and_send(0);
-        return 0;
-    }
-#endif
-
-#if defined(CONFIG_LGE_DIAG_USB_ACCESS_LOCK)
-    /* buf[0] : 0xA1(161) is a diag command for mdm port lock */
-	if ((is_filtering_command(buf) != 1) && (get_diag_enable() == DIAG_DISABLE)) {
-	    return 0;
-        }
 #endif
 
 	/* Check if the command is a supported mask command */
@@ -1956,21 +1761,6 @@ int diag_process_apps_pkt(unsigned char *buf, int len)
 		encode_rsp_and_send(5);
 		return 0;
 	}
-#ifdef CONFIG_LGE_ACG_CARRIER_CODE
-	// 0x26 (DIAG_NV_READ_F) 0x846d (NV_LG_FW_LRA_CARRIER_CODE_I:33901)
-	else if  ((*buf == 0x26) && (*(buf+1) == 0x6d) && (*(buf+2) == 0x84)) 
-	{
-		carrier_code = get_carrier_code();
-		printk(KERN_INFO "diag: carrier_code=%d result=%d\n", carrier_code, result);
-	}
-	// 0x27 (DIAG_NV_WRITE_F) 0x846d (NV_LG_FW_LRA_CARRIER_CODE_I:33901)
-	else if  ((*buf == 0x27) && (*(buf+1) == 0x6d) && (*(buf+2) == 0x84)) 
-	{
-		carrier_code = 10*(*(buf+3))+(*(buf+4));
-		result = set_carrier_code(carrier_code);
-		printk(KERN_INFO "diag: carrier_code=%d result=%d\n", carrier_code, result);
-	}
-#endif	
 	 /* Check for ID for NO MODEM present */
 	else if (chk_polling_response()) {
 		/* respond to 0x0 command */
@@ -2036,13 +1826,7 @@ void diag_process_hdlc(void *data, unsigned len)
 	hdlc.escaping = 0;
 
 	ret = diag_hdlc_decode(&hdlc);
-
-// skip crc check because of MITS Test - WX-BSP-Factory@lge.com
-#ifdef CONFIG_LGE_PM
-	if (ret && !skip_crc_chk) {
-#else
 	if (ret) {
-#endif
 		crc_chk = crc_check(hdlc.dest_ptr, hdlc.dest_idx);
 		if (crc_chk) {
 			/* CRC check failed. */
@@ -2183,23 +1967,6 @@ int diagfwd_connect(void)
 	int err;
 	int i;
 
-#ifdef CONFIG_LGE_DM_APP
-	if (driver->logging_mode == DM_APP_MODE) {
-		printk(KERN_DEBUG "diag: USB connected in DM_APP_MODE\n");
-		driver->usb_connected = 1;
-
-		err = usb_diag_alloc_req(driver->legacy_ch, N_LEGACY_WRITE,
-				N_LEGACY_READ);
-		if (err)
-			printk(KERN_ERR "diag: unable to alloc USB req on legacy ch");
-
-		/* Poll USB channel to check for data*/
-		queue_work(driver->diag_wq, &(driver->diag_read_work));
-
-		return 0;
-	}
-#endif
-
 	printk(KERN_DEBUG "diag: USB connected\n");
 	err = usb_diag_alloc_req(driver->legacy_ch,
 			(driver->supports_separate_cmdrsp ?
@@ -2238,15 +2005,6 @@ int diagfwd_disconnect(void)
 	int i;
 	unsigned long flags;
 	struct diag_smd_info *smd_info = NULL;
-
-#ifdef CONFIG_LGE_DM_APP
-	if (driver->logging_mode == DM_APP_MODE) {
-		printk(KERN_DEBUG "diag: USB disconnected in DM_APP_MODE\n");
-		driver->usb_connected = 0;
-
-		return 0;
-	}
-#endif
 
 	printk(KERN_DEBUG "diag: USB disconnected\n");
 	driver->usb_connected = 0;
@@ -2377,27 +2135,6 @@ int diagfwd_read_complete(struct diag_request *diag_read_ptr)
 				queue_work(driver->diag_wq,
 						 &(driver->diag_read_work));
 		}
-
-#ifdef CONFIG_LGE_DM_APP
-		if (driver->logging_mode == DM_APP_MODE) {
-            if((*(buf) == 0xEF) && (*(buf + 1) == 0x00)) {
-                queue_work(lge_dm_tty->dm_wq,
-                    &(lge_dm_tty->dm_dload_work));
-
-                mutex_lock(&driver->diagchar_mutex);
-                driver->logging_mode = USB_MODE;
-                mutex_unlock(&driver->diagchar_mutex);
-            }
-
-			if (status != -ECONNRESET && status != -ESHUTDOWN)
-				queue_work(driver->diag_wq,
-					&(driver->diag_proc_hdlc_work));
-			else
-				queue_work(driver->diag_wq,
-						 &(driver->diag_read_work));
-		}
-#endif
-
 	}
 #ifdef CONFIG_DIAG_SDIO_PIPE
 	else if (buf == (void *)driver->usb_buf_mdm_out) {
@@ -2495,11 +2232,11 @@ void diag_smd_notify(void *ctxt, unsigned event)
 			diag_dci_notify_client(smd_info->peripheral_mask,
 							DIAG_STATUS_OPEN);
 		}
-		wake_up(&driver->smd_wait_q);
 		diag_smd_queue_read(smd_info);
+		wake_up(&driver->smd_wait_q);
 	} else if (event == SMD_EVENT_DATA) {
-		wake_up(&driver->smd_wait_q);
 		diag_smd_queue_read(smd_info);
+		wake_up(&driver->smd_wait_q);
 		if (smd_info->type == SMD_DCI_TYPE ||
 		    smd_info->type == SMD_DCI_CMD_TYPE) {
 			diag_dci_try_activate_wakeup_source();
@@ -2955,23 +2692,6 @@ void diagfwd_init(void)
 	}
 	driver->diag_wq = create_singlethread_workqueue("diag_wq");
 	driver->diag_usb_wq = create_singlethread_workqueue("diag_usb_wq");
-// skip crc check because of MITS Test - WX-BSP-Factory@lge.com
-#ifdef CONFIG_LGE_PM
-	switch (lge_get_boot_mode()) {
-		case LGE_BOOT_MODE_QEM_56K:
-		case LGE_BOOT_MODE_QEM_130K:
-		case LGE_BOOT_MODE_QEM_910K:
-		case LGE_BOOT_MODE_PIF_56K:
-		case LGE_BOOT_MODE_PIF_130K:
-		case LGE_BOOT_MODE_PIF_910K:
-			skip_crc_chk = 1;
-			break;
-		default:
-			skip_crc_chk = 0;
-			break;
-	}
-#endif
-
 #ifdef CONFIG_DIAG_OVER_USB
 	INIT_WORK(&(driver->diag_usb_connect_work),
 						 diag_usb_connect_work_fn);
@@ -2986,16 +2706,6 @@ void diagfwd_init(void)
 		goto err;
 	}
 #endif
-
-#ifdef CONFIG_USB_G_LGE_ANDROID_DIAG_OSP_SUPPORT
-	driver->diag_read_status = 1;
-	init_waitqueue_head(&driver->diag_read_wait_q);
-#endif
-
-#ifdef CONFIG_LGE_DIAG_ENABLE
-	set_diag_enable_status(lge_diag_get_smem_value());
-#endif
-
 	platform_driver_register(&msm_smd_ch1_driver);
 	platform_driver_register(&diag_smd_lite_driver);
 
@@ -3072,92 +2782,3 @@ void diagfwd_exit(void)
 	destroy_workqueue(driver->diag_wq);
 	destroy_workqueue(driver->diag_usb_wq);
 }
- //for antenna bar test  2282 
-#if defined ( CONFIG_LGE_RSSI_DEBUG )   
-static int dummy_arg_on;   
-static int antbar_write(const char *val, struct kernel_param *kp)   
-{   
-    unsigned char string;   
-       
-    sscanf(val,"%s",&string);   
-    printk(KERN_ERR "khlee : write : %c \n", string);   
-      
-    return 0;
-}   
-   
-static int antbar_read(char *buf, struct kernel_param *kp)   
-{   
-    int fd;   
-    int read_byte = 0;   
-    char read_data = 0;   
-    mm_segment_t old_fs =  get_fs();   
-   
-    set_fs(get_ds());   
-    if((fd = sys_open((const char __user *)"/data/data/com.example.antbartest/files/Level.txt", O_CREAT | O_RDWR, 0777) ) < 0 )   
-    {   
-        printk(KERN_ERR "[antbar test] Can not open file. fd = %x\n", fd);   
-        sys_close(fd);   
-        set_fs(old_fs);   
-        return -1;   
-    }   
-   
-    read_byte = sys_read(fd, (char __user *) &read_data, sizeof(char));   
-       
-   
-    printk(KERN_ERR "khlee : read %c\n", read_data);   
-    sys_close(fd);   
-    set_fs(old_fs);   
-   
-    driver->apps_rsp_buf[0] = read_data; /* error code 13 */   
-    encode_rsp_and_send(1);   
-    return 0;   
-}   
-   
-module_param_call(antbar_test, antbar_write, antbar_read, &dummy_arg_on, 0665);   
-
-static int MRD_write(const char *val, struct kernel_param *kp)   
-{   
-    unsigned char string;   
-       
-    sscanf(val,"%s",&string);   
-    printk(KERN_ERR "khlee : MRD write : %c \n", string);   
-      
-    return 0;
-}   
-   
-static int MRD_read(char *buf, struct kernel_param *kp)   
-{   
-    int fd, i;   
-    int read_byte = 0;   
-    char read_data[10]={0,};   
-    mm_segment_t old_fs =  get_fs();   
-   
-    set_fs(get_ds());   
-    if((fd = sys_open((const char __user *)"/data/data/com.example.mrdset/files/MRDTest.txt", O_CREAT | O_RDWR, 0777) ) < 0 )   
-    {   
-        printk(KERN_ERR "[antbar test] Can not open file. fd = %x\n", fd);   
-        sys_close(fd);   
-        set_fs(old_fs);   
-        return -1;   
-    }   
-   
-    read_byte = sys_read(fd, (char __user *) &read_data, 10);   
-    
-   
-    printk(KERN_ERR "khlee : read bytes %d\n", read_byte);   
-    sys_close(fd);   
-    set_fs(old_fs);   
-
-    for (i = 0; i < diag_max_reg; i++) {
-        entry = driver->table[i];
-        if (entry.process_id != NO_PROCESS) {
-            diag_send_data(entry, read_data, read_byte, MODEM_DATA);
-        }
-    }    
-   
-    return 0;   
-}   
-   
-module_param_call(mrd_test, MRD_write, MRD_read, &dummy_arg_on, 0665);  
-   
-#endif  

@@ -43,9 +43,6 @@
 #include "diag_debugfs.h"
 #include "diag_masks.h"
 #include "diagfwd_bridge.h"
-#ifdef CONFIG_LGE_DIAG_USB_ACCESS_LOCK
-#include <mach/board_lge.h>
-#endif
 
 #include <linux/coresight-stm.h>
 #include <linux/kernel.h>
@@ -300,10 +297,12 @@ static int diagchar_close(struct inode *inode, struct file *file)
 #ifdef CONFIG_DIAG_OVER_USB
 	/* If the SD logging process exits, change logging to USB mode */
 	if (driver->logging_process_id == current->tgid) {
+		mutex_lock(&driver->diagchar_mutex);
 		driver->logging_mode = USB_MODE;
+		diag_ws_reset();
+		mutex_unlock(&driver->diagchar_mutex);
 		diag_update_proc_vote(DIAG_PROC_MEMORY_DEVICE, VOTE_DOWN);
 		diagfwd_connect();
-		diag_ws_reset();
 #ifdef CONFIG_DIAGFWD_BRIDGE_CODE
 		diag_clear_hsic_tbl();
 		diagfwd_cancel_hsic(REOPEN_HSIC);
@@ -909,6 +908,7 @@ int diag_switch_logging(unsigned long ioarg)
 				pr_err("socket process, status: %d\n",
 					status);
 			}
+			driver->socket_process = NULL;
 		}
 	} else if (driver->logging_mode == SOCKET_MODE) {
 		driver->socket_process = current;
@@ -1267,9 +1267,15 @@ drop:
 					COPY_USER_SPACE_OR_EXIT(buf+ret,
 						*(data->buf_in_1),
 						data->write_ptr_1->length);
+					diag_ws_on_copy();
+					copy_data = 1;
 					data->in_busy_1 = 0;
 				}
 			}
+		}
+		if (!copy_data) {
+			diag_ws_on_copy();
+			copy_data = 1;
 		}
 #ifdef CONFIG_DIAG_SDIO_PIPE
 		/* copy 9K data over SDIO */
@@ -1434,6 +1440,7 @@ drop:
 exit:
 	mutex_unlock(&driver->diagchar_mutex);
 	if (copy_data) {
+		diag_ws_on_copy_complete();
 		/*
 		 * Flush any work that is currently pending on the data
 		 * channels. This will ensure that the next read is not
@@ -1442,7 +1449,6 @@ exit:
 		for (i = 0; i < NUM_SMD_DATA_CHANNELS; i++)
 			flush_workqueue(driver->smd_data[i].wq);
 		wake_up(&driver->smd_wait_q);
-		diag_ws_on_copy_complete();
 	}
 	return ret;
 }
@@ -1453,11 +1459,6 @@ static int diagchar_write(struct file *file, const char __user *buf,
 	int err, ret = 0, pkt_type, token_offset = 0;
 	int remote_proc = 0, data_type;
 	uint8_t index;
-
-#ifdef CONFIG_LGE_DM_APP
-	char *buf_cmp;
-#endif
-
 #ifdef DIAG_DEBUG
 	int length = 0, i;
 #endif
@@ -1496,16 +1497,6 @@ static int diagchar_write(struct file *file, const char __user *buf,
 		return -EIO;
 	}
 #endif /* DIAG over USB */
-
-#ifdef CONFIG_LGE_DM_APP
-	if (driver->logging_mode == DM_APP_MODE) {
-		/* only diag cmd #250 for supporting testmode tool */
-		buf_cmp = (char *)buf + 4;
-		if (*(buf_cmp) != 0xFA)
-			return 0;
-	}
-#endif
-
 	if (pkt_type == DCI_DATA_TYPE) {
 		user_space_data = diagmem_alloc(driver, payload_size,
 								POOL_TYPE_USER);
@@ -2063,13 +2054,8 @@ static int diagchar_setup_cdev(dev_t devno)
 		return -1;
 	}
 
-#ifdef CONFIG_MACH_LGE
-	driver->diag_dev = device_create(driver->diagchar_class, NULL, devno,
-					 (void *)driver, "diag_lge");
-#else
 	driver->diag_dev = device_create(driver->diagchar_class, NULL, devno,
 					 (void *)driver, "diag");
-#endif
 
 	if (!driver->diag_dev)
 		return -EIO;
@@ -2132,101 +2118,6 @@ void diagfwd_bridge_fn(int type)
 inline void diagfwd_bridge_fn(int type) { }
 #endif
 
-#ifdef CONFIG_LGE_DIAG_USB_ACCESS_LOCK
-int user_diag_enable = 0;
-#if defined(CONFIG_LGE_DIAG_USB_ACCESS_LOCK) && !defined(CONFIG_MACH_MSM8974_G3_SPR_US) && !defined(CONFIG_MACH_MSM8974_G2_SPR)
-#define DIAG_ENABLE	1
-#define DIAG_DISABLE	0
-#endif
-
-static ssize_t read_diag_enable(struct device *dev, struct device_attribute *attr,
-				   char *buf)
-{
-	int ret;
-
-	ret = sprintf(buf, "%d", user_diag_enable);
-
-	return ret;
-}
-static ssize_t write_diag_enable(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t size)
-{
-    unsigned char string[2];
-
-    sscanf(buf, "%s", string);
-
-    if (!strncmp(string, "0", 1))
-    {
-    	user_diag_enable = 0;
-    }
-	else
-	{
-		user_diag_enable = 1;
-	}
-#if defined(CONFIG_LGE_DIAG_USB_ACCESS_LOCK) && !defined(CONFIG_MACH_MSM8974_G3_SPR_US) && !defined(CONFIG_MACH_MSM8974_G2_SPR)
-	if(lge_get_factory_boot()) {
-		printk("[FACTORY] force to diag enable, factory mode\n");
-		user_diag_enable = DIAG_ENABLE;
-	}
-#endif
-
-	printk("[%s] diag_enable: %d\n",__func__, user_diag_enable);
-
-	return size;
-}
-
-static DEVICE_ATTR(diag_enable, S_IRUGO | S_IWUSR, read_diag_enable, write_diag_enable);
-
-int lge_diag_create_file(struct platform_device *pdev)
-{
-    int ret;
-
-    ret = device_create_file(&pdev->dev, &dev_attr_diag_enable);
-    if (ret) {
-        device_remove_file(&pdev->dev, &dev_attr_diag_enable);
-        return ret;
-    }
-    return ret;
-}
-
-#if defined(CONFIG_LGE_DIAG_USB_ACCESS_LOCK) && !defined(CONFIG_MACH_MSM8974_G3_SPR_US) && !defined(CONFIG_MACH_MSM8974_G2_SPR)
-int get_diag_enable(void)
-{
-	if (lge_get_factory_boot())
-		user_diag_enable = DIAG_ENABLE;
-
-	return user_diag_enable;
-}
-EXPORT_SYMBOL(get_diag_enable);
-#endif
-
-int lge_diag_remove_file(struct platform_device *pdev)
-{
-    device_remove_file(&pdev->dev, &dev_attr_diag_enable);
-    return 0;
-}
-
-static int lge_diag_cmd_probe(struct platform_device *pdev)
-{
-    return lge_diag_create_file(pdev);
-}
-
-static int lge_diag_cmd_remove(struct platform_device *pdev)
-{
-    lge_diag_remove_file(pdev);
-    return 0;
-}
-
-static struct platform_driver lge_diag_cmd_driver = {
-    .probe		= lge_diag_cmd_probe,
-    .remove 	= lge_diag_cmd_remove,
-    .driver 	= {
-        .name = "lg_diag_cmd",
-        .owner	= THIS_MODULE,
-    },
-};
-#endif
 static int __init diagchar_init(void)
 {
 	dev_t dev;
@@ -2318,10 +2209,6 @@ static int __init diagchar_init(void)
 		printk(KERN_INFO "kzalloc failed\n");
 		goto fail;
 	}
-
-#ifdef CONFIG_LGE_DIAG_USB_ACCESS_LOCK
-	platform_driver_register(&lge_diag_cmd_driver);
-#endif
 
 	pr_info("diagchar initialized now");
 	return 0;
