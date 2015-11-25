@@ -146,7 +146,9 @@ fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_S336) += atmel/E2A47P1_2_04.fw \
 						 atmel/E2A47P2_2_07.fw \
 						 atmel/E4A47P1_2_04.fw \
 						 atmel/E4A47P2_2_04.fw \
-						 atmel/E4A47P2_2_07.fw
+						 atmel/E4A47P2_2_07.fw \
+						 atmel/S0A47P1_2_07.fw \
+						 atmel/Jaguar02.fw
 
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 

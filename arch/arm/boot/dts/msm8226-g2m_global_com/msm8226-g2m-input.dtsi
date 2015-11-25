@@ -1,0 +1,98 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	gpio_keys {
+		home {
+			unused;
+		};
+
+		quick_clip {
+			unused;
+		};
+	};
+
+	i2c@f9927000 { /* BLSP1 QUP5 */
+		melfas_mms136@48 {
+			melfas,product = "S0A47A";
+			melfas,fw-image-name = "melfas/g2m_global_com/g2m_global_com_rev_0_v101.mfsb";
+			melfas,panel-spec-name = "melfas/g2m_global_com/g2m_global_com_limit.txt";
+			vdd-supply = <0>;
+			melfas,ce = <60>;
+			melfas,button-map = <0>;
+			melfas,enalbe_active_mode = <0>;
+			revision = "rev_0";
+			status ="ok";
+		};
+
+		melfas_mms136_rev_a@48 {
+			melfas,product = "S0A47A";
+			melfas,fw-image-name = "melfas/g2m_global_com/g2m_global_com_rev_0_v101.mfsb";
+			melfas,panel-spec-name = "melfas/g2m_global_com/g2m_global_com_limit.txt";
+			vdd-supply = <0>;
+			melfas,ce = <60>;
+			melfas,button-map = <0>;
+			melfas,enalbe_active_mode = <0>;
+			revision = "rev_a";
+			status = "ok";
+		};
+
+		lge_touch@48 {
+			lge,product = "S0A47A";
+			lge,fw_image = "melfas/g2m_global_com/g2m_global_com_rev_0_v101.mfsb";
+			lge,panel_spec = "melfas/g2m_global_com/g2m_global_com_limit.txt";
+			revision = "rev_0...rev_a";
+			status = "disable";
+		};
+
+		atmel_s336@4a {
+			revision = "rev_b...";
+			status = "ok";
+			atmel,t15_key_state = <0>;
+			atmel,t15_key_map = <0>;
+			atmel,fw_name = "atmel/S0A47P1_2_07.fw";
+			atmel,panel_check = <0>;
+			atmel,panel_delta_value = <0 0 0 480 380>;
+			atmel,use_mfts = <1>;
+			atmel,ghost_detection_enable = <1>;
+		};
+
+		lge_ts_misc {
+			revision = "rev_0...rev_a";
+			vdd_on = <1>;
+			vio_l19_on = <1>;
+			vio_lvs1_on = <1>;
+			irq_wake = <0>;
+			status ="ok";
+		};
+
+		lge_ts_misc_rev_b {
+			compatible = "lge,ts_misc";
+			revision = "rev_b...";
+			reg = <0x13>;
+			vdd_on = <0>;
+			vio_l19_on = <0>;
+			vio_lvs1_on = <1>;
+			vdd-supply = <0>;
+			vio_l19-supply = <0>;
+			vio_lvs1-supply = <&pm8226_lvs1>;
+			vdd_voltage = <0>;
+			vio_l19_voltage = <0>;
+			vio_lvs1_voltage = <0>; // Not control
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0 0x0>;
+			gpio_int = <0>;
+			irq_wake = <0>;
+			status ="ok";
+		};
+	};
+};
