@@ -2,7 +2,7 @@
  * Broadcom Dongle Host Driver (DHD)
  * Prefered Network Offload and Wi-Fi Location Service(WLS) code.
  *
- * Copyright (C) 1999-2014, Broadcom Corporation
+ * Copyright (C) 1999-2015, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -3219,6 +3219,9 @@ dhd_pno_set_for_hotlist(dhd_pub_t *dhd, wl_pfn_bssid_t *p_pfn_bssid,
 			__FUNCTION__, err));
 		goto exit;
 	}
+#ifdef LPS_SUPPORT
+	_params->params_hotlist.scan_fr = hotlist_params->scan_fr;
+#endif
 	if ((err = _dhd_pno_set(dhd, _params, DHD_PNO_HOTLIST_MODE)) < 0) {
 		DHD_ERROR(("%s : failed to set call pno_set (err %d) in firmware\n",
 			__FUNCTION__, err));

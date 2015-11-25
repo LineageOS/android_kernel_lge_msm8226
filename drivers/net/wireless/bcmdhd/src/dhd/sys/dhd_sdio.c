@@ -1,7 +1,7 @@
 /*
  * DHD Bus Module for SDIO
  *
- * Copyright (C) 1999-2014, Broadcom Corporation
+ * Copyright (C) 1999-2015, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd_sdio.c 504212 2014-09-23 08:21:02Z $
+ * $Id: dhd_sdio.c 522630 2014-12-23 05:08:00Z $
  */
 
 #include <typedefs.h>
@@ -607,6 +607,7 @@ static int dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size);
 static int dhd_serialconsole(dhd_bus_t *bus, bool get, bool enable, int *bcmerror);
 #endif /* DHD_DEBUG */
 
+static int dhdsdio_mem_dump(dhd_bus_t *bus);
 static int dhdsdio_devcap_set(dhd_bus_t *bus, uint8 cap);
 static int dhdsdio_download_state(dhd_bus_t *bus, bool enter);
 
@@ -3209,6 +3210,12 @@ printbuf:
 		DHD_ERROR(("%s: %s\n", __FUNCTION__, strbuf.origbuf));
 	}
 
+	if (sdpcm_shared.flags & SDPCM_SHARED_TRAP) {
+		/* Mem dump to a file on device */
+		dhdsdio_mem_dump(bus);
+		/* In some cases, the host back trace could be relevant too. */
+		WARN_ON(1);
+	}
 
 done:
 	if (mbuffer)
@@ -3220,8 +3227,60 @@ done:
 
 	return bcmerror;
 }
-#endif /* #ifdef DHD_DEBUG */
 
+
+static int
+dhdsdio_mem_dump(dhd_bus_t *bus)
+{
+	int ret = 0;
+	int size; /* Full mem size */
+	int start = bus->dongle_ram_base; /* Start address */
+	int read_size = 0; /* Read size of each iteration */
+	uint8 *buf = NULL, *databuf = NULL;
+
+	/* Get full mem size */
+	size = bus->ramsize;
+	buf = MALLOC(bus->dhd->osh, size);
+	if (!buf) {
+		DHD_ERROR(("%s: Out of memory (%d bytes)\n", __FUNCTION__, size));
+		return -1;
+	}
+
+	/* Read mem content */
+	DHD_ERROR(("Dump dongle memory\n"));
+	databuf = buf;
+	while (size)
+	{
+		read_size = MIN(MEMBLOCK, size);
+		if ((ret = dhdsdio_membytes(bus, FALSE, start, databuf, read_size)))
+		{
+			DHD_ERROR(("%s: Error membytes %d\n", __FUNCTION__, ret));
+			if (buf) {
+				MFREE(bus->dhd->osh, buf, size);
+			}
+			return -1;
+		}
+		/* Decrement size and increment start address */
+		size -= read_size;
+		start += read_size;
+		databuf += read_size;
+	}
+	DHD_ERROR(("Done\n"));
+
+	dhd_save_fwdump(bus->dhd, buf, bus->ramsize);
+	dhd_schedule_memdump(bus->dhd, buf, bus->ramsize);
+	/* buf free handled in write_to_file, not here */
+
+	return 0;
+}
+
+int
+dhd_bus_mem_dump(dhd_pub_t *dhdp)
+{
+	dhd_bus_t *bus = dhdp->bus;
+	return dhdsdio_mem_dump(bus);
+}
+#endif /* #ifdef DHD_DEBUG */
 
 int
 dhdsdio_downloadvars(dhd_bus_t *bus, void *arg, int len)
@@ -8108,7 +8167,7 @@ dhdsdio_suspend(void *context)
 	}
 
 	ret = dhd_os_check_wakelock(bus->dhd);
-	if (ret && (bus->dhd->up)) {
+	if ((ret) && (bus->dhd->up)) {
 		if (wait_event_timeout(bus->bus_sleep, bus->sleeping, wait_time) == 0) {
 			if (!bus->sleeping) {
 				return 1;
