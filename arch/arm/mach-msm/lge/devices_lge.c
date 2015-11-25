@@ -469,10 +469,10 @@ int lge_battery_info = BATT_ID_UNKNOWN;
 
 bool is_lge_battery_valid(void)
 {
-	union power_supply_propval ac_val = {0,}, usb_val = {0,};
 #ifdef CONFIG_LGE_PM_BATTERY_4_2VOLT
 	return true;
 #else
+	union power_supply_propval ac_val = {0,}, usb_val = {0,};
 	if (!ac_psy)
 		ac_psy = power_supply_get_by_name("ac");
 	if (!usb_psy)
@@ -761,8 +761,9 @@ static int __init display_kcal_setup(char *kcal)
 		kcal_r = kcal_g = kcal_b = 255;
 		pr_info("set to default : %d\n", kcal_r);
 	}
-
+#if !defined(CONFIG_ARCH_MSM8610)
 	kcal_set_values(kcal_r, kcal_g, kcal_b);
+#endif
 	return 1;
 }
 __setup("lge.kcal=", display_kcal_setup);
