@@ -20,6 +20,10 @@
 #define VBIF_WR_LIM_CONF    0xC0
 #define MDSS_DEFAULT_OT_SETTING    0x10
 
+#if defined(CONFIG_ARCH_MSM8610)
+#define KOFF_TIMEOUT msecs_to_jiffies(300)
+#endif
+
 enum mdss_mdp_writeback_type {
 	MDSS_MDP_WRITEBACK_TYPE_ROTATOR,
 	MDSS_MDP_WRITEBACK_TYPE_LINE,

@@ -52,7 +52,9 @@
 
 /* wait for 300ms to take into account scheduling related delays
  * This number is empirical*/
+#if !defined(CONFIG_ARCH_MSM8610)
 #define KOFF_TIMEOUT msecs_to_jiffies(300)
+#endif
 
 #define OVERFETCH_DISABLE_TOP		BIT(0)
 #define OVERFETCH_DISABLE_BOTTOM	BIT(1)
