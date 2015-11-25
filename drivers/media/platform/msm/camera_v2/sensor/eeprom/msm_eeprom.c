@@ -352,7 +352,7 @@ static int read_eeprom_memory(struct msm_eeprom_ctrl_t *e_ctrl,
 					e_ctrl->i2c_client.cci_client->sid++;
 			       }
 			#else
-				#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM)
+				#if defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5_GLOBAL_COM) || defined(CONFIG_MACH_MSM8X10_W5DS_GLOBAL_COM)
 				if(lge_camera_info){
 					if(!strncmp(lge_camera_info, "imx111", 6)){
 						CDBG("%s: (global)I2C address : 0x%x\n", __func__, e_ctrl->i2c_client.client->addr);
