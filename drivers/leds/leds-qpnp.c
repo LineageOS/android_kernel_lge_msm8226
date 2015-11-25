@@ -1589,7 +1589,7 @@ static void __qpnp_led_work(struct qpnp_led_data *led,
 				"RGB set brightness failed (%d)\n", rc);
 		break;
 	case QPNP_ID_LED_MPP:
-#ifndef CONFIG_MACH_MSM8926_G2M_GLOBAL
+#if !defined(CONFIG_MACH_MSM8926_G2M_GLOBAL) && !defined(CONFIG_ARCH_MSM8610)
 		rc = qpnp_mpp_set(led);
 		if (rc < 0)
 			dev_err(&led->spmi_dev->dev,
