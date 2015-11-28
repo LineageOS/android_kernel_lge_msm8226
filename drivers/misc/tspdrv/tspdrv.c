@@ -53,7 +53,9 @@ static atomic_t g_bRuntimeRecord;
 #include <tspdrvRecorder.c>
 #endif
 
+#ifdef CONFIG_TSPDRV_VIBRATION_CONTROL
 #include"imm_timed_output.h"
+#endif
 
 /* Device name and version information */
 #define VERSION_STR " v3.7.11.0\n"                  /* DO NOT CHANGE - this is auto-generated */
@@ -185,6 +187,7 @@ MODULE_AUTHOR("Immersion Corporation");
 MODULE_DESCRIPTION("TouchSense Kernel Module");
 MODULE_LICENSE("GPL v2");
 
+#ifdef CONFIG_TSPDRV_VIBRATION_CONTROL
 extern VibeInt8 timedForce;
 
 static ssize_t nforce_val_show(struct device *dev, struct device_attribute *attr,
@@ -213,6 +216,7 @@ static ssize_t nforce_val_store(struct device *dev, struct device_attribute *att
 }
 
 static DEVICE_ATTR(nforce_timed, S_IRUGO | S_IWUSR, nforce_val_show, nforce_val_store);
+#endif
 
 #if defined(CONFIG_MACH_MSM8226_G2MDS_OPEN_CIS) || defined(CONFIG_MACH_MSM8226_G2MDS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8226_G2MSS_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_G2M_GLOBAL)
 /* LGE_CHANGED_START
@@ -331,8 +335,10 @@ static int __init tspdrv_init(void)
         g_cchDeviceName += strlen(szName);
 
     }
+#ifdef CONFIG_TSPDRV_VIBRATION_CONTROL
     device_create_file(&platdev.dev, &dev_attr_nforce_timed);
     ImmVibe_timed_output();
+#endif
     return 0;
 }
 

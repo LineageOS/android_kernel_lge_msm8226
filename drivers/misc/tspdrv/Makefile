@@ -25,5 +25,6 @@
 # under the License.
 # =========================================================================
 
-obj-$(CONFIG_TSPDRV)	+= tspdrv.o imm_timed_output.o
+obj-$(CONFIG_TSPDRV)		+= tspdrv.o
+obj-$(CONFIG_TSPDRV_VIBRATION_CONTROL) += imm_timed_output.o
 
