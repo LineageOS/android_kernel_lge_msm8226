@@ -605,6 +605,10 @@ config TSPDRV
     bool "tspdrv"
         default n
 
+config TSPDRV_VIBRATION_CONTROL
+    bool "tspdrv vibration control"
+        default n
+
 config TSPDRV_3_0V_VIBRATOR
 	bool "tspdrv use 3.0V Vibrator"
 	default n
