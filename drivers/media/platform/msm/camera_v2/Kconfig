@@ -316,3 +316,16 @@ config MSM_GEMINI
 	depends on MSMB_CAMERA && (ARCH_MSM7X30 || ARCH_MSM8X60 || ARCH_MSM8960)
 	---help---
 	  Enables support for the Gemini JPEG encoder engine for 8x60.
+
+config BACKLIGHT_RT8542
+        tristate "Backlight driver for rt8542 visualisation device"
+        depends on BACKLIGHT_CLASS_DEVICE
+        help
+          To compile this driver as a module, choose M here: the module will be
+          called rt8542 driver.
+
+config MSMB_CAMERA_ADP1660
+	tristate "driver for ADP1660"
+	depends MSMB_CAMERA
+	---help---
+	    Enable support for ADP1660
