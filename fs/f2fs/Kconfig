@@ -45,7 +45,7 @@ config F2FS_FS_POSIX_ACL
 	default y
 	help
 	  Posix Access Control Lists (ACLs) support permissions for users and
-	  gourps beyond the owner/group/world scheme.
+	  groups beyond the owner/group/world scheme.
 
 	  To learn more about Access Control Lists, visit the POSIX ACLs for
 	  Linux website <http://acl.bestbits.at/>.
@@ -79,5 +79,13 @@ config F2FS_IO_TRACE
 	help
 	  F2FS IO trace is based on a function trace, which gathers process
 	  information and block IO patterns in the filesystem level.
+
+	  If unsure, say N.
+
+config F2FS_FAULT_INJECTION
+	bool "F2FS fault injection facility"
+	depends on F2FS_FS
+	help
+	  Test F2FS to inject faults such as ENOMEM, ENOSPC, and so on.
 
 	  If unsure, say N.
