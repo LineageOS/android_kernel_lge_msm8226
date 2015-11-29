@@ -17,6 +17,10 @@
 		{ META_FLUSH,	"META_FLUSH" },				\
 		{ INMEM,	"INMEM" },				\
 		{ INMEM_DROP,	"INMEM_DROP" },				\
+<<<<<<< HEAD
+=======
+		{ INMEM_REVOKE,	"INMEM_REVOKE" },			\
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		{ IPU,		"IN-PLACE" },				\
 		{ OPU,		"OUT-OF-PLACE" })
 
@@ -82,6 +86,10 @@
 		{ CP_DISCARD,	"Discard" })
 
 struct victim_sel_policy;
+<<<<<<< HEAD
+=======
+struct f2fs_map_blocks;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 DECLARE_EVENT_CLASS(f2fs__inode,
 
@@ -446,31 +454,51 @@ TRACE_EVENT(f2fs_truncate_partial_nodes,
 		__entry->err)
 );
 
+<<<<<<< HEAD
 TRACE_EVENT(f2fs_get_data_block,
 	TP_PROTO(struct inode *inode, sector_t iblock,
 				struct buffer_head *bh, int ret),
 
 	TP_ARGS(inode, iblock, bh, ret),
+=======
+TRACE_EVENT(f2fs_map_blocks,
+	TP_PROTO(struct inode *inode, struct f2fs_map_blocks *map, int ret),
+
+	TP_ARGS(inode, map, ret),
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
+<<<<<<< HEAD
 		__field(sector_t,	iblock)
 		__field(sector_t,	bh_start)
 		__field(size_t,	bh_size)
+=======
+		__field(block_t,	m_lblk)
+		__field(block_t,	m_pblk)
+		__field(unsigned int,	m_len)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		__field(int,	ret)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= inode->i_sb->s_dev;
 		__entry->ino		= inode->i_ino;
+<<<<<<< HEAD
 		__entry->iblock		= iblock;
 		__entry->bh_start	= bh->b_blocknr;
 		__entry->bh_size	= bh->b_size;
+=======
+		__entry->m_lblk		= map->m_lblk;
+		__entry->m_pblk		= map->m_pblk;
+		__entry->m_len		= map->m_len;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		__entry->ret		= ret;
 	),
 
 	TP_printk("dev = (%d,%d), ino = %lu, file offset = %llu, "
+<<<<<<< HEAD
 		"start blkaddr = 0x%llx, len = 0x%llx bytes, err = %d",
 		show_dev_ino(__entry),
 		(unsigned long long)__entry->iblock,
@@ -479,6 +507,44 @@ TRACE_EVENT(f2fs_get_data_block,
 		__entry->ret)
 );
 
+=======
+		"start blkaddr = 0x%llx, len = 0x%llx, err = %d",
+		show_dev_ino(__entry),
+		(unsigned long long)__entry->m_lblk,
+		(unsigned long long)__entry->m_pblk,
+		(unsigned long long)__entry->m_len,
+		__entry->ret)
+);
+
+TRACE_EVENT(f2fs_background_gc,
+
+	TP_PROTO(struct super_block *sb, long wait_ms,
+			unsigned int prefree, unsigned int free),
+
+	TP_ARGS(sb, wait_ms, prefree, free),
+
+	TP_STRUCT__entry(
+		__field(dev_t,	dev)
+		__field(long,	wait_ms)
+		__field(unsigned int,	prefree)
+		__field(unsigned int,	free)
+	),
+
+	TP_fast_assign(
+		__entry->dev		= sb->s_dev;
+		__entry->wait_ms	= wait_ms;
+		__entry->prefree	= prefree;
+		__entry->free		= free;
+	),
+
+	TP_printk("dev = (%d,%d), wait_ms = %ld, prefree = %u, free = %u",
+		show_dev(__entry),
+		__entry->wait_ms,
+		__entry->prefree,
+		__entry->free)
+);
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 TRACE_EVENT(f2fs_get_victim,
 
 	TP_PROTO(struct super_block *sb, int type, int gc_type,
@@ -630,28 +696,52 @@ TRACE_EVENT(f2fs_direct_IO_exit,
 		__entry->ret)
 );
 
+<<<<<<< HEAD
 TRACE_EVENT(f2fs_reserve_new_block,
 
 	TP_PROTO(struct inode *inode, nid_t nid, unsigned int ofs_in_node),
 
 	TP_ARGS(inode, nid, ofs_in_node),
+=======
+TRACE_EVENT(f2fs_reserve_new_blocks,
+
+	TP_PROTO(struct inode *inode, nid_t nid, unsigned int ofs_in_node,
+							blkcnt_t count),
+
+	TP_ARGS(inode, nid, ofs_in_node, count),
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(nid_t, nid)
 		__field(unsigned int, ofs_in_node)
+<<<<<<< HEAD
+=======
+		__field(blkcnt_t, count)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	),
 
 	TP_fast_assign(
 		__entry->dev	= inode->i_sb->s_dev;
 		__entry->nid	= nid;
 		__entry->ofs_in_node = ofs_in_node;
+<<<<<<< HEAD
 	),
 
 	TP_printk("dev = (%d,%d), nid = %u, ofs_in_node = %u",
 		show_dev(__entry),
 		(unsigned int)__entry->nid,
 		__entry->ofs_in_node)
+=======
+		__entry->count = count;
+	),
+
+	TP_printk("dev = (%d,%d), nid = %u, ofs_in_node = %u, count = %llu",
+		show_dev(__entry),
+		(unsigned int)__entry->nid,
+		__entry->ofs_in_node,
+		(unsigned long long)__entry->count)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 );
 
 DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
@@ -664,7 +754,12 @@ DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
 		__field(dev_t, dev)
 		__field(ino_t, ino)
 		__field(pgoff_t, index)
+<<<<<<< HEAD
 		__field(block_t, blkaddr)
+=======
+		__field(block_t, old_blkaddr)
+		__field(block_t, new_blkaddr)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		__field(int, rw)
 		__field(int, type)
 	),
@@ -673,16 +768,29 @@ DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
 		__entry->dev		= page->mapping->host->i_sb->s_dev;
 		__entry->ino		= page->mapping->host->i_ino;
 		__entry->index		= page->index;
+<<<<<<< HEAD
 		__entry->blkaddr	= fio->blk_addr;
+=======
+		__entry->old_blkaddr	= fio->old_blkaddr;
+		__entry->new_blkaddr	= fio->new_blkaddr;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		__entry->rw		= fio->rw;
 		__entry->type		= fio->type;
 	),
 
 	TP_printk("dev = (%d,%d), ino = %lu, page_index = 0x%lx, "
+<<<<<<< HEAD
 		"blkaddr = 0x%llx, rw = %s%s, type = %s",
 		show_dev_ino(__entry),
 		(unsigned long)__entry->index,
 		(unsigned long long)__entry->blkaddr,
+=======
+		"oldaddr = 0x%llx, newaddr = 0x%llx rw = %s%s, type = %s",
+		show_dev_ino(__entry),
+		(unsigned long)__entry->index,
+		(unsigned long long)__entry->old_blkaddr,
+		(unsigned long long)__entry->new_blkaddr,
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		show_bio_type(__entry->rw),
 		show_block_type(__entry->type))
 );
@@ -962,6 +1070,35 @@ TRACE_EVENT(f2fs_writepages,
 		__entry->range_cyclic)
 );
 
+<<<<<<< HEAD
+=======
+TRACE_EVENT(f2fs_readpages,
+
+	TP_PROTO(struct inode *inode, struct page *page, unsigned int nrpage),
+
+	TP_ARGS(inode, page, nrpage),
+
+	TP_STRUCT__entry(
+		__field(dev_t,	dev)
+		__field(ino_t,	ino)
+		__field(pgoff_t,	start)
+		__field(unsigned int,	nrpage)
+	),
+
+	TP_fast_assign(
+		__entry->dev	= inode->i_sb->s_dev;
+		__entry->ino	= inode->i_ino;
+		__entry->start	= page->index;
+		__entry->nrpage	= nrpage;
+	),
+
+	TP_printk("dev = (%d,%d), ino = %lu, start = %lu nrpage = %u",
+		show_dev_ino(__entry),
+		(unsigned long)__entry->start,
+		__entry->nrpage)
+);
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 TRACE_EVENT(f2fs_write_checkpoint,
 
 	TP_PROTO(struct super_block *sb, int reason, char *msg),
@@ -1061,11 +1198,19 @@ TRACE_EVENT(f2fs_lookup_extent_tree_start,
 TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 
 	TP_PROTO(struct inode *inode, unsigned int pgofs,
+<<<<<<< HEAD
 						struct extent_node *en),
 
 	TP_ARGS(inode, pgofs, en),
 
 	TP_CONDITION(en),
+=======
+						struct extent_info *ei),
+
+	TP_ARGS(inode, pgofs, ei),
+
+	TP_CONDITION(ei),
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
@@ -1080,9 +1225,15 @@ TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 		__entry->dev = inode->i_sb->s_dev;
 		__entry->ino = inode->i_ino;
 		__entry->pgofs = pgofs;
+<<<<<<< HEAD
 		__entry->fofs = en->ei.fofs;
 		__entry->blk = en->ei.blk;
 		__entry->len = en->ei.len;
+=======
+		__entry->fofs = ei->fofs;
+		__entry->blk = ei->blk;
+		__entry->len = ei->len;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	),
 
 	TP_printk("dev = (%d,%d), ino = %lu, pgofs = %u, "
@@ -1094,17 +1245,30 @@ TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 		__entry->len)
 );
 
+<<<<<<< HEAD
 TRACE_EVENT(f2fs_update_extent_tree,
 
 	TP_PROTO(struct inode *inode, unsigned int pgofs, block_t blkaddr),
 
 	TP_ARGS(inode, pgofs, blkaddr),
+=======
+TRACE_EVENT(f2fs_update_extent_tree_range,
+
+	TP_PROTO(struct inode *inode, unsigned int pgofs, block_t blkaddr,
+						unsigned int len),
+
+	TP_ARGS(inode, pgofs, blkaddr, len),
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(unsigned int, pgofs)
 		__field(u32, blk)
+<<<<<<< HEAD
+=======
+		__field(unsigned int, len)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	),
 
 	TP_fast_assign(
@@ -1112,12 +1276,24 @@ TRACE_EVENT(f2fs_update_extent_tree,
 		__entry->ino = inode->i_ino;
 		__entry->pgofs = pgofs;
 		__entry->blk = blkaddr;
+<<<<<<< HEAD
 	),
 
 	TP_printk("dev = (%d,%d), ino = %lu, pgofs = %u, blkaddr = %u",
 		show_dev_ino(__entry),
 		__entry->pgofs,
 		__entry->blk)
+=======
+		__entry->len = len;
+	),
+
+	TP_printk("dev = (%d,%d), ino = %lu, pgofs = %u, "
+					"blkaddr = %u, len = %u",
+		show_dev_ino(__entry),
+		__entry->pgofs,
+		__entry->blk,
+		__entry->len)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 );
 
 TRACE_EVENT(f2fs_shrink_extent_tree,
@@ -1168,6 +1344,47 @@ TRACE_EVENT(f2fs_destroy_extent_tree,
 		__entry->node_cnt)
 );
 
+<<<<<<< HEAD
+=======
+DECLARE_EVENT_CLASS(f2fs_sync_dirty_inodes,
+
+	TP_PROTO(struct super_block *sb, int type, s64 count),
+
+	TP_ARGS(sb, type, count),
+
+	TP_STRUCT__entry(
+		__field(dev_t, dev)
+		__field(int, type)
+		__field(s64, count)
+	),
+
+	TP_fast_assign(
+		__entry->dev	= sb->s_dev;
+		__entry->type	= type;
+		__entry->count	= count;
+	),
+
+	TP_printk("dev = (%d,%d), %s, dirty count = %lld",
+		show_dev(__entry),
+		show_file_type(__entry->type),
+		__entry->count)
+);
+
+DEFINE_EVENT(f2fs_sync_dirty_inodes, f2fs_sync_dirty_inodes_enter,
+
+	TP_PROTO(struct super_block *sb, int type, s64 count),
+
+	TP_ARGS(sb, type, count)
+);
+
+DEFINE_EVENT(f2fs_sync_dirty_inodes, f2fs_sync_dirty_inodes_exit,
+
+	TP_PROTO(struct super_block *sb, int type, s64 count),
+
+	TP_ARGS(sb, type, count)
+);
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 #endif /* _TRACE_F2FS_H */
 
  /* This part must be outside protection */

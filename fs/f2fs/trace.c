@@ -29,7 +29,12 @@ static inline void __print_last_io(void)
 			last_io.major, last_io.minor,
 			last_io.pid, "----------------",
 			last_io.type,
+<<<<<<< HEAD
 			last_io.fio.rw, last_io.fio.blk_addr,
+=======
+			last_io.fio.rw,
+			last_io.fio.new_blkaddr,
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 			last_io.len);
 	memset(&last_io, 0, sizeof(last_io));
 }
@@ -80,7 +85,11 @@ out:
 	radix_tree_preload_end();
 }
 
+<<<<<<< HEAD
 void f2fs_trace_ios(struct page *page, struct f2fs_io_info *fio, int flush)
+=======
+void f2fs_trace_ios(struct f2fs_io_info *fio, int flush)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 {
 	struct inode *inode;
 	pid_t pid;
@@ -91,8 +100,13 @@ void f2fs_trace_ios(struct page *page, struct f2fs_io_info *fio, int flush)
 		return;
 	}
 
+<<<<<<< HEAD
 	inode = page->mapping->host;
 	pid = page_private(page);
+=======
+	inode = fio->page->mapping->host;
+	pid = page_private(fio->page);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	major = MAJOR(inode->i_sb->s_dev);
 	minor = MINOR(inode->i_sb->s_dev);
@@ -101,7 +115,12 @@ void f2fs_trace_ios(struct page *page, struct f2fs_io_info *fio, int flush)
 			last_io.pid == pid &&
 			last_io.type == __file_type(inode, pid) &&
 			last_io.fio.rw == fio->rw &&
+<<<<<<< HEAD
 			last_io.fio.blk_addr + last_io.len == fio->blk_addr) {
+=======
+			last_io.fio.new_blkaddr + last_io.len ==
+							fio->new_blkaddr) {
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		last_io.len++;
 		return;
 	}

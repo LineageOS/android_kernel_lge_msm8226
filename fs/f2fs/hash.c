@@ -79,8 +79,12 @@ f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info)
 	const unsigned char *name = name_info->name;
 	size_t len = name_info->len;
 
+<<<<<<< HEAD
 	if ((len <= 2) && (name[0] == '.') &&
 		(name[1] == '.' || name[1] == '\0'))
+=======
+	if (is_dot_dotdot(name_info))
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		return 0;
 
 	/* Initialize the default seed for the hash checksum functions */

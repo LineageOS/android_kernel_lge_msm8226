@@ -82,7 +82,11 @@ static int f2fs_xattr_generic_get(struct dentry *dentry, const char *name,
 	}
 	if (strcmp(name, "") == 0)
 		return -EINVAL;
+<<<<<<< HEAD
 	return f2fs_getxattr(dentry->d_inode, type, name, buffer, size, NULL);
+=======
+	return f2fs_getxattr(d_inode(dentry), type, name, buffer, size, NULL);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 }
 
 static int f2fs_xattr_generic_set(struct dentry *dentry, const char *name,
@@ -107,7 +111,11 @@ static int f2fs_xattr_generic_set(struct dentry *dentry, const char *name,
 	if (strcmp(name, "") == 0)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	return f2fs_setxattr(dentry->d_inode, type, name,
+=======
+	return f2fs_setxattr(d_inode(dentry), type, name,
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 					value, size, NULL, flags);
 }
 
@@ -129,7 +137,11 @@ static size_t f2fs_xattr_advise_list(struct dentry *dentry, char *list,
 static int f2fs_xattr_advise_get(struct dentry *dentry, const char *name,
 		void *buffer, size_t size, int type)
 {
+<<<<<<< HEAD
 	struct inode *inode = dentry->d_inode;
+=======
+	struct inode *inode = d_inode(dentry);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
@@ -142,7 +154,11 @@ static int f2fs_xattr_advise_get(struct dentry *dentry, const char *name,
 static int f2fs_xattr_advise_set(struct dentry *dentry, const char *name,
 		const void *value, size_t size, int flags, int type)
 {
+<<<<<<< HEAD
 	struct inode *inode = dentry->d_inode;
+=======
+	struct inode *inode = d_inode(dentry);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	if (strcmp(name, "") != 0)
 		return -EINVAL;
@@ -152,7 +168,11 @@ static int f2fs_xattr_advise_set(struct dentry *dentry, const char *name,
 		return -EINVAL;
 
 	F2FS_I(inode)->i_advise |= *(char *)value;
+<<<<<<< HEAD
 	mark_inode_dirty(inode);
+=======
+	f2fs_mark_inode_dirty_sync(inode);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	return 0;
 }
 
@@ -346,7 +366,12 @@ static inline int write_all_xattrs(struct inode *inode, __u32 hsize,
 
 		if (ipage) {
 			inline_addr = inline_xattr_addr(ipage);
+<<<<<<< HEAD
 			f2fs_wait_on_page_writeback(ipage, NODE);
+=======
+			f2fs_wait_on_page_writeback(ipage, NODE, true);
+			set_page_dirty(ipage);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		} else {
 			page = get_node_page(sbi, inode->i_ino);
 			if (IS_ERR(page)) {
@@ -354,7 +379,11 @@ static inline int write_all_xattrs(struct inode *inode, __u32 hsize,
 				return PTR_ERR(page);
 			}
 			inline_addr = inline_xattr_addr(page);
+<<<<<<< HEAD
 			f2fs_wait_on_page_writeback(page, NODE);
+=======
+			f2fs_wait_on_page_writeback(page, NODE, true);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		}
 		memcpy(inline_addr, txattr_addr, inline_size);
 		f2fs_put_page(page, 1);
@@ -375,7 +404,11 @@ static inline int write_all_xattrs(struct inode *inode, __u32 hsize,
 			return PTR_ERR(xpage);
 		}
 		f2fs_bug_on(sbi, new_nid);
+<<<<<<< HEAD
 		f2fs_wait_on_page_writeback(xpage, NODE);
+=======
+		f2fs_wait_on_page_writeback(xpage, NODE, true);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	} else {
 		struct dnode_of_data dn;
 		set_new_dnode(&dn, inode, NULL, NULL, new_nid);
@@ -443,7 +476,11 @@ cleanup:
 
 ssize_t f2fs_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
 {
+<<<<<<< HEAD
 	struct inode *inode = dentry->d_inode;
+=======
+	struct inode *inode = d_inode(dentry);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	struct f2fs_xattr_entry *entry;
 	void *base_addr;
 	int error = 0;
@@ -482,13 +519,20 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 			const char *name, const void *value, size_t size,
 			struct page *ipage, int flags)
 {
+<<<<<<< HEAD
 	struct f2fs_inode_info *fi = F2FS_I(inode);
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	struct f2fs_xattr_entry *here, *last;
 	void *base_addr;
 	int found, newsize;
 	size_t len;
 	__u32 new_hsize;
+<<<<<<< HEAD
 	int error = -ENOMEM;
+=======
+	int error = 0;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	if (name == NULL)
 		return -EINVAL;
@@ -498,12 +542,24 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 
 	len = strlen(name);
 
+<<<<<<< HEAD
 	if (len > F2FS_NAME_LEN || size > MAX_VALUE_LEN(inode))
 		return -ERANGE;
 
 	base_addr = read_all_xattrs(inode, ipage);
 	if (!base_addr)
 		goto exit;
+=======
+	if (len > F2FS_NAME_LEN)
+		return -ERANGE;
+
+	if (size > MAX_VALUE_LEN(inode))
+		return -E2BIG;
+
+	base_addr = read_all_xattrs(inode, ipage);
+	if (!base_addr)
+		return -ENOMEM;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	/* find entry with wanted name. */
 	here = __find_xattr(base_addr, index, len, name);
@@ -536,7 +592,11 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 			free = free + ENTRY_SIZE(here);
 
 		if (unlikely(free < newsize)) {
+<<<<<<< HEAD
 			error = -ENOSPC;
+=======
+			error = -E2BIG;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 			goto exit;
 		}
 	}
@@ -564,7 +624,10 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 		 * Before we come here, old entry is removed.
 		 * We just write new entry.
 		 */
+<<<<<<< HEAD
 		memset(last, 0, newsize);
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		last->e_name_index = index;
 		last->e_name_len = len;
 		memcpy(last->e_name, name, len);
@@ -578,6 +641,7 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 	if (error)
 		goto exit;
 
+<<<<<<< HEAD
 	if (is_inode_flag_set(fi, FI_ACL_MODE)) {
 		inode->i_mode = fi->i_acl_mode;
 		inode->i_ctime = CURRENT_TIME;
@@ -588,6 +652,17 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 		update_inode(inode, ipage);
 	else
 		update_inode_page(inode);
+=======
+	if (is_inode_flag_set(inode, FI_ACL_MODE)) {
+		inode->i_mode = F2FS_I(inode)->i_acl_mode;
+		inode->i_ctime = CURRENT_TIME;
+		clear_inode_flag(inode, FI_ACL_MODE);
+	}
+	if (index == F2FS_XATTR_INDEX_ENCRYPTION &&
+			!strcmp(name, F2FS_XATTR_NAME_ENCRYPTION_CONTEXT))
+		f2fs_set_encrypted_inode(inode);
+	f2fs_mark_inode_dirty_sync(inode);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 exit:
 	kzfree(base_addr);
 	return error;
@@ -604,7 +679,11 @@ int f2fs_setxattr(struct inode *inode, int index, const char *name,
 	if (ipage)
 		return __f2fs_setxattr(inode, index, name, value,
 						size, ipage, flags);
+<<<<<<< HEAD
 	f2fs_balance_fs(sbi);
+=======
+	f2fs_balance_fs(sbi, true);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	f2fs_lock_op(sbi);
 	/* protect xattr_ver */
@@ -613,5 +692,9 @@ int f2fs_setxattr(struct inode *inode, int index, const char *name,
 	up_write(&F2FS_I(inode)->i_sem);
 	f2fs_unlock_op(sbi);
 
+<<<<<<< HEAD
+=======
+	f2fs_update_time(sbi, REQ_TIME);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	return err;
 }

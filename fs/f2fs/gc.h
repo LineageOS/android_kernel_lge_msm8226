@@ -100,6 +100,7 @@ static inline bool has_enough_invalid_blocks(struct f2fs_sb_info *sbi)
 		return true;
 	return false;
 }
+<<<<<<< HEAD
 
 static inline int is_idle(struct f2fs_sb_info *sbi)
 {
@@ -108,3 +109,5 @@ static inline int is_idle(struct f2fs_sb_info *sbi)
 	struct request_list *rl = &q->rq;
 	return !(rl->count[BLK_RW_SYNC]) && !(rl->count[BLK_RW_ASYNC]);
 }
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y

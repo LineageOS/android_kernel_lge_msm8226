@@ -33,12 +33,20 @@ struct last_io_info {
 };
 
 extern void f2fs_trace_pid(struct page *);
+<<<<<<< HEAD
 extern void f2fs_trace_ios(struct page *, struct f2fs_io_info *, int);
+=======
+extern void f2fs_trace_ios(struct f2fs_io_info *, int);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 extern void f2fs_build_trace_ios(void);
 extern void f2fs_destroy_trace_ios(void);
 #else
 #define f2fs_trace_pid(p)
+<<<<<<< HEAD
 #define f2fs_trace_ios(p, i, n)
+=======
+#define f2fs_trace_ios(i, n)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 #define f2fs_build_trace_ios()
 #define f2fs_destroy_trace_ios()
 

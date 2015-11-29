@@ -11,6 +11,13 @@
 #ifndef _LINUX_F2FS_FS_H
 #define _LINUX_F2FS_FS_H
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_F2FS_FS_ENCRYPTION
+#undef CONFIG_F2FS_FS_ENCRYPTION
+#endif
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 #include <linux/pagemap.h>
 #include <linux/types.h>
 
@@ -21,7 +28,11 @@
 #define F2FS_BLKSIZE			4096	/* support only 4KB block */
 #define F2FS_BLKSIZE_BITS		12	/* bits for F2FS_BLKSIZE */
 #define F2FS_MAX_EXTENSION		64	/* # of extension entries */
+<<<<<<< HEAD
 #define F2FS_BLK_ALIGN(x)	(((x) + F2FS_BLKSIZE - 1) / F2FS_BLKSIZE)
+=======
+#define F2FS_BLK_ALIGN(x)	(((x) + F2FS_BLKSIZE - 1) >> F2FS_BLKSIZE_BITS)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 #define NULL_ADDR		((block_t)0)	/* used as block_t addresses */
 #define NEW_ADDR		((block_t)-1)	/* used as block_t addresses */
@@ -50,6 +61,12 @@
 #define MAX_ACTIVE_NODE_LOGS	8
 #define MAX_ACTIVE_DATA_LOGS	8
 
+<<<<<<< HEAD
+=======
+#define VERSION_LEN	256
+#define MAX_VOLUME_NAME		512
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 /*
  * For superblock
  */
@@ -82,10 +99,23 @@ struct f2fs_super_block {
 	__le32 node_ino;		/* node inode number */
 	__le32 meta_ino;		/* meta inode number */
 	__u8 uuid[16];			/* 128-bit uuid for volume */
+<<<<<<< HEAD
 	__le16 volume_name[512];	/* volume name */
 	__le32 extension_count;		/* # of extensions below */
 	__u8 extension_list[F2FS_MAX_EXTENSION][8];	/* extension array */
 	__le32 cp_payload;
+=======
+	__le16 volume_name[MAX_VOLUME_NAME];	/* volume name */
+	__le32 extension_count;		/* # of extensions below */
+	__u8 extension_list[F2FS_MAX_EXTENSION][8];	/* extension array */
+	__le32 cp_payload;
+	__u8 version[VERSION_LEN];	/* the kernel version */
+	__u8 init_version[VERSION_LEN];	/* the initial kernel version */
+	__le32 feature;			/* defined features */
+	__u8 encryption_level;		/* versioning level for encryption */
+	__u8 encrypt_pw_salt[16];	/* Salt used for string2key algorithm */
+	__u8 reserved[871];		/* valid reserved region */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 } __packed;
 
 /*
@@ -161,12 +191,21 @@ struct f2fs_extent {
 #define F2FS_INLINE_XATTR_ADDRS	50	/* 200 bytes for inline xattrs */
 #define DEF_ADDRS_PER_INODE	923	/* Address Pointers in an Inode */
 #define DEF_NIDS_PER_INODE	5	/* Node IDs in an Inode */
+<<<<<<< HEAD
 #define ADDRS_PER_INODE(fi)	addrs_per_inode(fi)
 #define ADDRS_PER_BLOCK		1018	/* Address Pointers in a Direct Block */
 #define NIDS_PER_BLOCK		1018	/* Node IDs in an Indirect Block */
 
 #define ADDRS_PER_PAGE(page, fi)	\
 	(IS_INODE(page) ? ADDRS_PER_INODE(fi) : ADDRS_PER_BLOCK)
+=======
+#define ADDRS_PER_INODE(inode)	addrs_per_inode(inode)
+#define ADDRS_PER_BLOCK		1018	/* Address Pointers in a Direct Block */
+#define NIDS_PER_BLOCK		1018	/* Node IDs in an Indirect Block */
+
+#define ADDRS_PER_PAGE(page, inode)	\
+	(IS_INODE(page) ? ADDRS_PER_INODE(inode) : ADDRS_PER_BLOCK)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 #define	NODE_DIR1_BLOCK		(DEF_ADDRS_PER_INODE + 1)
 #define	NODE_DIR2_BLOCK		(DEF_ADDRS_PER_INODE + 2)
@@ -336,7 +375,11 @@ struct f2fs_summary {
 
 struct summary_footer {
 	unsigned char entry_type;	/* SUM_TYPE_XXX */
+<<<<<<< HEAD
 	__u32 check_sum;		/* summary checksum */
+=======
+	__le32 check_sum;		/* summary checksum */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 } __packed;
 
 #define SUM_JOURNAL_SIZE	(F2FS_BLKSIZE - SUM_FOOTER_SIZE -\
@@ -349,6 +392,15 @@ struct summary_footer {
 				sizeof(struct sit_journal_entry))
 #define SIT_JOURNAL_RESERVED	((SUM_JOURNAL_SIZE - 2) %\
 				sizeof(struct sit_journal_entry))
+<<<<<<< HEAD
+=======
+
+/* Reserved area should make size of f2fs_extra_info equals to
+ * that of nat_journal and sit_journal.
+ */
+#define EXTRA_INFO_RESERVED	(SUM_JOURNAL_SIZE - 2 - 8)
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 /*
  * frequently updated NAT/SIT entries can be stored in the spare area in
  * summary blocks
@@ -378,18 +430,42 @@ struct sit_journal {
 	__u8 reserved[SIT_JOURNAL_RESERVED];
 } __packed;
 
+<<<<<<< HEAD
 /* 4KB-sized summary block structure */
 struct f2fs_summary_block {
 	struct f2fs_summary entries[ENTRIES_IN_SUM];
+=======
+struct f2fs_extra_info {
+	__le64 kbytes_written;
+	__u8 reserved[EXTRA_INFO_RESERVED];
+} __packed;
+
+struct f2fs_journal {
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	union {
 		__le16 n_nats;
 		__le16 n_sits;
 	};
+<<<<<<< HEAD
 	/* spare area is used by NAT or SIT journals */
 	union {
 		struct nat_journal nat_j;
 		struct sit_journal sit_j;
 	};
+=======
+	/* spare area is used by NAT or SIT journals or extra info */
+	union {
+		struct nat_journal nat_j;
+		struct sit_journal sit_j;
+		struct f2fs_extra_info info;
+	};
+} __packed;
+
+/* 4KB-sized summary block structure */
+struct f2fs_summary_block {
+	struct f2fs_summary entries[ENTRIES_IN_SUM];
+	struct f2fs_journal journal;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	struct summary_footer footer;
 } __packed;
 
@@ -409,15 +485,34 @@ typedef __le32	f2fs_hash_t;
 
 #define GET_DENTRY_SLOTS(x)	((x + F2FS_SLOT_LEN - 1) >> F2FS_SLOT_LEN_BITS)
 
+<<<<<<< HEAD
 /* the number of dentry in a block */
 #define NR_DENTRY_IN_BLOCK	214
 
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 /* MAX level for dir lookup */
 #define MAX_DIR_HASH_DEPTH	63
 
 /* MAX buckets in one level of dir */
 #define MAX_DIR_BUCKETS		(1 << ((MAX_DIR_HASH_DEPTH / 2) - 1))
 
+<<<<<<< HEAD
+=======
+/*
+ * space utilization of regular dentry and inline dentry
+ *		regular dentry			inline dentry
+ * bitmap	1 * 27 = 27			1 * 23 = 23
+ * reserved	1 * 3 = 3			1 * 7 = 7
+ * dentry	11 * 214 = 2354			11 * 182 = 2002
+ * filename	8 * 214 = 1712			8 * 182 = 1456
+ * total	4096				3488
+ *
+ * Note: there are more reserved space in inline dentry than in regular
+ * dentry, when converting inline dentry we should handle this carefully.
+ */
+#define NR_DENTRY_IN_BLOCK	214	/* the number of dentry in a block */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 #define SIZE_OF_DIR_ENTRY	11	/* by byte */
 #define SIZE_OF_DENTRY_BITMAP	((NR_DENTRY_IN_BLOCK + BITS_PER_BYTE - 1) / \
 					BITS_PER_BYTE)
@@ -473,4 +568,9 @@ enum {
 	F2FS_FT_MAX
 };
 
+<<<<<<< HEAD
+=======
+#define S_SHIFT 12
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 #endif  /* _LINUX_F2FS_FS_H */

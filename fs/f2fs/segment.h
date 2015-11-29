@@ -15,6 +15,10 @@
 #define NULL_SECNO			((unsigned int)(~0))
 
 #define DEF_RECLAIM_PREFREE_SEGMENTS	5	/* 5% over total segments */
+<<<<<<< HEAD
+=======
+#define DEF_MAX_RECLAIM_PREFREE_SEGMENTS	4096	/* 8GB in maximum */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 /* L: Logical segment # in volume, R: Relative segment # in main area */
 #define GET_L2R_SEGNO(free_i, segno)	(segno - free_i->start_segno)
@@ -136,10 +140,19 @@ enum {
 /*
  * BG_GC means the background cleaning job.
  * FG_GC means the on-demand cleaning job.
+<<<<<<< HEAD
  */
 enum {
 	BG_GC = 0,
 	FG_GC
+=======
+ * FORCE_FG_GC means on-demand cleaning job in background.
+ */
+enum {
+	BG_GC = 0,
+	FG_GC,
+	FORCE_FG_GC,
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 };
 
 /* for a function parameter to select a victim segment */
@@ -155,15 +168,27 @@ struct victim_sel_policy {
 };
 
 struct seg_entry {
+<<<<<<< HEAD
 	unsigned short valid_blocks;	/* # of valid blocks */
+=======
+	unsigned int type:6;		/* segment type like CURSEG_XXX_TYPE */
+	unsigned int valid_blocks:10;	/* # of valid blocks */
+	unsigned int ckpt_valid_blocks:10;	/* # of valid blocks last cp */
+	unsigned int padding:6;		/* padding */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	unsigned char *cur_valid_map;	/* validity bitmap of blocks */
 	/*
 	 * # of valid blocks and the validity bitmap stored in the the last
 	 * checkpoint pack. This information is used by the SSR mode.
 	 */
+<<<<<<< HEAD
 	unsigned short ckpt_valid_blocks;
 	unsigned char *ckpt_valid_map;
 	unsigned char type;		/* segment type like CURSEG_XXX_TYPE */
+=======
+	unsigned char *ckpt_valid_map;	/* validity bitmap of blocks last cp */
+	unsigned char *discard_map;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	unsigned long long mtime;	/* modification time of the segment */
 };
 
@@ -175,9 +200,25 @@ struct segment_allocation {
 	void (*allocate_segment)(struct f2fs_sb_info *, int, bool);
 };
 
+<<<<<<< HEAD
 struct inmem_pages {
 	struct list_head list;
 	struct page *page;
+=======
+/*
+ * this value is set in page as a private data which indicate that
+ * the page is atomically written, and it is in inmem_pages list.
+ */
+#define ATOMIC_WRITTEN_PAGE		((unsigned long)-1)
+
+#define IS_ATOMIC_WRITTEN_PAGE(page)			\
+		(page_private(page) == (unsigned long)ATOMIC_WRITTEN_PAGE)
+
+struct inmem_pages {
+	struct list_head list;
+	struct page *page;
+	block_t old_addr;		/* for revoking when fail to commit */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 };
 
 struct sit_info {
@@ -244,6 +285,11 @@ struct victim_selection {
 struct curseg_info {
 	struct mutex curseg_mutex;		/* lock for consistency */
 	struct f2fs_summary_block *sum_blk;	/* cached summary block */
+<<<<<<< HEAD
+=======
+	struct rw_semaphore journal_rwsem;	/* protect journal area */
+	struct f2fs_journal *journal;		/* cached journal info */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	unsigned char alloc_type;		/* current allocation type */
 	unsigned int segno;			/* current segment number */
 	unsigned short next_blkoff;		/* next block offset to write */
@@ -453,6 +499,13 @@ static inline bool need_SSR(struct f2fs_sb_info *sbi)
 {
 	int node_secs = get_blocktype_secs(sbi, F2FS_DIRTY_NODES);
 	int dent_secs = get_blocktype_secs(sbi, F2FS_DIRTY_DENTS);
+<<<<<<< HEAD
+=======
+
+	if (test_opt(sbi, LFS))
+		return false;
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	return free_sections(sbi) <= (node_secs + 2 * dent_secs +
 						reserved_sections(sbi) + 1);
 }
@@ -462,6 +515,11 @@ static inline bool has_not_enough_free_secs(struct f2fs_sb_info *sbi, int freed)
 	int node_secs = get_blocktype_secs(sbi, F2FS_DIRTY_NODES);
 	int dent_secs = get_blocktype_secs(sbi, F2FS_DIRTY_DENTS);
 
+<<<<<<< HEAD
+=======
+	node_secs += get_blocktype_secs(sbi, F2FS_DIRTY_IMETA);
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
 		return false;
 
@@ -514,6 +572,12 @@ static inline bool need_inplace_update(struct inode *inode)
 	if (S_ISDIR(inode->i_mode) || f2fs_is_atomic_file(inode))
 		return false;
 
+<<<<<<< HEAD
+=======
+	if (test_opt(sbi, LFS))
+		return false;
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	if (policy & (0x1 << F2FS_IPU_FORCE))
 		return true;
 	if (policy & (0x1 << F2FS_IPU_SSR) && need_SSR(sbi))
@@ -527,7 +591,11 @@ static inline bool need_inplace_update(struct inode *inode)
 
 	/* this is only set during fdatasync */
 	if (policy & (0x1 << F2FS_IPU_FSYNC) &&
+<<<<<<< HEAD
 			is_inode_flag_set(F2FS_I(inode), FI_NEED_IPU))
+=======
+			is_inode_flag_set(inode, FI_NEED_IPU))
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		return true;
 
 	return false;
@@ -553,16 +621,27 @@ static inline unsigned short curseg_blkoff(struct f2fs_sb_info *sbi, int type)
 	return curseg->next_blkoff;
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_F2FS_CHECK_FS
 static inline void check_seg_range(struct f2fs_sb_info *sbi, unsigned int segno)
 {
 	BUG_ON(segno > TOTAL_SEGS(sbi) - 1);
+=======
+static inline void check_seg_range(struct f2fs_sb_info *sbi, unsigned int segno)
+{
+	f2fs_bug_on(sbi, segno > TOTAL_SEGS(sbi) - 1);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 }
 
 static inline void verify_block_addr(struct f2fs_sb_info *sbi, block_t blk_addr)
 {
+<<<<<<< HEAD
 	BUG_ON(blk_addr < SEG0_BLKADDR(sbi));
 	BUG_ON(blk_addr >= MAX_BLKADDR(sbi));
+=======
+	f2fs_bug_on(sbi, blk_addr < SEG0_BLKADDR(sbi)
+					|| blk_addr >= MAX_BLKADDR(sbi));
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 }
 
 /*
@@ -571,16 +650,23 @@ static inline void verify_block_addr(struct f2fs_sb_info *sbi, block_t blk_addr)
 static inline void check_block_count(struct f2fs_sb_info *sbi,
 		int segno, struct f2fs_sit_entry *raw_sit)
 {
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_F2FS_CHECK_FS
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	bool is_valid  = test_bit_le(0, raw_sit->valid_map) ? true : false;
 	int valid_blocks = 0;
 	int cur_pos = 0, next_pos;
 
+<<<<<<< HEAD
 	/* check segment usage */
 	BUG_ON(GET_SIT_VBLOCKS(raw_sit) > sbi->blocks_per_seg);
 
 	/* check boundary of a given segment number */
 	BUG_ON(segno > TOTAL_SEGS(sbi) - 1);
 
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	/* check bitmap with valid block count */
 	do {
 		if (is_valid) {
@@ -596,6 +682,7 @@ static inline void check_block_count(struct f2fs_sb_info *sbi,
 		is_valid = !is_valid;
 	} while (cur_pos < sbi->blocks_per_seg);
 	BUG_ON(GET_SIT_VBLOCKS(raw_sit) != valid_blocks);
+<<<<<<< HEAD
 }
 #else
 static inline void check_seg_range(struct f2fs_sb_info *sbi, unsigned int segno)
@@ -625,6 +712,13 @@ static inline void check_block_count(struct f2fs_sb_info *sbi,
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
 }
 #endif
+=======
+#endif
+	/* check segment usage, and check boundary of a given segment number */
+	f2fs_bug_on(sbi, GET_SIT_VBLOCKS(raw_sit) > sbi->blocks_per_seg
+					|| segno > TOTAL_SEGS(sbi) - 1);
+}
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 static inline pgoff_t current_sit_addr(struct f2fs_sb_info *sbi,
 						unsigned int start)
@@ -719,9 +813,15 @@ static inline int nr_pages_to_skip(struct f2fs_sb_info *sbi, int type)
 	if (type == DATA)
 		return sbi->blocks_per_seg;
 	else if (type == NODE)
+<<<<<<< HEAD
 		return 3 * sbi->blocks_per_seg;
 	else if (type == META)
 		return MAX_BIO_BLOCKS(sbi);
+=======
+		return 8 * sbi->blocks_per_seg;
+	else if (type == META)
+		return 8 * MAX_BIO_BLOCKS(sbi);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	else
 		return 0;
 }
@@ -739,10 +839,15 @@ static inline long nr_pages_to_write(struct f2fs_sb_info *sbi, int type,
 
 	nr_to_write = wbc->nr_to_write;
 
+<<<<<<< HEAD
 	if (type == DATA)
 		desired = 4096;
 	else if (type == NODE)
 		desired = 3 * max_hw_blocks(sbi);
+=======
+	if (type == NODE)
+		desired = 2 * max_hw_blocks(sbi);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	else
 		desired = MAX_BIO_BLOCKS(sbi);
 

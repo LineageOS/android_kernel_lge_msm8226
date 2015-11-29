@@ -16,7 +16,10 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/freezer.h>
+<<<<<<< HEAD
 #include <linux/blkdev.h>
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 #include "f2fs.h"
 #include "node.h"
@@ -78,9 +81,18 @@ static int gc_thread_func(void *data)
 		stat_inc_bggc_count(sbi);
 
 		/* if return value is not zero, no victim was selected */
+<<<<<<< HEAD
 		if (f2fs_gc(sbi))
 			wait_ms = gc_th->no_gc_sleep_time;
 
+=======
+		if (f2fs_gc(sbi, test_opt(sbi, FORCE_FG_GC)))
+			wait_ms = gc_th->no_gc_sleep_time;
+
+		trace_f2fs_background_gc(sbi->sb, wait_ms,
+				prefree_segments(sbi), free_segments(sbi));
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		/* balancing f2fs's metadata periodically */
 		f2fs_balance_fs_bg(sbi);
 
@@ -94,7 +106,11 @@ int start_gc_thread(struct f2fs_sb_info *sbi)
 	dev_t dev = sbi->sb->s_bdev->bd_dev;
 	int err = 0;
 
+<<<<<<< HEAD
 	gc_th = kmalloc(sizeof(struct f2fs_gc_kthread), GFP_KERNEL);
+=======
+	gc_th = f2fs_kmalloc(sizeof(struct f2fs_gc_kthread), GFP_KERNEL);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	if (!gc_th) {
 		err = -ENOMEM;
 		goto out;
@@ -170,9 +186,15 @@ static unsigned int get_max_cost(struct f2fs_sb_info *sbi,
 {
 	/* SSR allocates in a segment unit */
 	if (p->alloc_mode == SSR)
+<<<<<<< HEAD
 		return 1 << sbi->log_blocks_per_seg;
 	if (p->gc_mode == GC_GREEDY)
 		return (1 << sbi->log_blocks_per_seg) * p->ofs_unit;
+=======
+		return sbi->blocks_per_seg;
+	if (p->gc_mode == GC_GREEDY)
+		return sbi->blocks_per_seg * p->ofs_unit;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	else if (p->gc_mode == GC_CB)
 		return UINT_MAX;
 	else /* No other gc_mode */
@@ -243,6 +265,21 @@ static inline unsigned int get_gc_cost(struct f2fs_sb_info *sbi,
 		return get_cb_cost(sbi, segno);
 }
 
+<<<<<<< HEAD
+=======
+static unsigned int count_bits(const unsigned long *addr,
+				unsigned int offset, unsigned int len)
+{
+	unsigned int end = offset + len, sum = 0;
+
+	while (offset < end) {
+		if (test_bit(offset++, addr))
+			++sum;
+	}
+	return sum;
+}
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 /*
  * This function is called from two paths.
  * One is garbage collection and the other is SSR segment selection.
@@ -256,8 +293,14 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	struct victim_sel_policy p;
+<<<<<<< HEAD
 	unsigned int secno, max_cost;
 	int nsearched = 0;
+=======
+	unsigned int secno, max_cost, last_victim;
+	unsigned int last_segment = MAIN_SEGS(sbi);
+	unsigned int nsearched = 0;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	mutex_lock(&dirty_i->seglist_lock);
 
@@ -267,6 +310,13 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 	p.min_segno = NULL_SEGNO;
 	p.min_cost = max_cost = get_max_cost(sbi, &p);
 
+<<<<<<< HEAD
+=======
+	if (p.max_search == 0)
+		goto out;
+
+	last_victim = sbi->last_victim[p.gc_mode];
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	if (p.alloc_mode == LFS && gc_type == FG_GC) {
 		p.min_segno = check_bg_victims(sbi);
 		if (p.min_segno != NULL_SEGNO)
@@ -277,9 +327,16 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 		unsigned long cost;
 		unsigned int segno;
 
+<<<<<<< HEAD
 		segno = find_next_bit(p.dirty_segmap, MAIN_SEGS(sbi), p.offset);
 		if (segno >= MAIN_SEGS(sbi)) {
 			if (sbi->last_victim[p.gc_mode]) {
+=======
+		segno = find_next_bit(p.dirty_segmap, last_segment, p.offset);
+		if (segno >= last_segment) {
+			if (sbi->last_victim[p.gc_mode]) {
+				last_segment = sbi->last_victim[p.gc_mode];
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 				sbi->last_victim[p.gc_mode] = 0;
 				p.offset = 0;
 				continue;
@@ -288,27 +345,55 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 		}
 
 		p.offset = segno + p.ofs_unit;
+<<<<<<< HEAD
 		if (p.ofs_unit > 1)
 			p.offset -= segno % p.ofs_unit;
+=======
+		if (p.ofs_unit > 1) {
+			p.offset -= segno % p.ofs_unit;
+			nsearched += count_bits(p.dirty_segmap,
+						p.offset - p.ofs_unit,
+						p.ofs_unit);
+		} else {
+			nsearched++;
+		}
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 		secno = GET_SECNO(sbi, segno);
 
 		if (sec_usage_check(sbi, secno))
+<<<<<<< HEAD
 			continue;
 		if (gc_type == BG_GC && test_bit(secno, dirty_i->victim_secmap))
 			continue;
+=======
+			goto next;
+		if (gc_type == BG_GC && test_bit(secno, dirty_i->victim_secmap))
+			goto next;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 		cost = get_gc_cost(sbi, segno, &p);
 
 		if (p.min_cost > cost) {
 			p.min_segno = segno;
 			p.min_cost = cost;
+<<<<<<< HEAD
 		} else if (unlikely(cost == max_cost)) {
 			continue;
 		}
 
 		if (nsearched++ >= p.max_search) {
 			sbi->last_victim[p.gc_mode] = segno;
+=======
+		}
+next:
+		if (nsearched >= p.max_search) {
+			if (!sbi->last_victim[p.gc_mode] && segno <= last_victim)
+				sbi->last_victim[p.gc_mode] = last_victim + 1;
+			else
+				sbi->last_victim[p.gc_mode] = segno + 1;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 			break;
 		}
 	}
@@ -327,6 +412,10 @@ got_it:
 				sbi->cur_victim_sec,
 				prefree_segments(sbi), free_segments(sbi));
 	}
+<<<<<<< HEAD
+=======
+out:
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	mutex_unlock(&dirty_i->seglist_lock);
 
 	return (p.min_segno == NULL_SEGNO) ? 0 : 1;
@@ -396,14 +485,26 @@ static void gc_node_segment(struct f2fs_sb_info *sbi,
 {
 	bool initial = true;
 	struct f2fs_summary *entry;
+<<<<<<< HEAD
 	int off;
 
+=======
+	block_t start_addr;
+	int off;
+
+	start_addr = START_BLOCK(sbi, segno);
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 next_step:
 	entry = sum;
 
 	for (off = 0; off < sbi->blocks_per_seg; off++, entry++) {
 		nid_t nid = le32_to_cpu(entry->nid);
 		struct page *node_page;
+<<<<<<< HEAD
+=======
+		struct node_info ni;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 		/* stop BG_GC if there is not enough free sections. */
 		if (gc_type == BG_GC && has_not_enough_free_secs(sbi, 0))
@@ -426,6 +527,7 @@ next_step:
 			continue;
 		}
 
+<<<<<<< HEAD
 		/* set page dirty and write it */
 		if (gc_type == FG_GC) {
 			f2fs_wait_on_page_writeback(node_page, NODE);
@@ -435,6 +537,15 @@ next_step:
 				set_page_dirty(node_page);
 		}
 		f2fs_put_page(node_page, 1);
+=======
+		get_node_info(sbi, nid, &ni);
+		if (ni.blk_addr != start_addr + off) {
+			f2fs_put_page(node_page, 1);
+			continue;
+		}
+
+		move_node_page(node_page, gc_type);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		stat_inc_node_blk_count(sbi, 1, gc_type);
 	}
 
@@ -442,6 +553,7 @@ next_step:
 		initial = false;
 		goto next_step;
 	}
+<<<<<<< HEAD
 
 	if (gc_type == FG_GC) {
 		struct writeback_control wbc = {
@@ -458,6 +570,8 @@ next_step:
 		if (get_valid_blocks(sbi, segno, 1) != 0)
 			goto next_step;
 	}
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 }
 
 /*
@@ -467,7 +581,11 @@ next_step:
  * as indirect or double indirect node blocks, are given, it must be a caller's
  * bug.
  */
+<<<<<<< HEAD
 block_t start_bidx_of_node(unsigned int node_ofs, struct f2fs_inode_info *fi)
+=======
+block_t start_bidx_of_node(unsigned int node_ofs, struct inode *inode)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 {
 	unsigned int indirect_blks = 2 * NIDS_PER_BLOCK + 4;
 	unsigned int bidx;
@@ -484,10 +602,17 @@ block_t start_bidx_of_node(unsigned int node_ofs, struct f2fs_inode_info *fi)
 		int dec = (node_ofs - indirect_blks - 3) / (NIDS_PER_BLOCK + 1);
 		bidx = node_ofs - 5 - dec;
 	}
+<<<<<<< HEAD
 	return bidx * ADDRS_PER_BLOCK + ADDRS_PER_INODE(fi);
 }
 
 static int check_dnode(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
+=======
+	return bidx * ADDRS_PER_BLOCK + ADDRS_PER_INODE(inode);
+}
+
+static bool is_alive(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		struct node_info *dni, block_t blkaddr, unsigned int *nofs)
 {
 	struct page *node_page;
@@ -500,13 +625,21 @@ static int check_dnode(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
 
 	node_page = get_node_page(sbi, nid);
 	if (IS_ERR(node_page))
+<<<<<<< HEAD
 		return 0;
+=======
+		return false;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	get_node_info(sbi, nid, dni);
 
 	if (sum->version != dni->version) {
 		f2fs_put_page(node_page, 1);
+<<<<<<< HEAD
 		return 0;
+=======
+		return false;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	}
 
 	*nofs = ofs_of_node(node_page);
@@ -514,6 +647,7 @@ static int check_dnode(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
 	f2fs_put_page(node_page, 1);
 
 	if (source_blkaddr != blkaddr)
+<<<<<<< HEAD
 		return 0;
 	return 1;
 }
@@ -524,6 +658,118 @@ static void move_data_page(struct inode *inode, struct page *page, int gc_type)
 		.type = DATA,
 		.rw = WRITE_SYNC,
 	};
+=======
+		return false;
+	return true;
+}
+
+static void move_encrypted_block(struct inode *inode, block_t bidx)
+{
+	struct f2fs_io_info fio = {
+		.sbi = F2FS_I_SB(inode),
+		.type = DATA,
+		.rw = READ_SYNC,
+		.encrypted_page = NULL,
+	};
+	struct dnode_of_data dn;
+	struct f2fs_summary sum;
+	struct node_info ni;
+	struct page *page;
+	block_t newaddr;
+	int err;
+
+	/* do not read out */
+	page = f2fs_grab_cache_page(inode->i_mapping, bidx, false);
+	if (!page)
+		return;
+
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
+	err = get_dnode_of_data(&dn, bidx, LOOKUP_NODE);
+	if (err)
+		goto out;
+
+	if (unlikely(dn.data_blkaddr == NULL_ADDR)) {
+		ClearPageUptodate(page);
+		goto put_out;
+	}
+
+	/*
+	 * don't cache encrypted data into meta inode until previous dirty
+	 * data were writebacked to avoid racing between GC and flush.
+	 */
+	f2fs_wait_on_page_writeback(page, DATA, true);
+
+	get_node_info(fio.sbi, dn.nid, &ni);
+	set_summary(&sum, dn.nid, dn.ofs_in_node, ni.version);
+
+	/* read page */
+	fio.page = page;
+	fio.new_blkaddr = fio.old_blkaddr = dn.data_blkaddr;
+
+	allocate_data_block(fio.sbi, NULL, fio.old_blkaddr, &newaddr,
+							&sum, CURSEG_COLD_DATA);
+
+	fio.encrypted_page = f2fs_grab_cache_page(META_MAPPING(fio.sbi),
+							newaddr, true);
+	if (!fio.encrypted_page) {
+		err = -ENOMEM;
+		goto recover_block;
+	}
+
+	err = f2fs_submit_page_bio(&fio);
+	if (err)
+		goto put_page_out;
+
+	/* write page */
+	lock_page(fio.encrypted_page);
+
+	if (unlikely(fio.encrypted_page->mapping != META_MAPPING(fio.sbi))) {
+		err = -EIO;
+		goto put_page_out;
+	}
+	if (unlikely(!PageUptodate(fio.encrypted_page))) {
+		err = -EIO;
+		goto put_page_out;
+	}
+
+	set_page_dirty(fio.encrypted_page);
+	f2fs_wait_on_page_writeback(fio.encrypted_page, DATA, true);
+	if (clear_page_dirty_for_io(fio.encrypted_page))
+		dec_page_count(fio.sbi, F2FS_DIRTY_META);
+
+	set_page_writeback(fio.encrypted_page);
+
+	/* allocate block address */
+	f2fs_wait_on_page_writeback(dn.node_page, NODE, true);
+
+	fio.rw = WRITE_SYNC;
+	fio.new_blkaddr = newaddr;
+	f2fs_submit_page_mbio(&fio);
+
+	f2fs_update_data_blkaddr(&dn, newaddr);
+	set_inode_flag(inode, FI_APPEND_WRITE);
+	if (page->index == 0)
+		set_inode_flag(inode, FI_FIRST_BLOCK_WRITTEN);
+put_page_out:
+	f2fs_put_page(fio.encrypted_page, 1);
+recover_block:
+	if (err)
+		__f2fs_replace_block(fio.sbi, &sum, newaddr, fio.old_blkaddr,
+								true, true);
+put_out:
+	f2fs_put_dnode(&dn);
+out:
+	f2fs_put_page(page, 1);
+}
+
+static void move_data_page(struct inode *inode, block_t bidx, int gc_type)
+{
+	struct page *page;
+
+	page = get_lock_data_page(inode, bidx, true);
+	if (IS_ERR(page))
+		return;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	if (gc_type == BG_GC) {
 		if (PageWriteback(page))
@@ -531,12 +777,39 @@ static void move_data_page(struct inode *inode, struct page *page, int gc_type)
 		set_page_dirty(page);
 		set_cold_data(page);
 	} else {
+<<<<<<< HEAD
 		f2fs_wait_on_page_writeback(page, DATA);
 
 		if (clear_page_dirty_for_io(page))
 			inode_dec_dirty_pages(inode);
 		set_cold_data(page);
 		do_write_data_page(page, &fio);
+=======
+		struct f2fs_io_info fio = {
+			.sbi = F2FS_I_SB(inode),
+			.type = DATA,
+			.rw = WRITE_SYNC,
+			.page = page,
+			.encrypted_page = NULL,
+		};
+		bool is_dirty = PageDirty(page);
+		int err;
+
+retry:
+		set_page_dirty(page);
+		f2fs_wait_on_page_writeback(page, DATA, true);
+		if (clear_page_dirty_for_io(page))
+			inode_dec_dirty_pages(inode);
+
+		set_cold_data(page);
+
+		err = do_write_data_page(&fio);
+		if (err == -ENOMEM && is_dirty) {
+			congestion_wait(BLK_RW_ASYNC, HZ/50);
+			goto retry;
+		}
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 		clear_cold_data(page);
 	}
 out:
@@ -584,7 +857,11 @@ next_step:
 		}
 
 		/* Get an inode by ino with checking validity */
+<<<<<<< HEAD
 		if (check_dnode(sbi, entry, &dni, start_addr + off, &nofs) == 0)
+=======
+		if (!is_alive(sbi, entry, &dni, start_addr + off, &nofs))
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 			continue;
 
 		if (phase == 1) {
@@ -599,10 +876,23 @@ next_step:
 			if (IS_ERR(inode) || is_bad_inode(inode))
 				continue;
 
+<<<<<<< HEAD
 			start_bidx = start_bidx_of_node(nofs, F2FS_I(inode));
 
 			data_page = find_data_page(inode,
 					start_bidx + ofs_in_node, false);
+=======
+			/* if encrypted inode, let's go phase 3 */
+			if (f2fs_encrypted_inode(inode) &&
+						S_ISREG(inode->i_mode)) {
+				add_gc_inode(gc_list, inode);
+				continue;
+			}
+
+			start_bidx = start_bidx_of_node(nofs, inode);
+			data_page = get_read_data_page(inode,
+					start_bidx + ofs_in_node, READA, true);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 			if (IS_ERR(data_page)) {
 				iput(inode);
 				continue;
@@ -616,18 +906,48 @@ next_step:
 		/* phase 3 */
 		inode = find_gc_inode(gc_list, dni.ino);
 		if (inode) {
+<<<<<<< HEAD
 			start_bidx = start_bidx_of_node(nofs, F2FS_I(inode));
 			data_page = get_lock_data_page(inode,
 						start_bidx + ofs_in_node);
 			if (IS_ERR(data_page))
 				continue;
 			move_data_page(inode, data_page, gc_type);
+=======
+			struct f2fs_inode_info *fi = F2FS_I(inode);
+			bool locked = false;
+
+			if (S_ISREG(inode->i_mode)) {
+				if (!down_write_trylock(&fi->dio_rwsem[READ]))
+					continue;
+				if (!down_write_trylock(
+						&fi->dio_rwsem[WRITE])) {
+					up_write(&fi->dio_rwsem[READ]);
+					continue;
+				}
+				locked = true;
+			}
+
+			start_bidx = start_bidx_of_node(nofs, inode)
+								+ ofs_in_node;
+			if (f2fs_encrypted_inode(inode) && S_ISREG(inode->i_mode))
+				move_encrypted_block(inode, start_bidx);
+			else
+				move_data_page(inode, start_bidx, gc_type);
+
+			if (locked) {
+				up_write(&fi->dio_rwsem[WRITE]);
+				up_write(&fi->dio_rwsem[READ]);
+			}
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 			stat_inc_data_blk_count(sbi, 1, gc_type);
 		}
 	}
 
 	if (++phase < 4)
 		goto next_step;
+<<<<<<< HEAD
 
 	if (gc_type == FG_GC) {
 		f2fs_submit_merged_bio(sbi, DATA, WRITE);
@@ -641,6 +961,8 @@ next_step:
 			goto next_step;
 		}
 	}
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 }
 
 static int __get_victim(struct f2fs_sb_info *sbi, unsigned int *victim,
@@ -656,12 +978,18 @@ static int __get_victim(struct f2fs_sb_info *sbi, unsigned int *victim,
 	return ret;
 }
 
+<<<<<<< HEAD
 static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
+=======
+static int do_garbage_collect(struct f2fs_sb_info *sbi,
+				unsigned int start_segno,
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 				struct gc_inode_list *gc_list, int gc_type)
 {
 	struct page *sum_page;
 	struct f2fs_summary_block *sum;
 	struct blk_plug plug;
+<<<<<<< HEAD
 
 	/* read segment summary of victim */
 	sum_page = get_sum_page(sbi, segno);
@@ -692,6 +1020,83 @@ int f2fs_gc(struct f2fs_sb_info *sbi)
 	int gc_type = BG_GC;
 	int nfree = 0;
 	int ret = -1;
+=======
+	unsigned int segno = start_segno;
+	unsigned int end_segno = start_segno + sbi->segs_per_sec;
+	int seg_freed = 0;
+	unsigned char type = IS_DATASEG(get_seg_entry(sbi, segno)->type) ?
+						SUM_TYPE_DATA : SUM_TYPE_NODE;
+
+	/* readahead multi ssa blocks those have contiguous address */
+	if (sbi->segs_per_sec > 1)
+		ra_meta_pages(sbi, GET_SUM_BLOCK(sbi, segno),
+					sbi->segs_per_sec, META_SSA, true);
+
+	/* reference all summary page */
+	while (segno < end_segno) {
+		sum_page = get_sum_page(sbi, segno++);
+		unlock_page(sum_page);
+	}
+
+	blk_start_plug(&plug);
+
+	for (segno = start_segno; segno < end_segno; segno++) {
+
+		if (get_valid_blocks(sbi, segno, 1) == 0)
+			continue;
+
+		/* find segment summary of victim */
+		sum_page = find_get_page(META_MAPPING(sbi),
+					GET_SUM_BLOCK(sbi, segno));
+		f2fs_bug_on(sbi, !PageUptodate(sum_page));
+		f2fs_put_page(sum_page, 0);
+
+		sum = page_address(sum_page);
+		f2fs_bug_on(sbi, type != GET_SUM_TYPE((&sum->footer)));
+
+		/*
+		 * this is to avoid deadlock:
+		 * - lock_page(sum_page)         - f2fs_replace_block
+		 *  - check_valid_map()            - mutex_lock(sentry_lock)
+		 *   - mutex_lock(sentry_lock)     - change_curseg()
+		 *                                  - lock_page(sum_page)
+		 */
+
+		if (type == SUM_TYPE_NODE)
+			gc_node_segment(sbi, sum->entries, segno, gc_type);
+		else
+			gc_data_segment(sbi, sum->entries, gc_list, segno,
+								gc_type);
+
+		stat_inc_seg_count(sbi, type, gc_type);
+
+		f2fs_put_page(sum_page, 0);
+	}
+
+	if (gc_type == FG_GC)
+		f2fs_submit_merged_bio(sbi,
+				(type == SUM_TYPE_NODE) ? NODE : DATA, WRITE);
+
+	blk_finish_plug(&plug);
+
+	if (gc_type == FG_GC) {
+		while (start_segno < end_segno)
+			if (get_valid_blocks(sbi, start_segno++, 1) == 0)
+				seg_freed++;
+	}
+
+	stat_inc_call_count(sbi->stat_info);
+
+	return seg_freed;
+}
+
+int f2fs_gc(struct f2fs_sb_info *sbi, bool sync)
+{
+	unsigned int segno;
+	int gc_type = sync ? FG_GC : BG_GC;
+	int sec_freed = 0, seg_freed;
+	int ret = -EINVAL;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	struct cp_control cpc;
 	struct gc_inode_list gc_list = {
 		.ilist = LIST_HEAD_INIT(gc_list.ilist),
@@ -700,6 +1105,7 @@ int f2fs_gc(struct f2fs_sb_info *sbi)
 
 	cpc.reason = __get_cp_reason(sbi);
 gc_more:
+<<<<<<< HEAD
 	if (unlikely(!(sbi->sb->s_flags & MS_ACTIVE)))
 		goto stop;
 	if (unlikely(f2fs_cp_error(sbi)))
@@ -733,10 +1139,62 @@ gc_more:
 
 	if (gc_type == FG_GC)
 		write_checkpoint(sbi, &cpc);
+=======
+	segno = NULL_SEGNO;
+
+	if (unlikely(!(sbi->sb->s_flags & MS_ACTIVE)))
+		goto stop;
+	if (unlikely(f2fs_cp_error(sbi))) {
+		ret = -EIO;
+		goto stop;
+	}
+
+	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, sec_freed)) {
+		gc_type = FG_GC;
+		/*
+		 * If there is no victim and no prefree segment but still not
+		 * enough free sections, we should flush dent/node blocks and do
+		 * garbage collections.
+		 */
+		if (__get_victim(sbi, &segno, gc_type) ||
+						prefree_segments(sbi)) {
+			write_checkpoint(sbi, &cpc);
+			segno = NULL_SEGNO;
+		} else if (has_not_enough_free_secs(sbi, 0)) {
+			write_checkpoint(sbi, &cpc);
+		}
+	}
+
+	if (segno == NULL_SEGNO && !__get_victim(sbi, &segno, gc_type))
+		goto stop;
+	ret = 0;
+
+	seg_freed = do_garbage_collect(sbi, segno, &gc_list, gc_type);
+
+	if (gc_type == FG_GC && seg_freed == sbi->segs_per_sec)
+		sec_freed++;
+
+	if (gc_type == FG_GC)
+		sbi->cur_victim_sec = NULL_SEGNO;
+
+	if (!sync) {
+		if (has_not_enough_free_secs(sbi, sec_freed))
+			goto gc_more;
+
+		if (gc_type == FG_GC)
+			write_checkpoint(sbi, &cpc);
+	}
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 stop:
 	mutex_unlock(&sbi->gc_mutex);
 
 	put_gc_inode(&gc_list);
+<<<<<<< HEAD
+=======
+
+	if (sync)
+		ret = sec_freed ? 0 : -EAGAIN;
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 	return ret;
 }
 

@@ -14,14 +14,31 @@
 /* node block offset on the NAT area dedicated to the given start node id */
 #define	NAT_BLOCK_OFFSET(start_nid) (start_nid / NAT_ENTRY_PER_BLOCK)
 
+<<<<<<< HEAD
 /* # of pages to perform readahead before building free nids */
 #define FREE_NID_PAGES 4
+=======
+/* # of pages to perform synchronous readahead before building free nids */
+#define FREE_NID_PAGES	8
+#define MAX_FREE_NIDS	(NAT_ENTRY_PER_BLOCK * FREE_NID_PAGES)
+
+#define DEF_RA_NID_PAGES	0	/* # of nid pages to be readaheaded */
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 /* maximum readahead size for node during getting data blocks */
 #define MAX_RA_NODE		128
 
 /* control the memory footprint threshold (10MB per 1GB ram) */
+<<<<<<< HEAD
 #define DEF_RAM_THRESHOLD	10
+=======
+#define DEF_RAM_THRESHOLD	1
+
+/* control dirty nats ratio threshold (default: 10% over max nid count) */
+#define DEF_DIRTY_NAT_RATIO_THRESHOLD		10
+/* control total # of nats */
+#define DEF_NAT_CACHE_THRESHOLD			100000
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 /* vector size for gang look-up from nat cache that consists of radix tree */
 #define NATVEC_SIZE	64
@@ -115,6 +132,20 @@ static inline void raw_nat_from_node_info(struct f2fs_nat_entry *raw_ne,
 	raw_ne->version = ni->version;
 }
 
+<<<<<<< HEAD
+=======
+static inline bool excess_dirty_nats(struct f2fs_sb_info *sbi)
+{
+	return NM_I(sbi)->dirty_nat_cnt >= NM_I(sbi)->max_nid *
+					NM_I(sbi)->dirty_nats_ratio / 100;
+}
+
+static inline bool excess_cached_nats(struct f2fs_sb_info *sbi)
+{
+	return NM_I(sbi)->nat_cnt >= DEF_NAT_CACHE_THRESHOLD;
+}
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 enum mem_type {
 	FREE_NIDS,	/* indicates the free nid list */
 	NAT_ENTRIES,	/* indicates the cached nat entry */
@@ -181,7 +212,11 @@ static inline pgoff_t current_nat_addr(struct f2fs_sb_info *sbi, nid_t start)
 
 	block_addr = (pgoff_t)(nm_i->nat_blkaddr +
 		(seg_off << sbi->log_blocks_per_seg << 1) +
+<<<<<<< HEAD
 		(block_off & ((1 << sbi->log_blocks_per_seg) - 1)));
+=======
+		(block_off & (sbi->blocks_per_seg - 1)));
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	if (f2fs_test_bit(block_off, nm_i->nat_bitmap))
 		block_addr += sbi->blocks_per_seg;
@@ -315,17 +350,29 @@ static inline bool IS_DNODE(struct page *node_page)
 	return true;
 }
 
+<<<<<<< HEAD
 static inline void set_nid(struct page *p, int off, nid_t nid, bool i)
 {
 	struct f2fs_node *rn = F2FS_NODE(p);
 
 	f2fs_wait_on_page_writeback(p, NODE);
+=======
+static inline int set_nid(struct page *p, int off, nid_t nid, bool i)
+{
+	struct f2fs_node *rn = F2FS_NODE(p);
+
+	f2fs_wait_on_page_writeback(p, NODE, true);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 	if (i)
 		rn->i.i_nid[off - NODE_DIR1_BLOCK] = cpu_to_le32(nid);
 	else
 		rn->in.nid[off] = cpu_to_le32(nid);
+<<<<<<< HEAD
 	set_page_dirty(p);
+=======
+	return set_page_dirty(p);
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 }
 
 static inline nid_t get_nid(struct page *p, int off, bool i)
@@ -343,6 +390,7 @@ static inline nid_t get_nid(struct page *p, int off, bool i)
  *  - Mark cold node blocks in their node footer
  *  - Mark cold data pages in page cache
  */
+<<<<<<< HEAD
 static inline int is_file(struct inode *inode, int type)
 {
 	return F2FS_I(inode)->i_advise & type;
@@ -365,6 +413,8 @@ static inline void clear_file(struct inode *inode, int type)
 #define file_clear_cold(inode)	clear_file(inode, FADVISE_COLD_BIT)
 #define file_got_pino(inode)	clear_file(inode, FADVISE_LOST_PINO_BIT)
 
+=======
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 static inline int is_cold_data(struct page *page)
 {
 	return PageChecked(page);
@@ -390,6 +440,24 @@ static inline int is_node(struct page *page, int type)
 #define is_fsync_dnode(page)	is_node(page, FSYNC_BIT_SHIFT)
 #define is_dent_dnode(page)	is_node(page, DENT_BIT_SHIFT)
 
+<<<<<<< HEAD
+=======
+static inline int is_inline_node(struct page *page)
+{
+	return PageChecked(page);
+}
+
+static inline void set_inline_node(struct page *page)
+{
+	SetPageChecked(page);
+}
+
+static inline void clear_inline_node(struct page *page)
+{
+	ClearPageChecked(page);
+}
+
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 static inline void set_cold_node(struct inode *inode, struct page *page)
 {
 	struct f2fs_node *rn = F2FS_NODE(page);

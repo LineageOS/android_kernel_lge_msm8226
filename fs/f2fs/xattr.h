@@ -35,6 +35,13 @@
 #define F2FS_XATTR_INDEX_LUSTRE			5
 #define F2FS_XATTR_INDEX_SECURITY		6
 #define F2FS_XATTR_INDEX_ADVISE			7
+<<<<<<< HEAD
+=======
+/* Should be same as EXT4_XATTR_INDEX_ENCRYPTION */
+#define F2FS_XATTR_INDEX_ENCRYPTION		9
+
+#define F2FS_XATTR_NAME_ENCRYPTION_CONTEXT	"c"
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 
 struct f2fs_xattr_header {
 	__le32  h_magic;        /* magic number for identification */
@@ -124,7 +131,12 @@ extern ssize_t f2fs_listxattr(struct dentry *, char *, size_t);
 
 #define f2fs_xattr_handlers	NULL
 static inline int f2fs_setxattr(struct inode *inode, int index,
+<<<<<<< HEAD
 		const char *name, const void *value, size_t size, int flags)
+=======
+		const char *name, const void *value, size_t size,
+		struct page *page, int flags)
+>>>>>>> 788b059... f2fs: Sync with upstream f2fs-stable 3.4.y
 {
 	return -EOPNOTSUPP;
 }
