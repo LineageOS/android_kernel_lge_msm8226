@@ -170,6 +170,10 @@ initrd_phys-$(CONFIG_ARCH_FSM9XXX)	:= 0x12000000
 # MSM8610
    zreladdr-$(CONFIG_ARCH_MSM8610)	:= 0x00008000
 ifeq ($(CONFIG_MACH_LGE),y)
+	dtb-$(CONFIG_MACH_MSM8X10_W5N_GLOBAL_COM)   +=   msm8610-v1-w5n.dtb \
+							 msm8610-v2-w5n.dtb
+	dtb-$(CONFIG_MACH_MSM8X10_W3DS_GLOBAL_COM)   +=  msm8610-v1-w3ds.dtb \
+							 msm8610-v2-w3ds.dtb
 else # not CONFIG_MACH_LGE
         dtb-$(CONFIG_ARCH_MSM8610)	+= msm8610-v1-cdp.dtb
         dtb-$(CONFIG_ARCH_MSM8610)	+= msm8610-v2-cdp.dtb
