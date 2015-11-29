@@ -326,6 +326,6 @@ config BACKLIGHT_RT8542
 
 config MSMB_CAMERA_ADP1660
 	tristate "driver for ADP1660"
-	depends MSMB_CAMERA
+	depends on MSMB_CAMERA
 	---help---
 	    Enable support for ADP1660
