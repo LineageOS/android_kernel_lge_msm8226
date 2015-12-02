@@ -360,7 +360,7 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 				      enum led_brightness value)
 {
 	struct msm_fb_data_type *mfd = dev_get_drvdata(led_cdev->dev->parent);
-	int bl_lvl;
+	int bl_lvl = 0;
 #ifdef CONFIG_LGE_LCD_OFF_DIMMING
 	if (lge_get_bootreason() == 0x77665560 && !fb_blank_called) {
 		pr_info("%s : lcd off mode! Will not turn on backlight.\n", __func__);
