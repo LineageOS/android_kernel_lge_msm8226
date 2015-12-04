@@ -490,24 +490,24 @@ static struct msm_camera_i2c_conf_array hi351_fixed_fps_conf[] = {
 	ARRAY_SIZE(hi351_fixed_fps_settings[HI351_50HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
 };
 // LGE_CHANGE_E. youngwook.song@lge.com, this code is for distinguishing Camera/Camcoder init. from other enterings. 2014-01-21
-static struct msm_camera_i2c_conf_array hi351_720p_settings_conf_in_case_of_init[] = {
+/*static struct msm_camera_i2c_conf_array hi351_720p_settings_conf_in_case_of_init[] = {
 	{&hi351_720p_settings_in_case_of_init[HI351_60HZ][0],
 	ARRAY_SIZE(hi351_720p_settings_in_case_of_init[HI351_60HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
 	{&hi351_720p_settings_in_case_of_init[HI351_50HZ][0],
 	ARRAY_SIZE(hi351_720p_settings_in_case_of_init[HI351_50HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
-};
+};*/
 static struct msm_camera_i2c_conf_array hi351_720p_settings_conf[] = {
 	{&hi351_720p_settings[HI351_60HZ][0],
 	ARRAY_SIZE(hi351_720p_settings[HI351_60HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
 	{&hi351_720p_settings[HI351_50HZ][0],
 	ARRAY_SIZE(hi351_720p_settings[HI351_50HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
 };
-static struct msm_camera_i2c_conf_array hi351_recover_from720P_settings_conf_in_case_of_init[] = {
+/*static struct msm_camera_i2c_conf_array hi351_recover_from720P_settings_conf_in_case_of_init[] = {
 	{&hi351_recover_from720P_settings_in_case_of_init[HI351_60HZ][0],
 	ARRAY_SIZE(hi351_recover_from720P_settings_in_case_of_init[HI351_60HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
 	{&hi351_recover_from720P_settings_in_case_of_init[HI351_50HZ][0],
 	ARRAY_SIZE(hi351_recover_from720P_settings_in_case_of_init[HI351_50HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
-};
+};*/
 static struct msm_camera_i2c_conf_array hi351_recover_from720P_settings_conf[] = {
 	{&hi351_recover_from720P_settings[HI351_60HZ][0],
 	ARRAY_SIZE(hi351_recover_from720P_settings[HI351_60HZ]), 0, MSM_CAMERA_I2C_BYTE_DATA},
@@ -1673,6 +1673,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 // conf0 is with recommend setting right after. When INIT_DONE is 1, it means this is followed by right after Recommend Setting register set.
 			if(INIT_DONE == 1){
 				if(hi351_prev_res == HI351_SENSOR_RES_HD){
+/*
 					#if defined(CONFIG_FAST_TUNE_REGISTER)
 						if(TUNING_REGISTER){
 							hi351_sensor_write_init_settings(s_ctrl->sensor_i2c_client,
@@ -1686,7 +1687,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 							hi351_sensor_write_init_settings(s_ctrl->sensor_i2c_client,
 									(struct msm_camera_i2c_reg_conf *) hi351_recover_from720P_settings_conf_in_case_of_init[hi351_antibanding].conf,
 									hi351_recover_from720P_settings_conf_in_case_of_init[hi351_antibanding].size);
-					#endif
+					#endif*/
 					pr_err("%s, recover from 720P - QTR followed by INIT!!\n", __func__);
 				}else{
 					#if defined(CONFIG_FAST_TUNE_REGISTER)
@@ -1740,6 +1741,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		}
 		else if (val == 2){
 			if(INIT_DONE == 1){
+/*
 				#if defined(CONFIG_FAST_TUNE_REGISTER)
 					if(TUNING_REGISTER){
 						hi351_sensor_write_init_settings(s_ctrl->sensor_i2c_client,
@@ -1753,7 +1755,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 						hi351_sensor_write_init_settings(s_ctrl->sensor_i2c_client,
 							(struct msm_camera_i2c_reg_conf *) hi351_720p_settings_conf_in_case_of_init[hi351_antibanding].conf,
 							hi351_720p_settings_conf_in_case_of_init[hi351_antibanding].size);
-				#endif
+				#endif*/
 					pr_err("%s, recording HD setting followed by INIT !!\n", __func__);
 			}else{ //INIT_DONE == 0
 				//sujeong.kwon@lge.com 2014-03-08. support 720P
@@ -1788,7 +1790,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 // settings0 is with recommend setting right after. When INIT_DONE is 1, it means this is followed by right after Recommend Setting register set.
 		if(INIT_DONE == 1){
 			if(hi351_prev_res == HI351_SENSOR_RES_HD){
-				hi351_i2c_write_table(s_ctrl, &hi351_recover_from720P_start_settings_in_case_of_init[0], ARRAY_SIZE(hi351_recover_from720P_start_settings_in_case_of_init));
+//				hi351_i2c_write_table(s_ctrl, &hi351_recover_from720P_start_settings_in_case_of_init[0], ARRAY_SIZE(hi351_recover_from720P_start_settings_in_case_of_init));
 			}else{
 				hi351_i2c_write_table(s_ctrl, &hi351_start_settings_in_case_of_init[0], ARRAY_SIZE(hi351_start_settings_in_case_of_init));
 			}
@@ -1797,7 +1799,7 @@ int32_t hi351_sensor_config(struct msm_sensor_ctrl_t *s_ctrl,
 		// settings1 is with recommend setting right after. When INIT_DONE is 1, it means this is followed by right after Recommend Setting register set.
 		else if(INIT_DONE == 0){
 			if(hi351_prev_res == HI351_SENSOR_RES_HD){
-				hi351_i2c_write_table(s_ctrl, &hi351_recover_from720P_start_settings[0], ARRAY_SIZE(hi351_recover_from720P_start_settings));
+//				hi351_i2c_write_table(s_ctrl, &hi351_recover_from720P_start_settings[0], ARRAY_SIZE(hi351_recover_from720P_start_settings));
 			}else{
 				hi351_i2c_write_table(s_ctrl, &hi351_start_settings[0], ARRAY_SIZE(hi351_start_settings));
 			}
