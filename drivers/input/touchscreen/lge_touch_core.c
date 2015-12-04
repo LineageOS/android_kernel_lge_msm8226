@@ -3217,6 +3217,12 @@ void send_uevent_lpwg(struct i2c_client *client, int type)
 		&& atomic_read(&ts->state.uevent_state) == UEVENT_IDLE) {
 			atomic_set(&ts->state.uevent_state, UEVENT_BUSY);
 			send_uevent(lpwg_uevent[type - 1]);
+                       if (type == LPWG_DOUBLE_TAP) {
+                               input_report_key(ts->input_dev, KEY_POWER, BUTTON_PRESSED);
+                               input_report_key(ts->input_dev, KEY_POWER, BUTTON_RELEASED);
+                               input_sync(ts->input_dev);
+                       }
+
     }
 }
 
@@ -3354,6 +3360,36 @@ static ssize_t store_lpwg_notify(struct lge_touch_data *ts, const char *buf, siz
     return count;
 }
 
+/* 
+ * Sysfs - DoubleTap to wake
+ */
+static ssize_t store_double_tap(struct lge_touch_data *ts, const char *buf, size_t count) 
+{
+	int value[1] = {0};
+
+	if (mutex_is_locked(&i2c_suspend_lock)) {
+		TOUCH_INFO_MSG("%s mutex_is_locked \n", __func__);
+	}
+
+	sscanf(buf, "%d", &value[0]);
+
+	if (value[0] > 1) {
+		TOUCH_INFO_MSG("%s Incorrect double tap value. %d\n", __func__, value[0]);
+	} else {
+		touch_device_func->lpwg(ts->client, LPWG_ENABLE, value[0], NULL);
+		mutex_lock(&ts->irq_work_mutex);
+		if (value[0])
+			touch_gesture_enable = 1;
+		else
+			touch_gesture_enable = 0;
+		atomic_set(&ts->device_init, 1);
+		mutex_unlock(&ts->irq_work_mutex);
+	}
+
+	return count;
+}
+
+
 static ssize_t store_global_access_pixel(struct lge_touch_data *ts, const char *buf, size_t count)
 {
 	int ret = 0;
@@ -3408,6 +3444,7 @@ static LGE_TOUCH_ATTR(power_control, S_IRUGO | S_IWUSR, NULL, power_control_stor
 static LGE_TOUCH_ATTR(global_access_pixel, S_IRUGO | S_IWUSR, show_global_access_pixel, store_global_access_pixel);
 static LGE_TOUCH_ATTR(lpwg_data, S_IRUGO | S_IWUSR, show_lpwg_data, store_lpwg_data);
 static LGE_TOUCH_ATTR(lpwg_notify, S_IRUGO | S_IWUSR, NULL, store_lpwg_notify);
+static LGE_TOUCH_ATTR(dt2w_enable, S_IRUGO | S_IWUSR, NULL, store_double_tap);
 
 static struct attribute *lge_touch_attribute_list[] = {
 	&lge_touch_attr_platform_data.attr,
@@ -3437,6 +3474,7 @@ static struct attribute *lge_touch_attribute_list[] = {
 	&lge_touch_attr_global_access_pixel.attr,
 	&lge_touch_attr_lpwg_data.attr,
 	&lge_touch_attr_lpwg_notify.attr,
+	&lge_touch_attr_dt2w_enable.attr,
 	NULL,
 };
 
@@ -4336,6 +4374,8 @@ static int touch_probe(struct i2c_client *client, const struct i2c_device_id *id
 	ts->input_dev->name = "touch_dev";
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_ABS, ts->input_dev->evbit);
+	set_bit(EV_KEY, ts->input_dev->evbit);
+	set_bit(KEY_POWER, ts->input_dev->keybit);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0))
 	set_bit(INPUT_PROP_DIRECT, ts->input_dev->propbit);
 #endif
