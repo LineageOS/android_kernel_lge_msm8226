@@ -109,12 +109,14 @@ enum msm_sensor_power_seq_gpio_t {
 	SENSOR_GPIO_VANA,
 	SENSOR_GPIO_VDIG,
 	SENSOR_GPIO_VAF,
+#ifndef CONFIG_ARCH_MSM8610
 	SENSOR_GPIO_FL_EN,
 	SENSOR_GPIO_FL_NOW,
 /* LGE_CHANGE_S, Camera bring-up : Add gpio to control LDO*/
 	SENSOR_GPIO_AF_MVDD,
 	SENSOR_GPIO_LDAF_EN,
 /* LGE_CHANGE_E, Camera bring-up : Add gpio to control LDO*/
+#endif
 	SENSOR_GPIO_MAX,
 };
 
@@ -242,8 +244,10 @@ struct msm_sensor_power_setting {
 struct msm_sensor_power_setting_array {
 	struct msm_sensor_power_setting *power_setting;
 	uint16_t size;
+#ifndef CONFIG_ARCH_MSM8610
 	struct msm_sensor_power_setting *power_down_setting;
 	uint16_t size_down;
+#endif
 };
 
 struct msm_sensor_id_info_t {
@@ -251,6 +255,7 @@ struct msm_sensor_id_info_t {
 	uint16_t sensor_id;
 };
 
+#ifndef CONFIG_ARCH_MSM8610
 enum msm_sensor_camera_id_t {
 	CAMERA_0,
 	CAMERA_1,
@@ -264,7 +269,7 @@ enum cci_i2c_master_t {
 	MASTER_1,
 	MASTER_MAX,
 };
-
+#endif
 
 struct msm_camera_i2c_reg_array {
 	uint16_t reg_addr;
@@ -358,12 +363,18 @@ struct csi_lane_params_t {
 };
 
 enum camb_position_t {
+#ifndef CONFIG_ARCH_MSM8610
 	BACK_CAMERA_B,
 	FRONT_CAMERA_B,
 	INVALID_CAMERA_B,
+#else
+	BACK_CAMERA_B,
+	FRONT_CAMERA_B,
+#endif
 };
 
 struct msm_sensor_info_t {
+#ifndef CONFIG_ARCH_MSM8610
 	char     sensor_name[MAX_SENSOR_NAME];
 	int32_t  session_id;
 	int32_t  subdev_id[SUB_MODULE_MAX];
@@ -374,6 +385,11 @@ struct msm_sensor_info_t {
 	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
 	int					product_kor;
 	uint8_t 	module_id;   /*LGE_CHANGE,	To check module-vedorID for same sensor without any differences of HW, 2014-07-31, sujeong.kwon@lge.com*/
+#else
+        char sensor_name[MAX_SENSOR_NAME];
+        int32_t    session_id;
+        int32_t     subdev_id[SUB_MODULE_MAX];
+#endif
 };
 
 #if 1 /* LGE_FEATURE_APLUS */
@@ -402,7 +418,9 @@ struct camera_vreg_t {
 enum camerab_mode_t {
 	CAMERA_MODE_2D_B = (1<<0),
 	CAMERA_MODE_3D_B = (1<<1),
+#ifndef CONFIG_ARCH_MSM8610
 	CAMERA_MODE_INVALID = (1<<2),
+#endif
 };
 
 struct msm_sensor_init_params {
@@ -413,9 +431,12 @@ struct msm_sensor_init_params {
 	/* sensor mount angle */
 	uint32_t            sensor_mount_angle;
 	int 				maker_gpio;/* LGE_CHANGE, Fix for Dual Camera Module of HI707, 2014-03-04, dongsu.bag@lge.com */
+#ifndef CONFIG_ARCH_MSM8610
 	int					product_kor;
+#endif
 };
 
+#ifndef CONFIG_ARCH_MSM8610
 struct msm_camera_sensor_slave_info {
 	char sensor_name[32];
 	char eeprom_name[32];
@@ -428,13 +449,22 @@ struct msm_camera_sensor_slave_info {
 	uint8_t  is_init_params_valid;
 	struct msm_sensor_init_params sensor_init_params;
 };
+#else
+struct msm_camera_sensor_slave_info {
+	uint16_t slave_addr;
+	enum msm_camera_i2c_reg_addr_type addr_type;
+	struct msm_sensor_id_info_t sensor_id_info;
+	struct msm_sensor_power_setting_array power_setting_array;
+};
+#endif
+
 
 struct sensorb_cfg_data {
 	int cfgtype;
 	union {
 		struct msm_sensor_info_t      sensor_info;
 		struct msm_sensor_init_params sensor_init_params;
-#if 1  /* LGE_FEATURE_APLUS */
+#ifndef CONFIG_ARCH_MSM8610  /* LGE_FEATURE_APLUS */
 		struct msm_sensor_proxy_info_t	proxy_info;	/* LGE_CHANGE, PROXY stat, 2014-03-27, seonyung.kim@lge.com */
 		uint16_t proxy_data;	/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
 #endif
@@ -463,7 +493,9 @@ enum eeprom_cfg_type_t {
 	CFG_EEPROM_GET_CAL_DATA,
 	CFG_EEPROM_READ_CAL_DATA,
 	CFG_EEPROM_WRITE_DATA,
+#ifndef CONFIG_ARCH_MSM8610
 	CFG_EEPROM_GET_MM_INFO,
+#endif
 };
 
 struct eeprom_get_t {
@@ -480,11 +512,13 @@ struct eeprom_write_t {
 	uint32_t num_bytes;
 };
 
+#ifndef CONFIG_ARCH_MSM8610
 struct eeprom_get_mm_t {
 	uint32_t mm_support;
 	uint32_t mm_compression;
 	uint32_t mm_size;
 };
+#endif
 
 struct msm_eeprom_cfg_data {
 	enum eeprom_cfg_type_t cfgtype;
@@ -494,7 +528,9 @@ struct msm_eeprom_cfg_data {
 		struct eeprom_get_t get_data;
 		struct eeprom_read_t read_data;
 		struct eeprom_write_t write_data;
+#ifndef CONFIG_ARCH_MSM8610
 		struct eeprom_get_mm_t get_mm_data;
+#endif
 	} cfg;
 };
 
@@ -531,10 +567,11 @@ enum msm_sensor_cfg_type_t {
 	CFG_SET_AEC_ROI,
 	CFG_SET_AWB_LOCK,
 	CFG_SET_AEC_LOCK,
+#ifndef CONFIG_ARCH_MSM8610
 	CFG_SET_INIT_SETTING_VT,
 /* LGE_CHANGE_E, Enable touch AE in soc sensor , 2013-11-12, dongsu.bag@lge.com */
 	CFG_SET_REGISTER_UPDATE,		/* LGE_CHANGE . To fast tune register. sujeong.kwon@lge.com 2014.03.22*/
-#if 1  /* LGE_FEATURE_APLUS */
+/* LGE_FEATURE_APLUS */
 	CFG_PROXY_ON,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
 	CFG_PROXY_OFF,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
 	CFG_GET_PROXY,				/* LGE_CHANGE, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
@@ -551,9 +588,11 @@ enum msm_actuator_cfg_type_t {
 	CFG_SET_ACTUATOR_INFO,
 	CFG_SET_DEFAULT_FOCUS,
 	CFG_MOVE_FOCUS,
+#ifndef CONFIG_ARCH_MSM8610
 	CFG_SET_POSITION,
 	CFG_ACTUATOR_POWERDOWN,
 	CFG_ACTUATOR_POWERUP,
+#endif
 };
 
 enum actuator_type {
@@ -571,18 +610,24 @@ enum msm_actuator_addr_type {
 	MSM_ACTUATOR_WORD_ADDR,
 };
 
+#ifndef CONFIG_ARCH_MSM8610
 enum msm_actuator_i2c_operation {
 	MSM_ACT_WRITE = 0,
 	MSM_ACT_POLL,
 };
+#endif
 
 struct reg_settings_t {
 	uint16_t reg_addr;
+#ifndef CONFIG_ARCH_MSM8610
 	enum msm_actuator_addr_type addr_type;
+#endif
 	uint16_t reg_data;
+#ifndef CONFIG_ARCH_MSM8610
 	enum msm_actuator_data_type data_type;
 	enum msm_actuator_i2c_operation i2c_operation;
 	uint32_t delay;
+#endif
 };
 
 struct region_params_t {
@@ -604,7 +649,9 @@ struct msm_actuator_move_params_t {
 	int8_t sign_dir;
 	int16_t dest_step_pos;
 	int32_t num_steps;
+#ifndef CONFIG_ARCH_MSM8610
 	uint16_t curr_lens_pos;
+#endif
 	struct damping_params_t *ringing_params;
 };
 
@@ -655,19 +702,23 @@ enum af_camera_name {
 	ACTUATOR_MAIN_CAM_3,
 	ACTUATOR_MAIN_CAM_4,
 	ACTUATOR_MAIN_CAM_5,
+#ifndef CONFIG_ARCH_MSM8610
 	ACTUATOR_MAIN_CAM_6,
 	ACTUATOR_MAIN_CAM_7,
+#endif
 	ACTUATOR_WEB_CAM_0,
 	ACTUATOR_WEB_CAM_1,
 	ACTUATOR_WEB_CAM_2,
 };
 
 
+#ifndef CONFIG_ARCH_MSM8610
 struct msm_actuator_set_position_t {
 	uint16_t number_of_steps;
 	uint16_t pos[MAX_NUMBER_OF_STEPS];
 	uint16_t delay[MAX_NUMBER_OF_STEPS];
 };
+#endif
 
 struct msm_actuator_cfg_data {
 	int cfgtype;
@@ -676,7 +727,9 @@ struct msm_actuator_cfg_data {
 		struct msm_actuator_move_params_t move;
 		struct msm_actuator_set_info_t set_info;
 		struct msm_actuator_get_info_t get_info;
+#ifndef CONFIG_ARCH_MSM8610
 		struct msm_actuator_set_position_t setpos;
+#endif
 		enum af_camera_name cam_name;
 	} cfg;
 };
@@ -708,6 +761,7 @@ struct msm_camera_led_cfg_t {
 	uint32_t flash_current[2];
 };
 
+#ifndef CONFIG_ARCH_MSM8610
 /* sensor init structures and enums */
 enum msm_sensor_init_cfg_type_t {
 	CFG_SINIT_PROBE,
@@ -721,6 +775,7 @@ struct sensor_init_cfg_data {
 		void *setting;
 	} cfg;
 };
+#endif
 
 #define VIDIOC_MSM_SENSOR_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 1, struct sensorb_cfg_data)
@@ -731,11 +786,21 @@ struct sensor_init_cfg_data {
 #define VIDIOC_MSM_SENSOR_GET_SUBDEV_ID \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 3, uint32_t)
 
+#ifndef CONFIG_ARCH_MSM8610
 #define VIDIOC_MSM_CSIPHY_IO_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 4, struct csiphy_cfg_data)
+#else
+#define VIDIOC_MSM_CSIPHY_IO_CFG \
+	_IOWR('V', BASE_VIDIOC_PRIVATE + 4, struct csid_cfg_data)
+#endif
 
+#ifndef CONFIG_ARCH_MSM8610
 #define VIDIOC_MSM_CSID_IO_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 5, struct csid_cfg_data)
+#else
+#define VIDIOC_MSM_CSID_IO_CFG \
+	_IOWR('V', BASE_VIDIOC_PRIVATE + 5, struct csiphy_cfg_data)
+#endif
 
 #define VIDIOC_MSM_ACTUATOR_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 6, struct msm_actuator_cfg_data)

@@ -1,0 +1,425 @@
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
+#include "msm_sensor.h"
+#define HI543_SENSOR_NAME "hi543"
+#include <mach/board_lge.h>		//to use lge_get_board_revno()
+DEFINE_MSM_MUTEX(hi543_mut);
+
+static struct msm_sensor_ctrl_t hi543_s_ctrl;
+
+static struct msm_sensor_power_setting hi543_power_setting_rev_a[] = {
+
+	{  /* Set GPIO_RESET to low to disable power on reset*/
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+	#if defined(CONFIG_MACH_MSM8X10_W5)
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VIO,
+		.config_val = 0,
+		.delay = 0,
+	},
+	#else
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VIO,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+	#endif
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+#if defined(CONFIG_MACH_MSM8X10_W5)
+#if defined(CONFIG_MACH_MSM8X10_W5C_VZW)
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_STANDBY,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+#endif
+#else //                                                                                        
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VDIG,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_STANDBY,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+#endif
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1, // >= 16MCLK
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+
+};
+
+#if defined(CONFIG_MACH_MSM8X10_W5) && !defined(CONFIG_MACH_MSM8X10_W5C_VZW)
+static struct msm_sensor_power_setting hi543_power_setting_rev_b[] = {
+	 {	/* Set GPIO_RESET to low to disable power on reset*/
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VIO,
+		.config_val = 0,
+		.delay = 1,
+	},
+#if 0
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VIO,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+#endif
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_STANDBY,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+#if 0
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VDIG,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+#endif
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1, //TODO : >= 16MCLK ?
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+};
+#endif
+
+#if defined(CONFIG_MACH_MSM8X10_W5C_VZW)
+static struct msm_sensor_power_setting hi543_power_setting_rev_c_w5c[] = {
+	 {	/* Set GPIO_RESET to low to disable power on reset*/
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_LOW,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VIO,
+		.config_val = 0,
+		.delay = 1,
+	},
+#if 0
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VIO,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+#endif
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VANA,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_VREG,
+		.seq_val = CAM_VAF,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 0,
+	},
+#if 0
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_VDIG,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+#endif
+	{
+		.seq_type = SENSOR_GPIO,
+		.seq_val = SENSOR_GPIO_RESET,
+		.config_val = GPIO_OUT_HIGH,
+		.delay = 1,
+	},
+	{
+		.seq_type = SENSOR_CLK,
+		.seq_val = SENSOR_CAM_MCLK,
+		.config_val = 0,
+		.delay = 1, //TODO : >= 16MCLK ?
+	},
+	{
+		.seq_type = SENSOR_I2C_MUX,
+		.seq_val = 0,
+		.config_val = 0,
+		.delay = 0,
+	},
+};
+#endif
+
+static struct v4l2_subdev_info hi543_subdev_info[] = {
+	{
+		.code = V4L2_MBUS_FMT_SBGGR10_1X10,
+		.colorspace = V4L2_COLORSPACE_JPEG,
+		.fmt = 1,
+		.order = 0,
+	},
+};
+
+static const struct i2c_device_id hi543_i2c_id[] = {
+	{HI543_SENSOR_NAME, (kernel_ulong_t)&hi543_s_ctrl},
+	{ }
+};
+
+static int32_t msm_hi543_i2c_probe(struct i2c_client *client,
+	const struct i2c_device_id *id)
+{
+	return msm_sensor_i2c_probe(client, id, &hi543_s_ctrl);
+}
+
+static struct i2c_driver hi543_i2c_driver = {
+	.id_table = hi543_i2c_id,
+	.probe  = msm_hi543_i2c_probe,
+	.driver = {
+		.name = HI543_SENSOR_NAME,
+	},
+};
+
+static struct msm_camera_i2c_client hi543_sensor_i2c_client = {
+	.addr_type = MSM_CAMERA_I2C_WORD_ADDR,
+};
+
+static const struct of_device_id hi543_dt_match[] = {
+	{.compatible = "qcom,hi543", .data = &hi543_s_ctrl},
+	{}
+};
+
+MODULE_DEVICE_TABLE(of, hi543_dt_match);
+
+static struct platform_driver hi543_platform_driver = {
+	.driver = {
+		.name = "qcom,hi543",
+		.owner = THIS_MODULE,
+		.of_match_table = hi543_dt_match,
+	},
+};
+
+static int32_t hi543_platform_probe(struct platform_device *pdev)
+{
+	int32_t rc = 0;
+	const struct of_device_id *match;
+	match = of_match_device(hi543_dt_match, &pdev->dev);
+/*                                                    */
+	if(!match)
+	{
+		  pr_err(" %s failed ",__func__);
+		  return -ENODEV;
+	 }
+/*                                                    */
+	rc = msm_sensor_platform_probe(pdev, match->data);
+	return rc;
+}
+
+static int __init hi543_init_module(void)
+{
+	int32_t rc = 0;
+	pr_info("%s:%d\n", __func__, __LINE__);
+/*                                                                                          */
+#if defined(CONFIG_MACH_MSM8X10_W5)
+	switch(lge_get_board_revno()) {
+		case HW_REV_A:
+			printk("%s: Sensor power is set as Rev.A\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_a;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_a);
+			break;
+		case HW_REV_B:
+			#if defined(CONFIG_MACH_MSM8X10_W5C_VZW)
+			printk("%s: (W5C_VZW)Sensor power is set as over Rev.A\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_a;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_a);
+			break;
+			#else
+			printk("%s: Sensor power is set as Rev.B\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_b;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_b);
+			break;
+			#endif
+		case HW_REV_C:
+			#if defined(CONFIG_MACH_MSM8X10_W5C_VZW)
+			printk("%s: (W5C_VZW)Sensor power is set as Rev.C\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_c_w5c;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_c_w5c);
+			break;
+			#else
+			printk("%s: Sensor power is set as Rev.B\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_b;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_b);
+			break;
+			#endif
+		default:
+			#if defined(CONFIG_MACH_MSM8X10_W5C_VZW)
+			printk("%s: (W5C_VZW)Sensor power is set as over Rev.C\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_c_w5c;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_c_w5c);
+			break;
+			#else
+			printk("%s: Sensor power is set as Rev.B\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_b;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_b);
+			break;
+			#endif
+	}
+#else
+	switch(lge_get_board_revno()) {
+		case HW_REV_A:
+			printk("%s: Sensor power is set as Rev.A\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_a;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_a);
+			break;
+		default:
+			printk("%s: Sensor power is set as Rev.A\n", __func__);
+			hi543_s_ctrl.power_setting_array.power_setting = hi543_power_setting_rev_a;
+			hi543_s_ctrl.power_setting_array.size = ARRAY_SIZE(hi543_power_setting_rev_a);
+			break;
+	}
+#endif
+/*                                                                                          */
+	rc = platform_driver_probe(&hi543_platform_driver,
+		hi543_platform_probe);
+	if (!rc)
+		return rc;
+	pr_info("%s:%d rc %d\n", __func__, __LINE__, rc);
+	return i2c_add_driver(&hi543_i2c_driver);
+}
+
+int32_t hi543_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
+{
+
+	int32_t rc = 0;
+	uint16_t chipid[2];
+
+	rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(
+			s_ctrl->sensor_i2c_client,
+			s_ctrl->sensordata->slave_info->sensor_id_reg_addr,
+			&chipid[0], MSM_CAMERA_I2C_BYTE_DATA);
+	if (rc < 0) {
+		pr_err("%s: %d %s: read id failed\n", __func__,__LINE__,
+			s_ctrl->sensordata->sensor_name);
+		return rc;
+	}
+	rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(
+			s_ctrl->sensor_i2c_client,
+			s_ctrl->sensordata->slave_info->sensor_id_reg_addr|0x0001,
+			&chipid[1], MSM_CAMERA_I2C_BYTE_DATA);
+	if (rc < 0) {
+		pr_err("%s: %d %s: read id failed\n", __func__,__LINE__,
+			s_ctrl->sensordata->sensor_name);
+		return rc;
+	}
+
+	chipid[1] = chipid[0] << 8 | chipid[1];
+
+	if (chipid[1] != s_ctrl->sensordata->slave_info->sensor_id) {
+		pr_err("%s read id 0x%x does not match with expected id 0x%x\n",__func__,
+			chipid[1], s_ctrl->sensordata->slave_info->sensor_id);
+		return -ENODEV;
+	}
+
+	return rc;
+
+}
+
+static struct msm_sensor_fn_t hi543_sensor_func_tbl = {
+	.sensor_config = msm_sensor_config,
+	.sensor_power_up = msm_sensor_power_up,
+	.sensor_power_down = msm_sensor_power_down,
+	.sensor_match_id = hi543_sensor_match_id,
+};
+
+static void __exit hi543_exit_module(void)
+{
+	pr_info("%s:%d\n", __func__, __LINE__);
+	if (hi543_s_ctrl.pdev) {
+		msm_sensor_free_sensor_data(&hi543_s_ctrl);
+		platform_driver_unregister(&hi543_platform_driver);
+	} else
+		i2c_del_driver(&hi543_i2c_driver);
+	return;
+}
+
+static struct msm_sensor_ctrl_t hi543_s_ctrl = {
+	.sensor_i2c_client = &hi543_sensor_i2c_client,
+/*                                                                                          */
+	//.power_setting_array.power_setting = hi543_power_setting,
+	//.power_setting_array.size = ARRAY_SIZE(hi543_power_setting),
+/*                                                                                          */
+	.msm_sensor_mutex = &hi543_mut,
+	.sensor_v4l2_subdev_info = hi543_subdev_info,
+	.sensor_v4l2_subdev_info_size = ARRAY_SIZE(hi543_subdev_info),
+	.func_tbl = &hi543_sensor_func_tbl,
+};
+
+module_init(hi543_init_module);
+module_exit(hi543_exit_module);
+MODULE_DESCRIPTION("hi543");
+MODULE_LICENSE("GPL v2");
+
