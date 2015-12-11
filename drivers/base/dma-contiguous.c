@@ -221,16 +221,10 @@ int __init cma_fdt_scan(unsigned long node, const char *uname,
 	char *name;
 	bool in_system;
 	phys_addr_t limit = MEMBLOCK_ALLOC_ANYWHERE;
-#ifdef CONFIG_MACH_LGE
-	const char *status;
-#endif
+
 	if (!of_get_flat_dt_prop(node, "linux,contiguous-region", NULL))
 		return 0;
-#ifdef CONFIG_MACH_LGE
-	status = of_get_flat_dt_prop(node, "status", NULL);
-	if (status && (strncmp(status, "ok", 2) != 0))
-		return 0;
-#endif
+
 	prop = of_get_flat_dt_prop(node, "reg", &len);
 	if (!prop || (len != 2 * sizeof(unsigned long)))
 		return 0;

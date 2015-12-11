@@ -719,10 +719,6 @@ int platform_pm_suspend(struct device *dev)
 		ret = platform_legacy_suspend(dev, PMSG_SUSPEND);
 	}
 
-    #if defined(CONFIG_MACH_MSM8X10_L70P)
-    if(ret != 0) pr_err("[can not suspend] %s : %d\n", dev->driver->name, ret);
-    #endif
-
 	return ret;
 }
 

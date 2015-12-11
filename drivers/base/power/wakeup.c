@@ -24,10 +24,6 @@
  */
 bool events_check_enabled __read_mostly;
 
- #ifdef CONFIG_MACH_MSM8X10_L70P
-static int counter_first = 0;
-#endif
-
 /*
  * Combined counters of registered wakeup events and wakeup events in progress.
  * They need to be modified together atomically, so it's better to use one
@@ -382,18 +378,6 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 {
 	unsigned int cec;
 
- #ifdef CONFIG_MACH_MSM8X10_L70P /* Boost Cpu when wake up */
-    extern int boost_freq;
-    extern bool suspend_marker_entry;
-    bool wakeup_pending = true;
-    
-    if (!strcmp(ws->name, "touch_irq") || !strcmp(ws->name, "hall_ic_wakeups")) {
-        if(!counter_first) {
-            wakeup_pending = false;
-            counter_first = 1;
-        }
-    }
-#endif
 	ws->active = true;
 	ws->active_count++;
 	ws->last_time = ktime_get();
@@ -404,20 +388,6 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 	cec = atomic_inc_return(&combined_event_count);
 
 	trace_wakeup_source_activate(ws->name, cec);
-
-#ifdef CONFIG_MACH_MSM8X10_L70P  /* Boost cpu when wake up */
-	if (suspend_marker_entry) {
-		if (!wakeup_pending) {
-			if (boost_freq == 1) {
-				if (!strcmp(ws->name, "touch_irq") || !strcmp(ws->name, "hall_ic_wakeups")) {
-					printk(KERN_ERR "ws->name=%s, boost_Freq=%d\n", ws->name, boost_freq);
-					boost_freq++;
-					printk(KERN_ERR "ws->name=%s, boost_Freq=%d\n", ws->name, boost_freq);
-				}
-		    }
-		}
-	}
-#endif
 }
 
 /**
@@ -521,11 +491,6 @@ static void wakeup_source_deactivate(struct wakeup_source *ws)
 		ws->relax_count--;
 		return;
 	}
-#ifdef CONFIG_MACH_MSM8X10_L70P
-    if (!strcmp(ws->name, "touch_irq") || !strcmp(ws->name, "hall_ic_wakeups")) {
-        counter_first = 0;
-    }
-#endif
 
 	ws->active = false;
 
@@ -684,35 +649,6 @@ void pm_wakeup_event(struct device *dev, unsigned int msec)
 }
 EXPORT_SYMBOL_GPL(pm_wakeup_event);
 
-#ifdef CONFIG_LGE_PRINT_WAKEUP_PENDING
-static void print_active_wakeup_sources(void)
-{
-	struct wakeup_source *ws;
-	int active = 0;
-	struct wakeup_source *last_activity_ws = NULL;
-
-	rcu_read_lock();
-	list_for_each_entry_rcu(ws, &wakeup_sources, entry) {
-	if (ws->active) {
-	 	pr_info("active wakeup source: %s\n", ws->name);
-	 	active = 1;
-	 } else if (!active &&
-	 				(!last_activity_ws ||
-	 					ws->last_time.tv64 >
-	 					last_activity_ws->last_time.tv64)) {
-	 		last_activity_ws = ws;
-	 	}
-	}
-
-	if (!active && last_activity_ws)
-	{
-		pr_info("last active wakeup source: %s\n",
-										last_activity_ws->name);
-	}
-	rcu_read_unlock();
-}
-#endif
-
 /**
  * pm_wakeup_pending - Check if power transition in progress should be aborted.
  *
@@ -735,12 +671,6 @@ bool pm_wakeup_pending(void)
 		events_check_enabled = !ret;
 	}
 	spin_unlock_irqrestore(&events_lock, flags);
-#ifdef CONFIG_LGE_PRINT_WAKEUP_PENDING
-	if (ret)
-	{
-		print_active_wakeup_sources();
-	}
-#endif
 	return ret;
 }
 
@@ -885,54 +815,6 @@ static int print_wakeup_source_stats(struct seq_file *m,
 	return ret;
 }
 
-#ifdef CONFIG_LGE_PM
-static int print_wakeup_source_active_stats(struct seq_file *m,
-					    struct wakeup_source *ws)
-{
-	unsigned long flags;
-	ktime_t total_time;
-	ktime_t max_time;
-	unsigned long active_count;
-	ktime_t active_time;
-	ktime_t prevent_sleep_time;
-	int ret;
-
-	spin_lock_irqsave(&ws->lock, flags);
-
-	total_time = ws->total_time;
-	max_time = ws->max_time;
-	prevent_sleep_time = ws->prevent_sleep_time;
-	active_count = ws->active_count;
-	if (ws->active) {
-		ktime_t now = ktime_get();
-
-		active_time = ktime_sub(now, ws->last_time);
-		total_time = ktime_add(total_time, active_time);
-		if (active_time.tv64 > max_time.tv64)
-			max_time = active_time;
-
-		if (ws->autosleep_enabled)
-			prevent_sleep_time = ktime_add(prevent_sleep_time,
-				ktime_sub(now, ws->start_prevent_time));
-	} else {
-		active_time = ktime_set(0, 0);
-	}
-
-	if (ktime_to_ms(active_time) > 0)
-		ret = seq_printf(m, "%-12s\t%lu\t\t%lu\t\t%lu\t\t%lu\t\t"
-				"%lld\t\t%lld\t\t%lld\t\t%lld\t\t%lld\n",
-				ws->name, active_count, ws->event_count,
-				ws->wakeup_count, ws->expire_count,
-				ktime_to_ms(active_time), ktime_to_ms(total_time),
-				ktime_to_ms(max_time), ktime_to_ms(ws->last_time),
-				ktime_to_ms(prevent_sleep_time));
-
-	spin_unlock_irqrestore(&ws->lock, flags);
-
-	return ret;
-}
-#endif
-
 /**
  * wakeup_sources_stats_show - Print wakeup sources statistics information.
  * @m: seq_file to print the statistics into.
@@ -953,35 +835,10 @@ static int wakeup_sources_stats_show(struct seq_file *m, void *unused)
 	return 0;
 }
 
-#ifdef CONFIG_LGE_PM
-static int wakeup_sources_active_stats_show(struct seq_file *m, void *unused)
-{
-	struct wakeup_source *ws;
-
-	seq_puts(m, "name\t\tactive_count\tevent_count\twakeup_count\t"
-		"expire_count\tactive_since\ttotal_time\tmax_time\t"
-		"last_change\tprevent_suspend_time\n");
-
-	rcu_read_lock();
-	list_for_each_entry_rcu(ws, &wakeup_sources, entry)
-		print_wakeup_source_active_stats(m, ws);
-	rcu_read_unlock();
-
-	return 0;
-}
-#endif
-
 static int wakeup_sources_stats_open(struct inode *inode, struct file *file)
 {
 	return single_open(file, wakeup_sources_stats_show, NULL);
 }
-
-#ifdef CONFIG_LGE_PM
-static int wakeup_sources_active_stats_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, wakeup_sources_active_stats_show, NULL);
-}
-#endif
 
 static const struct file_operations wakeup_sources_stats_fops = {
 	.owner = THIS_MODULE,
@@ -991,26 +848,10 @@ static const struct file_operations wakeup_sources_stats_fops = {
 	.release = single_release,
 };
 
-#ifdef CONFIG_LGE_PM
-static const struct file_operations wakeup_sources_active_stats_fops = {
-	.owner = THIS_MODULE,
-	.open = wakeup_sources_active_stats_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
-#endif
-
 static int __init wakeup_sources_debugfs_init(void)
 {
 	wakeup_sources_stats_dentry = debugfs_create_file("wakeup_sources",
 			S_IRUGO, NULL, NULL, &wakeup_sources_stats_fops);
-
-#ifdef CONFIG_LGE_PM
-	wakeup_sources_stats_dentry = debugfs_create_file("wakeup_sources_active",
-			S_IRUGO, NULL, NULL, &wakeup_sources_active_stats_fops);
-#endif
-
 	return 0;
 }
 
