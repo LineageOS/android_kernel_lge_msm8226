@@ -2478,7 +2478,7 @@ CONFIG_IMX119=y
 # CONFIG_SP1628 is not set
 # CONFIG_GC0339 is not set
 # CONFIG_OV8825 is not set
-# CONFIG_OV8858 is not set
+CONFIG_OV8858=y
 # CONFIG_OV8865 is not set
 # CONFIG_s5k4e1 is not set
 # CONFIG_OV12830 is not set
