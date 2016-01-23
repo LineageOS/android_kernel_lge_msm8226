@@ -4959,6 +4959,17 @@ static ssize_t store_double_tap(struct mxt_data *data, const char *buf, size_t c
 	return count;
 }
 
+static ssize_t show_double_tap(struct mxt_data *data, char *buf)
+{
+	int count = 0;
+	char c = 0;
+
+	c = data->lpwg_mode ? '1' : '0';
+	count = sprintf(buf, "%c\n", c);
+
+	return count;
+}
+
 #endif
 
 static ssize_t store_incoming_call(struct mxt_data *data, const char *buf, size_t count)
@@ -5063,7 +5074,7 @@ static LGE_TOUCH_ATTR(knock_on_type, S_IRUGO, mxt_get_knockon_type, NULL);
 #if defined(CONFIG_TOUCHSCREEN_LGE_LPWG)
 static LGE_TOUCH_ATTR(lpwg_data, S_IRUGO | S_IWUSR, show_lpwg_data, store_lpwg_data);
 static LGE_TOUCH_ATTR(lpwg_notify, S_IRUGO | S_IWUSR, NULL, store_lpwg_notify);
-static LGE_TOUCH_ATTR(dt2w_enable, S_IRUGO | S_IWUSR, NULL, store_double_tap);
+static LGE_TOUCH_ATTR(dt2w_enable, S_IRUGO | S_IWUSR, show_double_tap, store_double_tap);
 #else
 static LGE_TOUCH_ATTR(touch_gesture, S_IRUGO | S_IWUSR, NULL, mxt_knock_on_store);
 #endif

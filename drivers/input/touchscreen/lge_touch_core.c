@@ -3389,6 +3389,17 @@ static ssize_t store_double_tap(struct lge_touch_data *ts, const char *buf, size
 	return count;
 }
 
+static ssize_t show_double_tap(struct lge_touch_data *ts, char *buf)
+{
+	int count = 0;
+	char c = 0;
+
+	c = touch_gesture_enable ? '1' : '0';
+	count = sprintf(buf, "%c\n", c);
+
+	return count;
+}
+
 
 static ssize_t store_global_access_pixel(struct lge_touch_data *ts, const char *buf, size_t count)
 {
@@ -3444,7 +3455,7 @@ static LGE_TOUCH_ATTR(power_control, S_IRUGO | S_IWUSR, NULL, power_control_stor
 static LGE_TOUCH_ATTR(global_access_pixel, S_IRUGO | S_IWUSR, show_global_access_pixel, store_global_access_pixel);
 static LGE_TOUCH_ATTR(lpwg_data, S_IRUGO | S_IWUSR, show_lpwg_data, store_lpwg_data);
 static LGE_TOUCH_ATTR(lpwg_notify, S_IRUGO | S_IWUSR, NULL, store_lpwg_notify);
-static LGE_TOUCH_ATTR(dt2w_enable, S_IRUGO | S_IWUSR, NULL, store_double_tap);
+static LGE_TOUCH_ATTR(dt2w_enable, S_IRUGO | S_IWUSR, show_double_tap, store_double_tap);
 
 static struct attribute *lge_touch_attribute_list[] = {
 	&lge_touch_attr_platform_data.attr,
