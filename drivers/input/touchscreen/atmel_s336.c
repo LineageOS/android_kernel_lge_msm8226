@@ -2180,8 +2180,8 @@ static void mxt_proc_t93_messages(struct mxt_data *data, u8 *message)
 				hrtimer_start(&data->multi_tap_timer, ktime_set(0, MS_TO_NS(MXT_WAITED_UDF_TIME)), HRTIMER_MODE_REL);
 		} else if (data->lpwg_mode == LPWG_DOUBLE_TAP) {
 			send_uevent(knockon_event);
-			input_report_key(input_dev, KEY_POWER, 1);
-			input_report_key(input_dev, KEY_POWER, 0);
+			input_report_key(input_dev, KEY_WAKEUP, 1);
+			input_report_key(input_dev, KEY_WAKEUP, 0);
 			input_sync(input_dev);
 		}
 	}
@@ -2214,8 +2214,8 @@ static void mxt_proc_t24_messages(struct mxt_data *data, u8 *message)
 		wake_lock_timeout(&touch_wake_lock, msecs_to_jiffies(2000));
 		TOUCH_INFO_MSG("Knock On detected x[%3d] y[%3d] \n", x, y);
 		kobject_uevent_env(&lge_touch_sys_device.kobj, KOBJ_CHANGE, knockon_event);
-		input_report_key(input_dev, KEY_POWER, 1);
-		input_report_key(input_dev, KEY_POWER, 0);
+		input_report_key(input_dev, KEY_WAKEUP, 1);
+		input_report_key(input_dev, KEY_WAKEUP, 0);
 		input_sync(input_dev);
 	} else {
 		TOUCH_INFO_MSG("%s msg = %d \n", __func__, msg);
@@ -5743,7 +5743,7 @@ int mxt_initialize_t9_input_device(struct mxt_data *data)
 	}
 
 	set_bit(EV_KEY, input_dev->evbit);
-	set_bit(KEY_POWER, input_dev->keybit);
+	set_bit(KEY_WAKEUP, input_dev->keybit);
 
 	input_set_drvdata(input_dev, data);
 
