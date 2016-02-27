@@ -3217,13 +3217,16 @@ void send_uevent_lpwg(struct i2c_client *client, int type)
 		&& atomic_read(&ts->state.uevent_state) == UEVENT_IDLE) {
 			atomic_set(&ts->state.uevent_state, UEVENT_BUSY);
 			send_uevent(lpwg_uevent[type - 1]);
-                       if (type == LPWG_DOUBLE_TAP) {
-                               input_report_key(ts->input_dev, KEY_WAKEUP, BUTTON_PRESSED);
-                               input_report_key(ts->input_dev, KEY_WAKEUP, BUTTON_RELEASED);
-                               input_sync(ts->input_dev);
-                       }
 
     }
+
+    if (type == LPWG_DOUBLE_TAP) {
+	input_report_key(ts->input_dev, KEY_WAKEUP, BUTTON_PRESSED);
+	input_report_key(ts->input_dev, KEY_WAKEUP, BUTTON_RELEASED);
+	input_sync(ts->input_dev);
+	}
+
+
 }
 
 /* update_status
