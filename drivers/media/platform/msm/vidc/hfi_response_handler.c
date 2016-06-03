@@ -659,7 +659,7 @@ static void hfi_process_sess_get_prop_buf_req(
 	dprintk(VIDC_DBG, "Entered ");
 	if (!prop) {
 		dprintk(VIDC_ERR,
-			"hal_process_sess_get_prop_buf_req:bad_prop: %p",
+			"hal_process_sess_get_prop_buf_req:bad_prop: %pK",
 			prop);
 		return;
 	}
@@ -836,8 +836,8 @@ static void hfi_process_session_init_done(
 	} else {
 		sess_close = (struct hal_session *)pkt->session_id;
 		if (sess_close) {
-			dprintk(VIDC_WARN,
-				"Sess init failed: 0x%x, 0x%p",
+			dprintk(VIDC_INFO,
+				"Sess init failed: Deleting session: 0x%x 0x%pK",
 				sess_close->session_id, sess_close);
 		}
 	}
