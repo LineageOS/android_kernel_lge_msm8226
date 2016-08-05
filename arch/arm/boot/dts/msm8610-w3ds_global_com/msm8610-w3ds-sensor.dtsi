@@ -46,116 +46,41 @@
 			status = "ok";
 			revision = "rev_a";
 		};
-		Bosch_bma2x2@18_rev_0{
-			compatible = "Bosch,bma2x2";
+		bma2x2@18_rev_0 {
+			compatible = "bosch,bma2x2";
 			reg = <0x18>;
-			interrupt-parent = <&msmgpio>;
-			interrupts = <81 0x2>;
-			Bosch,vdd_ana-supply = <&pm8110_l14>;
-			Bosch,vddio_i2c-supply = <&pm8110_l14>;
-			Bosch,irq-gpio = <&msmgpio 81 0x00>;
-			Bosch,i2c-pull-up = <1>;
-			Bosch,vdd_ana_supply_min = <1800000>;
-			Bosch,vdd_ana_supply_max = <1800000>;
-			Bosch,vdd_ana_load_ua = <10000>;
-			Bosch,vddio_dig_supply_min = <1800000>;
-			Bosch,vddio_dig_supply_max = <1800000>;
-			Bosch,vddio_dig_load_ua = <10000>;
-			Bosch,vddio_i2c_supply_min = <1800000>;
-			Bosch,vddio_i2c_supply_max = <1800000>;
-			Bosch,vddio_i2c_load_ua = <10000>;
-			place = <5>;
-			status = "ok";
-			revision = "rev_0";
-		};
-		Bosch_bma2x2@18_rev_b{
-			compatible = "Bosch,bma2x2";
-			revision = "rev_b";
-			status = "ok";
+			vdd-supply = <&pm8110_l14>;
+			gpios = <&msmgpio 81 0>; /* IRQ */
+			bma,place = <5>;
+			};
+		bma2x2@18_rev_b {
+			compatible = "bosch,bma2x2";
 			reg = <0x18>;
-			interrupt-parent = <&msmgpio>;
-			interrupts = <81 0x2>;
-			Bosch,vdd_ana-supply = <&pm8110_l14>;
-			Bosch,vddio_i2c-supply = <&pm8110_l14>;
-			Bosch,irq-gpio = <&msmgpio 81 0x00>;
-			Bosch,i2c-pull-up = <1>;
-			Bosch,vdd_ana_supply_min = <1800000>;
-			Bosch,vdd_ana_supply_max = <1800000>;
-			Bosch,vdd_ana_load_ua = <10000>;
-			Bosch,vddio_dig_supply_min = <1800000>;
-			Bosch,vddio_dig_supply_max = <1800000>;
-			Bosch,vddio_dig_load_ua = <10000>;
-			Bosch,vddio_i2c_supply_min = <1800000>;
-			Bosch,vddio_i2c_supply_max = <1800000>;
-			Bosch,vddio_i2c_load_ua = <10000>;
-			place = <7>;
-		};
-		Bosch_bma2x2@18_rev_c{
-			compatible = "Bosch,bma2x2";
-			revision = "rev_c";
-			status = "ok";
+			vdd-supply = <&pm8110_l14>;
+			gpios = <&msmgpio 81 0>; /* IRQ */
+			bma,place = <7>;
+			};
+		bma2x2@18_rev_c {
+			compatible = "bosch,bma2x2";
 			reg = <0x18>;
-			interrupt-parent = <&msmgpio>;
-			interrupts = <81 0x2>;
-			Bosch,vdd_ana-supply = <&pm8110_l14>;
-			Bosch,vddio_i2c-supply = <&pm8110_l14>;
-			Bosch,irq-gpio = <&msmgpio 81 0x00>;
-			Bosch,i2c-pull-up = <1>;
-			Bosch,vdd_ana_supply_min = <1800000>;
-			Bosch,vdd_ana_supply_max = <1800000>;
-			Bosch,vdd_ana_load_ua = <10000>;
-			Bosch,vddio_dig_supply_min = <1800000>;
-			Bosch,vddio_dig_supply_max = <1800000>;
-			Bosch,vddio_dig_load_ua = <10000>;
-			Bosch,vddio_i2c_supply_min = <1800000>;
-			Bosch,vddio_i2c_supply_max = <1800000>;
-			Bosch,vddio_i2c_load_ua = <10000>;
-			place = <5>;
-		};
-		Bosch_bma2x2@18_rev_d{
-			compatible = "Bosch,bma2x2";
-			revision = "rev_d";
-			status = "ok";
+			vdd-supply = <&pm8110_l14>;
+			gpios = <&msmgpio 81 0>; /* IRQ */
+			bma,place = <5>;
+			};
+		bma2x2@18_rev_d {
+			compatible = "bosch,bma2x2";
 			reg = <0x18>;
-			interrupt-parent = <&msmgpio>;
-			interrupts = <81 0x2>;
-			Bosch,vdd_ana-supply = <&pm8110_l14>;
-			Bosch,vddio_i2c-supply = <&pm8110_l14>;
-			Bosch,irq-gpio = <&msmgpio 81 0x00>;
-			Bosch,i2c-pull-up = <1>;
-			Bosch,vdd_ana_supply_min = <1800000>;
-			Bosch,vdd_ana_supply_max = <1800000>;
-			Bosch,vdd_ana_load_ua = <10000>;
-			Bosch,vddio_dig_supply_min = <1800000>;
-			Bosch,vddio_dig_supply_max = <1800000>;
-			Bosch,vddio_dig_load_ua = <10000>;
-			Bosch,vddio_i2c_supply_min = <1800000>;
-			Bosch,vddio_i2c_supply_max = <1800000>;
-			Bosch,vddio_i2c_load_ua = <10000>;
-			place = <7>;
-		};
-		Bosch_bma2x2@18_rev_e...{
-			compatible = "Bosch,bma2x2";
-			revision = "rev_e...";
-			status = "ok";
+			vdd-supply = <&pm8110_l14>;
+			gpios = <&msmgpio 81 0>; /* IRQ */
+			bma,place = <7>;
+			};
+		bma2x2@18_rev_e... {
+			compatible = "bosch,bma2x2";
 			reg = <0x18>;
-			interrupt-parent = <&msmgpio>;
-			interrupts = <81 0x2>;
-			Bosch,vdd_ana-supply = <&pm8110_l14>;
-			Bosch,vddio_i2c-supply = <&pm8110_l14>;
-			Bosch,irq-gpio = <&msmgpio 81 0x00>;
-			Bosch,i2c-pull-up = <1>;
-			Bosch,vdd_ana_supply_min = <1800000>;
-			Bosch,vdd_ana_supply_max = <1800000>;
-			Bosch,vdd_ana_load_ua = <10000>;
-			Bosch,vddio_dig_supply_min = <1800000>;
-			Bosch,vddio_dig_supply_max = <1800000>;
-			Bosch,vddio_dig_load_ua = <10000>;
-			Bosch,vddio_i2c_supply_min = <1800000>;
-			Bosch,vddio_i2c_supply_max = <1800000>;
-			Bosch,vddio_i2c_load_ua = <10000>;
-			place = <5>;
-		};
+			vdd-supply = <&pm8110_l14>;
+			gpios = <&msmgpio 81 0>; /* IRQ */
+			bma,place = <5>;
+			};
 		/* Proximity sensor */
 		Avago_apds9190@39 {
 			compatible = "Avago,apds9190";
