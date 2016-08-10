@@ -10,6 +10,48 @@
  * GNU General Public License for more details.
  */
 
-/ {
+&i2c_2 {
+        bma2x2@11 {
+                compatible = "bosch,bma2x2";
+                reg = <0x11>;
+                vdd-supply = <&pm8226_l19>;
+                gpios = <&msmgpio 69 0>; /* IRQ */
+                bma,place = <7>;
+        };
 
+        bmm050@13 {
+                compatible = "bosch,bmm050";
+                reg = <0x13>;
+                vdd-supply = <&pm8226_l19>;
+                gpios = <&msmgpio 66 0>; /* IRQ */
+                bmm,place = <4>;
+        };
+
+        Avago_apds9130@39 {
+            compatible = "Avago,apds9130";
+            reg = <0x39>;
+            interrupt-parent = <&msmgpio>;
+            interrupts = <80 0x2>;
+            Avago,vdd_ana-supply = <&pm8226_l19>;
+            Avago,vddio_i2c-supply = <&pm8226_lvs1>;
+            Avago,irq-gpio = <&msmgpio 119 0x00>;
+            Avago,i2c-pull-up = <1>;
+            Avago,vdd_ana_supply_min = <2850000>;
+            Avago,vdd_ana_supply_max = <3300000>;
+            Avago,vdd_ana_load_ua = <15000>;
+            Avago,vddio_dig_supply_min = <1800000>;
+            Avago,vddio_dig_supply_max = <1800000>;
+            Avago,vddio_dig_load_ua = <10000>;
+            Avago,vddio_i2c_supply_min = <1800000>;
+            Avago,vddio_i2c_supply_max = <1800000>;
+            Avago,vddio_i2c_load_ua = <10000>;
+            /*add*/
+            Avago,ppcount = <8>;
+            Avago,pdrive = <0>;
+            Avago,near_offset = <150>;
+            Avago,far_offset = <50>;
+            Avago,crosstalk_max = <770>;
+            status = "ok";
+        };
 };
+
