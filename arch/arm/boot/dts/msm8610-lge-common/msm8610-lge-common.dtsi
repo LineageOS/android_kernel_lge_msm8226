@@ -11,6 +11,7 @@
  */
 
 
+
 /include/ "msm8610-lge-panel.dtsi"
 /include/ "msm8610-lge-input.dtsi"
 /include/ "msm8610-lge-hdmi.dtsi"
@@ -36,5 +37,13 @@
 		qcom,ion-heap@26 { /* MODEM HEAP */
 			qcom,memory-fixed = <0x09700000 0x2e00000>;
 		};
+	};
+
+	ram_console {
+		compatible = "android,ram-console";
+		status = "ok";
+
+		android,ram-buffer-start = <0x3eae0000>;
+		android,ram-buffer-size = <0x20000>;
 	};
 };
