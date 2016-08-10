@@ -37,28 +37,12 @@
             STMicroelectronics,vddio_i2c_load_ua = <10000>;
         };
 
-
-        Bosch_bma2x2@10 {
-            compatible = "Bosch,bma2x2";
+        bma2x2@10 {
+            compatible = "bosch,bma2x2";
             reg = <0x10>;
-            interrupt-parent = <&msmgpio>;
-            interrupts = <81 0x2>;
-            Bosch,vdd_ana-supply = <&pm8110_l19>;
-            Bosch,vddio_i2c-supply = <&pm8110_l14>;
-            Bosch,irq-gpio = <&msmgpio 81 0x00>;
-            Bosch,i2c-pull-up = <1>;
-            Bosch,vdd_ana_supply_min = <2850000>;
-            Bosch,vdd_ana_supply_max = <3300000>;
-            Bosch,vdd_ana_load_ua = <15000>;
-            Bosch,vddio_dig_supply_min = <1800000>;
-            Bosch,vddio_dig_supply_max = <1800000>;
-            Bosch,vddio_dig_load_ua = <10000>;
-            Bosch,vddio_i2c_supply_min = <1800000>;
-            Bosch,vddio_i2c_supply_max = <1800000>;
-            Bosch,vddio_i2c_load_ua = <10000>;
-            place = <4>;
-            status = "ok";
-            revision = "rev_b...";
+            vdd-supply = <&pm8110_l14>;
+            gpios = <&msmgpio 81 0>; /* IRQ */
+            bma,place = <4>;
         };
 
         /* Magnetic Sensor Driver */
@@ -85,27 +69,12 @@
 
         };
 
-        Bosch_bmm050@12 {
-            compatible = "Bosch,bmm050";
-            reg = <0x12>;
-            interrupt-parent = <&msmgpio>;
-            interrupts = <83 0x2>;
-            Bosch,vdd_ana-supply = <&pm8110_l19>;
-            Bosch,vddio_i2c-supply = <&pm8110_l14>;
-            Bosch,irq-gpio = <&msmgpio 83 0x00>;
-            Bosch,i2c-pull-up = <1>;
-            Bosch,vdd_ana_supply_min = <2850000>;
-            Bosch,vdd_ana_supply_max = <3300000>;
-            Bosch,vdd_ana_load_ua = <15000>;
-            Bosch,vddio_dig_supply_min = <1800000>;
-            Bosch,vddio_dig_supply_max = <1800000>;
-            Bosch,vddio_dig_load_ua = <10000>;
-            Bosch,vddio_i2c_supply_min = <1800000>;
-            Bosch,vddio_i2c_supply_max = <1800000>;
-            Bosch,vddio_i2c_load_ua = <10000>;
-            place = <4>;
-            status = "ok";
-            revision = "rev_b...";
+        bmm050@12 {
+                compatible = "bosch,bmm050";
+                reg = <0x12>;
+                vdd-supply = <&pm8110_l14>;
+                gpios = <&msmgpio 83 0>; /* IRQ */
+                bmm,place = <4>;
         };
 
         /* Proximity sensor */
