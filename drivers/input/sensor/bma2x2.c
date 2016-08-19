@@ -6327,6 +6327,7 @@ static void bma2x2_irq_work_func(struct work_struct *work)
 	unsigned char i;
 	unsigned char first_value = 0;
 	unsigned char sign_value = 0;
+	int j = 0;
 
 #ifdef BMA_ENABLE_NEWDATA_INT
 	static struct bma2x2acc acc;
@@ -6350,7 +6351,14 @@ static void bma2x2_irq_work_func(struct work_struct *work)
 
 
 
-	bma2x2_get_interruptstatus1(bma2x2->bma2x2_client, &status);
+// Workaround for 'xfer not allowed when ctrl is suspended' error
+	if (bma2x2_get_interruptstatus1(bma2x2->bma2x2_client, &status)) {
+		for (j = 0; j < 10; j++) {
+			printk(KERN_INFO "bma2x2_irq_work_func ERROR, status = 0x%x\n", status);
+			usleep (5000);
+			if (!bma2x2_get_interruptstatus1(bma2x2->bma2x2_client, &status)) break;
+		    }
+		}
 	printk(KERN_INFO "bma2x2_irq_work_func, status = 0x%x\n", status);
 
 #ifdef CONFIG_SENSORS_BMA2X2_SIG_MOTION
