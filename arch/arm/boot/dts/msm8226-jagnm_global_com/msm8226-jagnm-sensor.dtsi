@@ -11,6 +11,7 @@
  */
 
 &i2c_2 {
+        status = "ok";
         bma2x2@11 {
                 compatible = "bosch,bma2x2";
                 reg = <0x11>;

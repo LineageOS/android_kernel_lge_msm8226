@@ -73,7 +73,7 @@
                 qcom,sda-gpio = <&msmgpio 6 0>;
                 qcom,scl-gpio = <&msmgpio 7 0>;
                 qcom,master-id = <86>;
-                status = "ok";
+		status = "disable";
         };
 
 };
