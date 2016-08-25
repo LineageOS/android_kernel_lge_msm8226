@@ -214,6 +214,19 @@ static struct msm_gpiomux_config msm_lcd_configs[] __initdata = {
 	}
 };
 
+/* I2C Pin Setting */
+static struct gpiomux_setting gpio_i2c_act_config = {
+        .func = GPIOMUX_FUNC_3,
+        .drv = GPIOMUX_DRV_8MA,
+        .pull = GPIOMUX_PULL_NONE,
+};
+ 
+static struct gpiomux_setting gpio_i2c_sus_config = {
+        .func = GPIOMUX_FUNC_3,
+        .drv = GPIOMUX_DRV_2MA,
+        .pull = GPIOMUX_PULL_NONE,
+};
+
 static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 	{
 		.gpio      = 0,		/* BLSP1 QUP1 SPI_DATA_MOSI */
@@ -237,6 +250,20 @@ static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 		.gpio      = 3,		/* BLSP1 QUP1 SPI_CLK */
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gpio_spi_config,
+		},
+	},
+	{
+		.gpio      = 6,		/* BLSP1 QUP2 */
+		.settings = {
+                        [GPIOMUX_ACTIVE] = &gpio_i2c_act_config,
+                        [GPIOMUX_SUSPENDED] = &gpio_i2c_sus_config,
+		},
+	},
+	{
+		.gpio      = 7,		/* BLSP1 QUP2 */
+		.settings = {
+                        [GPIOMUX_ACTIVE] = &gpio_i2c_act_config,
+                        [GPIOMUX_SUSPENDED] = &gpio_i2c_sus_config,
 		},
 	},
 #ifdef CONFIG_MACH_LGE  /* LGE_CHANGE_S,  Added for COMMON_I2C */
