@@ -35,7 +35,7 @@
             interrupts = <80 0x2>;
             Avago,vdd_ana-supply = <&pm8226_l19>;
             Avago,vddio_i2c-supply = <&pm8226_lvs1>;
-            Avago,irq-gpio = <&msmgpio 119 0x00>;
+            Avago,irq-gpio = <&msmgpio 115 0x00>;
             Avago,i2c-pull-up = <1>;
             Avago,vdd_ana_supply_min = <2850000>;
             Avago,vdd_ana_supply_max = <3300000>;
