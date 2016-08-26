@@ -557,4 +557,11 @@
 			status = "okay";
 		};
 	};
+        rpm-regulator-vsa1 {
+                status = "okay";
+                pm8226_lvs1: regulator-lvs1 {
+                        regulator-always-on;
+                        status = "okay";
+                };
+        };
 };
