@@ -17,7 +17,7 @@
                 reg = <0x11>;
                 vdd-supply = <&pm8226_l19>;
                 gpios = <&msmgpio 69 0>; /* IRQ */
-                bma,place = <7>;
+                bma,place = <4>;
         };
 
         bmm050@13 {
