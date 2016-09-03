@@ -277,7 +277,6 @@ config LGE_BLUETOOTH
 	  This driver provides support for LGE BT.
 # LGE_CHANGE_E, [BT][teddy.ju@lge.com], 2013-05-13
 
-
 config LGE_BLUESLEEP
 	bool "LGE Bluetooth sleep driver"
 	depends on LGE_BLUETOOTH
@@ -292,4 +291,6 @@ config LGE_BLUETOOTH_PM
        help
          LGE Bluetooth Power & Sleep 	
          This driver provides support for LGE BT Power & Sleep.
+source drivers/bluetooth/broadcom/Kconfig
+
 endmenu
