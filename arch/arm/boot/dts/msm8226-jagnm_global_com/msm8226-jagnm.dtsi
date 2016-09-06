@@ -120,6 +120,10 @@
 			status = "disabled";
 		};
 	};
+
+	bcmbt_ldisc {
+		compatible = "bcmbt_ldisc";
+	};
 };
 
 &soc {
