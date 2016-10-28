@@ -11,7 +11,7 @@
  */
 
 &i2c_2 {
-        status = "ok";
+        status = "disable";
         bma2x2@11 {
                 compatible = "bosch,bma2x2";
                 reg = <0x11>;
@@ -52,7 +52,7 @@
             Avago,near_offset = <150>;
             Avago,far_offset = <50>;
             Avago,crosstalk_max = <770>;
-            status = "ok";
+            status = "disable";
         };
 };
 
