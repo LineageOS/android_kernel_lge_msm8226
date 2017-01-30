@@ -2416,11 +2416,6 @@ static int bcmbt_ldisc_remove(struct platform_device *pdev)
     return 0;
 }
 
-static const struct of_device_id bcmbt_ldisc_dt_ids[] = {
-    { .compatible = "bcmbt_ldisc"},
-    {}
-};
-
 /* Sys_fs entry bcm_ldisc. The Line discipline driver sets this to 1 when bluedroid performs open on BT
   * protocol driver or application performs open on FM v4l2 driver */
 /* Note: This entry is used in bt_hci_bdroid.c (Android source). Also present in
@@ -2431,12 +2426,24 @@ static struct platform_driver bcmbt_ldisc_platform_driver = {
     .driver = {
            .name = "bcm_ldisc",
            .owner = THIS_MODULE,
-           .of_match_table = bcmbt_ldisc_dt_ids,
            },
 };
 
-module_platform_driver(bcmbt_ldisc_platform_driver);
+static int __init bcmbt_ldisc_init(void)
+{
+    platform_driver_register(&bcmbt_ldisc_platform_driver);
+    mutex_init(&cmd_credit);
+    return 0;
+}
 
+static void __exit bcmbt_ldisc_exit(void)
+{
+    platform_driver_unregister(&bcmbt_ldisc_platform_driver);
+    mutex_destroy(&cmd_credit);
+}
+
+module_init(bcmbt_ldisc_init);
+module_exit(bcmbt_ldisc_exit);
 
 /*****************************************************************************
 **   Module Details

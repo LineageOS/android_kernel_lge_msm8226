@@ -161,7 +161,22 @@ void __init lge_add_lcd_kcal_devices(void)
 	pr_info (" KCAL_DEBUG : %s \n", __func__);
 	platform_device_register(&kcal_platrom_device);
 }
+
 #endif
+
+static struct platform_device bcm_ldisc_device = {
+    .name = "bcm_ldisc",
+    .id = -1,
+    .dev = {
+
+    },
+};
+
+void __init add_bcm_ldisc_device(void)
+{
+	platform_device_register(&bcm_ldisc_device);
+}
+
 /*
  * Used to satisfy dependencies for devices that need to be
  * run early or in a particular order. Most likely your device doesn't fall
@@ -200,6 +215,10 @@ void __init msm8226_add_drivers(void)
 
 #ifdef CONFIG_LGE_ENABLE_MMC_STRENGTH_CONTROL
     lge_add_mmc_strength_devices();
+#endif
+
+#ifdef CONFIG_BT_PROTOCOL_DRIVER
+	add_bcm_ldisc_device();
 #endif
 
 }
