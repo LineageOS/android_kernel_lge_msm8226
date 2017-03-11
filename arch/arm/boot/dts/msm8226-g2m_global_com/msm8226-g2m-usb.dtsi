@@ -22,6 +22,6 @@
 			2 &spmi_bus 0x0 0x0 0x9 0x0>;
 	interrupt-names = "core_irq", "async_irq", "pmic_id_irq";
 
-	qcom,hsusb-otg-mode = <1>;
+	qcom,hsusb-otg-mode = <3>;
 	vbus_otg-supply = <&pm8226_chg_otg>;
 };
