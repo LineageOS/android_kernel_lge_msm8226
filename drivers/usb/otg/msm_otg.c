@@ -3768,8 +3768,13 @@ static void msm_otg_sm_work(struct work_struct *w)
 
 			switch (motg->chg_state) {
 				case USB_CHG_STATE_UNDEFINED:
+#ifdef CONFIG_CHG_DETECTOR_MAX14656
 					lge_chg_detect_work(&motg->lge_chg_work.work);
 					break;
+#else
+					msm_chg_detect_work(&motg->chg_work.work);
+					break;
+#endif
 					//fall through
 				case USB_CHG_STATE_DETECTED:
 					switch (motg->chg_type) {
@@ -3801,7 +3806,11 @@ static void msm_otg_sm_work(struct work_struct *w)
 			if (!test_bit(B_SESS_VLD, &motg->inputs)) {
 				pr_err("not b_sess_vld while a host wait B conn\n");
 				del_timer_sync(&motg->chg_check_timer);
+#ifdef CONFIG_CHG_DETECTOR_MAX14656
 				cancel_delayed_work_sync(&motg->lge_chg_work);
+#else
+				cancel_delayed_work_sync(&motg->chg_work);
+#endif
 				motg->chg_state = USB_CHG_STATE_UNDEFINED;
 #if !defined(CONFIG_LGE_SUPPORT_TYPE_A_USB)
 				motg->chg_type = USB_INVALID_CHARGER;
@@ -3874,9 +3883,13 @@ static void msm_otg_sm_work(struct work_struct *w)
 			pr_err("*** usb device exist :: %d \n",usb_device_exist);
 			switch (motg->chg_state) {
 				case USB_CHG_STATE_UNDEFINED:
+#ifdef CONFIG_CHG_DETECTOR_MAX14656
 					lge_chg_detect_work(&motg->lge_chg_work.work);
 					break;
-
+#else
+					msm_chg_detect_work(&motg->chg_work.work);
+					break;
+#endif
 				case USB_CHG_STATE_DETECTED:
 					switch (motg->chg_type) {
 						case USB_SDP_CHARGER:
