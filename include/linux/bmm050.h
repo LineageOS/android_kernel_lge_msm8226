@@ -1,6 +1,6 @@
 /*!
  * @section LICENSE
- * (C) Copyright 2014 Bosch Sensortec GmbH All Rights Reserved
+ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
  *
  * This software program is licensed subject to the GNU General
  * Public License (GPL).Version 2,June 1991,
@@ -8,7 +8,7 @@
  *
  * @filename bmm050.h
  * @date: 2013/11/25
- * @id       "fcff9b1"
+ * @id       "7bf4b97"
  * @version: 1.2
  *
  * @brief    Header of BMM050API
@@ -60,7 +60,7 @@
 #define BMM050_DELAY_SETTLING_TIME         2
 
 
-#define BMM050_RETURN_FUNCTION_TYPE        char
+#define BMM050_RETURN_FUNCTION_TYPE        int
 #define BMM050_I2C_ADDRESS                 0x10
 
 /*General Info datas*/
@@ -391,17 +391,17 @@
 #define BMM050_SPI_RD_MASK                      0x80
 #define BMM050_READ_SET                         0x01
 
-#define E_BMM050_NULL_PTR                       ((char)-127)
-#define E_BMM050_COMM_RES                       ((char)-1)
-#define E_BMM050_OUT_OF_RANGE                   ((char)-2)
+#define E_BMM050_NULL_PTR                       ((signed char)-127)
+#define E_BMM050_COMM_RES                       ((signed char)-1)
+#define E_BMM050_OUT_OF_RANGE                   ((signed char)-2)
 #define E_BMM050_UNDEFINED_MODE                 0
 
 #define BMM050_WR_FUNC_PTR\
-	char (*bus_write)(unsigned char, unsigned char,\
+	int (*bus_write)(unsigned char, unsigned char,\
 			unsigned char *, unsigned char)
 
 #define BMM050_RD_FUNC_PTR\
-	char (*bus_read)(unsigned char, unsigned char,\
+	int (*bus_read)(unsigned char, unsigned char,\
 			unsigned char *, unsigned char)
 #define BMM050_MDELAY_DATA_TYPE unsigned int
 

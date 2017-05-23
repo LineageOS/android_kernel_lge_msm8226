@@ -1,6 +1,6 @@
 /*!
  * @section LICENSE
- * (C) Copyright 2014 Bosch Sensortec GmbH All Rights Reserved
+ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
  *
  * This software program is licensed subject to the GNU General
  * Public License (GPL).Version 2,June 1991,
@@ -19,9 +19,6 @@
 
 #include <linux/kernel.h>
 
-/*! @defgroup bmp280_core_src
- *  @brief The core code of BMP280 device driver
- @{*/
 /*! ERROR LOG LEVEL */
 #define LOG_LEVEL_E 3
 /*! NOTICE LOG LEVEL */
@@ -38,7 +35,7 @@
 
 #ifndef MODULE_TAG
 /*! MODULE TAG DEFINATION */
-#define MODULE_TAG "<BMP280>"
+#define MODULE_TAG "<BMM>"
 #endif
 
 #if (LOG_LEVEL >= LOG_LEVEL_E)
