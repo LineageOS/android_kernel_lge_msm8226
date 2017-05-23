@@ -1,23 +1,21 @@
 /*!
  * @section LICENSE
- * (C) Copyright 2014 Bosch Sensortec GmbH All Rights Reserved
+ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
  *
  * This software program is licensed subject to the GNU General
  * Public License (GPL).Version 2,June 1991,
  * available at http://www.fsf.org/copyleft/gpl.html
  *
  * @filename    bmm050_driver.c
- * @date        2014/01/07
- * @id          "fcff9b1"
- * @version     v2.6
+ * @date        2014/03/11
+ * @id          "7bf4b97"
+ * @version     v2.8
  *
  * @brief       BMM050 Linux Driver
  */
 
 #include <linux/version.h>
 #include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
 #include <linux/init.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
@@ -43,8 +41,8 @@
 #endif
 
 
-#include "linux/bmm050.h"
-#include "linux/bs_log.h"
+#include <linux/bmm050.h>
+#include <linux/bs_log.h>
 
 #define CONFIG_BMM_USE_PLATFORM_DATA
 #define BMM_USE_BASIC_I2C_FUNC
@@ -87,6 +85,7 @@
 /*! Bosch sensor remapping table size P0~P7*/
 #define MAX_AXIS_REMAP_TAB_SZ 8
 
+#ifdef CONFIG_BMM_USE_PLATFORM_DATA
 struct bosch_sensor_specific {
 	char *name;
 	/* 0 to 7 */
@@ -94,6 +93,7 @@ struct bosch_sensor_specific {
 	int irq;
 	int (*irq_gpio_cfg)(void);
 };
+#endif
 
 /*!
  * we use a typedef to hide the detail,
@@ -127,17 +127,12 @@ struct bosch_sensor_data {
 	};
 };
 
-struct op_mode_map {
-	char *op_mode_name;
-	long op_mode;
-};
-
 static const u8 odr_map[] = {10, 2, 6, 8, 15, 20, 25, 30};
-static const struct op_mode_map op_mode_maps[] = {
-	{"normal", BMM_VAL_NAME(NORMAL_MODE)},
-	{"forced", BMM_VAL_NAME(FORCED_MODE)},
-	{"suspend", BMM_VAL_NAME(SUSPEND_MODE)},
-	{"sleep", BMM_VAL_NAME(SLEEP_MODE)},
+static const long op_mode_maps[] = {
+	BMM_VAL_NAME(NORMAL_MODE),
+	BMM_VAL_NAME(FORCED_MODE),
+	BMM_VAL_NAME(SUSPEND_MODE),
+	BMM_VAL_NAME(SLEEP_MODE)
 };
 
 
@@ -145,7 +140,6 @@ struct bmm_client_data {
 	struct bmm050 device;
 	struct i2c_client *client;
 	struct input_dev *input;
-	struct workqueue_struct *work_queue;
 	struct delayed_work work;
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
@@ -183,9 +177,9 @@ struct bmm_client_data {
 static struct i2c_client *bmm_client;
 /* i2c operation for API */
 static void bmm_delay(u32 msec);
-static char bmm_i2c_read(struct i2c_client *client, u8 reg_addr,
+static int bmm_i2c_read(struct i2c_client *client, u8 reg_addr,
 		u8 *data, u8 len);
-static char bmm_i2c_write(struct i2c_client *client, u8 reg_addr,
+static int bmm_i2c_write(struct i2c_client *client, u8 reg_addr,
 		u8 *data, u8 len);
 
 static void bmm_dump_reg(struct i2c_client *client);
@@ -274,7 +268,7 @@ static int bmm_check_chip_id(struct i2c_client *client)
 		PINFO("read chip id result: %#x", chip_id);
 
 		if ((chip_id & 0xff) != SENSOR_CHIP_ID_BMM) {
-			msleep(1);
+			mdelay(1);
 		} else {
 			err = 0;
 			break;
@@ -352,7 +346,7 @@ static int bmm_wakeup(struct i2c_client *client)
 }
 
 /*i2c read routine for API*/
-static char bmm_i2c_read(struct i2c_client *client, u8 reg_addr,
+static int bmm_i2c_read(struct i2c_client *client, u8 reg_addr,
 		u8 *data, u8 len)
 {
 #if !defined BMM_USE_BASIC_I2C_FUNC
@@ -417,7 +411,7 @@ static char bmm_i2c_read(struct i2c_client *client, u8 reg_addr,
 }
 
 /*i2c write routine for */
-static char bmm_i2c_write(struct i2c_client *client, u8 reg_addr,
+static int bmm_i2c_write(struct i2c_client *client, u8 reg_addr,
 		u8 *data, u8 len)
 {
 #if !defined BMM_USE_BASIC_I2C_FUNC
@@ -482,16 +476,16 @@ static char bmm_i2c_write(struct i2c_client *client, u8 reg_addr,
 #endif
 }
 
-static char bmm_i2c_read_wrapper(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
+static int bmm_i2c_read_wrapper(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
 {
-	char err = 0;
+	int err = 0;
 	err = bmm_i2c_read(bmm_client, reg_addr, data, len);
 	return err;
 }
 
-static char bmm_i2c_write_wrapper(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
+static int bmm_i2c_write_wrapper(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
 {
-	char err = 0;
+	int err = 0;
 	err = bmm_i2c_write(bmm_client, reg_addr, data, len);
 	return err;
 }
@@ -529,17 +523,14 @@ static void bmm_work_func(struct work_struct *work)
 	BMM_CALL_API(read_mdataXYZ_s32)(&client_data->value);
 	bmm_remap_sensor_data(&client_data->value, client_data);
 
-	input_event(client_data->input, EV_REL, REL_X,
-		client_data->value.datax);
-	input_event(client_data->input, EV_REL, REL_Y,
-		client_data->value.datay);
-	input_event(client_data->input, EV_REL, REL_Z,
-		client_data->value.dataz);
+	input_report_abs(client_data->input, ABS_X, client_data->value.datax);
+	input_report_abs(client_data->input, ABS_Y, client_data->value.datay);
+	input_report_abs(client_data->input, ABS_Z, client_data->value.dataz);
 	mutex_unlock(&client_data->mutex_value);
 
 	input_sync(client_data->input);
 
-	queue_delayed_work(client_data->work_queue, &client_data->work, delay);
+	schedule_delayed_work(&client_data->work, delay);
 }
 
 
@@ -605,7 +596,7 @@ static inline int bmm_get_op_mode_idx(u8 op_mode)
 	int i = 0;
 
 	for (i = 0; i < ARRAY_SIZE(op_mode_maps); i++) {
-		if (op_mode_maps[i].op_mode == op_mode)
+		if (op_mode_maps[i] == op_mode)
 			break;
 	}
 
@@ -976,7 +967,7 @@ static ssize_t bmm_store_enable(struct device *dev,
 	mutex_lock(&client_data->mutex_enable);
 	if (data != client_data->enable) {
 		if (data) {
-			queue_delayed_work(client_data->work_queue,
+			schedule_delayed_work(
 					&client_data->work,
 					msecs_to_jiffies(atomic_read(
 							&client_data->delay)));
@@ -1014,7 +1005,7 @@ static ssize_t bmm_store_delay(struct device *dev,
 	if (err)
 		return err;
 
-	if (data <= 0) {
+	if (data == 0) {
 		err = -EINVAL;
 		return err;
 	}
@@ -1142,23 +1133,23 @@ static ssize_t bmm_show_place(struct device *dev,
 
 static DEVICE_ATTR(chip_id, S_IRUGO,
 		bmm_show_chip_id, NULL);
-static DEVICE_ATTR(op_mode, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(op_mode, S_IRUGO|S_IWUSR,
 		bmm_show_op_mode, bmm_store_op_mode);
-static DEVICE_ATTR(odr, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(odr, S_IRUGO|S_IWUSR,
 		bmm_show_odr, bmm_store_odr);
-static DEVICE_ATTR(rept_xy, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(rept_xy, S_IRUGO|S_IWUSR,
 		bmm_show_rept_xy, bmm_store_rept_xy);
-static DEVICE_ATTR(rept_z, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(rept_z, S_IRUGO|S_IWUSR,
 		bmm_show_rept_z, bmm_store_rept_z);
 static DEVICE_ATTR(value, S_IRUGO,
 		bmm_show_value, NULL);
 static DEVICE_ATTR(value_raw, S_IRUGO,
 		bmm_show_value_raw, NULL);
-static DEVICE_ATTR(enable, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(enable, S_IRUGO|S_IWUSR,
 		bmm_show_enable, bmm_store_enable);
-static DEVICE_ATTR(delay, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(delay, S_IRUGO|S_IWUSR,
 		bmm_show_delay, bmm_store_delay);
-static DEVICE_ATTR(test, S_IRUGO|S_IWUSR|S_IWGRP,
+static DEVICE_ATTR(test, S_IRUGO|S_IWUSR,
 		bmm_show_test, bmm_store_test);
 static DEVICE_ATTR(reg, S_IRUGO,
 		bmm_show_reg, NULL);
@@ -1199,9 +1190,10 @@ static int bmm_input_init(struct bmm_client_data *client_data)
 	dev->name = SENSOR_NAME;
 	dev->id.bustype = BUS_I2C;
 
-	input_set_capability(dev, EV_REL, REL_X);
-	input_set_capability(dev, EV_REL, REL_Y);
-	input_set_capability(dev, EV_REL, REL_Z);
+	input_set_capability(dev, EV_ABS, ABS_MISC);
+	input_set_abs_params(dev, ABS_X, MAG_VALUE_MIN, MAG_VALUE_MAX, 0, 0);
+	input_set_abs_params(dev, ABS_Y, MAG_VALUE_MIN, MAG_VALUE_MAX, 0, 0);
+	input_set_abs_params(dev, ABS_Z, MAG_VALUE_MIN, MAG_VALUE_MAX, 0, 0);
 	input_set_drvdata(dev, client_data);
 
 	err = input_register_device(dev);
@@ -1316,7 +1308,7 @@ static int bmm_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	/* check chip id */
 	err = bmm_check_chip_id(client);
 	if (!err) {
-		PNOTICE("Bosch Sensortec Device %s detected: %#x",
+		PNOTICE("Bosch Sensortec Device %s detected, i2c_addr: %#x",
 				SENSOR_NAME, client->addr);
 	} else {
 		PERR("Bosch Sensortec Device not found, chip id mismatch");
@@ -1384,7 +1376,6 @@ static int bmm_probe(struct i2c_client *client, const struct i2c_device_id *id)
 
 
 	/* workqueue init */
-	client_data->work_queue = create_singlethread_workqueue("bmm050");
 	INIT_DELAYED_WORK(&client_data->work, bmm_work_func);
 	atomic_set(&client_data->delay, BMM_DELAY_DEFAULT);
 
@@ -1494,8 +1485,7 @@ static int bmm_post_resume(struct i2c_client *client)
 
 	mutex_lock(&client_data->mutex_enable);
 	if (client_data->enable) {
-		queue_delayed_work(client_data->work_queue,
-				&client_data->work,
+		schedule_delayed_work(&client_data->work,
 				msecs_to_jiffies(
 					atomic_read(&client_data->delay)));
 	}
@@ -1507,7 +1497,6 @@ static int bmm_post_resume(struct i2c_client *client)
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void bmm_early_suspend(struct early_suspend *handler)
 {
-	int err = 0;
 	struct bmm_client_data *client_data =
 		(struct bmm_client_data *)container_of(handler,
 			struct bmm_client_data, early_suspend_handler);
@@ -1518,8 +1507,8 @@ static void bmm_early_suspend(struct early_suspend *handler)
 	mutex_lock(&client_data->mutex_power_mode);
 	BMM_CALL_API(get_powermode)(&power_mode);
 	if (power_mode) {
-		err = bmm_pre_suspend(client);
-		err = bmm_set_op_mode(client_data, BMM_VAL_NAME(SUSPEND_MODE));
+		bmm_pre_suspend(client);
+		bmm_set_op_mode(client_data, BMM_VAL_NAME(SUSPEND_MODE));
 	}
 	mutex_unlock(&client_data->mutex_power_mode);
 
@@ -1527,7 +1516,6 @@ static void bmm_early_suspend(struct early_suspend *handler)
 
 static void bmm_late_resume(struct early_suspend *handler)
 {
-	int err = 0;
 	struct bmm_client_data *client_data =
 		(struct bmm_client_data *)container_of(handler,
 			struct bmm_client_data, early_suspend_handler);
@@ -1536,7 +1524,7 @@ static void bmm_late_resume(struct early_suspend *handler)
 
 	mutex_lock(&client_data->mutex_power_mode);
 
-	err = bmm_restore_hw_cfg(client);
+	bmm_restore_hw_cfg(client);
 	/* post resume operation */
 	bmm_post_resume(client);
 
@@ -1608,7 +1596,6 @@ static int bmm_remove(struct i2c_client *client)
 			cancel_delayed_work_sync(&client_data->work);
 			PDEBUG("cancel work");
 		}
-		destroy_workqueue(client_data->work_queue);
 		mutex_unlock(&client_data->mutex_op_mode);
 
 		err = bmm_set_op_mode(client_data, BMM_VAL_NAME(SUSPEND_MODE));
