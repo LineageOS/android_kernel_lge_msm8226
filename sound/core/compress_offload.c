@@ -461,7 +461,7 @@ static int snd_compr_allocate_buffer(struct snd_compr_stream *stream,
 	void *buffer;
 
 	if (params->buffer.fragment_size == 0 ||
-	    params->buffer.fragments > SIZE_MAX / params->buffer.fragment_size)
+	    params->buffer.fragments > UINT_MAX / params->buffer.fragment_size)
 		return -EINVAL;
 
 	buffer_size = params->buffer.fragment_size * params->buffer.fragments;
