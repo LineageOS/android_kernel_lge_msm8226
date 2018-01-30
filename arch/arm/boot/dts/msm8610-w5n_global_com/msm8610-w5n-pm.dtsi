@@ -295,5 +295,15 @@
 			status = "okay";
 		};
 	};
+
+	rpm-regulator-ldoa19 {
+		status = "okay";
+		pm8110_l19: regulator-l19 {
+			regulator-min-microvolt = <2850000>;
+			regulator-max-microvolt = <3300000>;
+			qcom,init-voltage = <3300000>;
+			status = "okay";
+		};
+	};
 };
 
