@@ -40,7 +40,7 @@
         bma2x2@10 {
             compatible = "bosch,bma2x2";
             reg = <0x10>;
-            vdd-supply = <&pm8110_l14>;
+            vdd-supply = <&pm8110_l19>;
             gpios = <&msmgpio 81 0>; /* IRQ */
             bma,place = <4>;
         };
